@@ -7,7 +7,6 @@ import typing
 from typing import List, Tuple, Dict, Optional, Any, Sequence
 import PyQt5.QtCore
 import util
-import priv
 
 if typing.TYPE_CHECKING:
 	import psycopg2
@@ -320,6 +319,7 @@ def resolveRedirects(url: str,
 			'User-Agent': __userAgent
 		}
 	if cookies is None:
+		import priv
 		cookies = priv.getDefaultCookies()
 	r = requests.get(url, headers=headers, cookies=cookies, timeout=15)
 	time.sleep(2 * random.random())
@@ -352,6 +352,7 @@ def scrape(url: str, cookies: 'requests.cookies.RequestsCookieJar' = None,
 
 	import requests
 	if cookies is None:
+		import priv
 		cookies = priv.getDefaultCookies()
 	r = None
 	try:
