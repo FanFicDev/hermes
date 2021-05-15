@@ -1,18 +1,18 @@
 
-CREATE TYPE FFNFavoriteStatus AS ENUM (
+create type FFNFavoriteStatus as enum (
 	'exists',
 	'unknown',
 	'userRemoved',
 	'siteRemoved'
 );
 
-CREATE TABLE FFNUserFavorite (
-	userId bigint NOT NULL,
-	localId bigint NOT NULL,
-	ficId bigint NOT NULL references fic(id),
-	lastSeen oil_timestamp NOT NULL,
-	status FFNFavoriteStatus DEFAULT 'exists'::FFNFavoriteStatus NOT NULL,
+create table if not exists FFNUserFavorite (
+	userId bigint not null,
+	localId bigint not null,
+	ficId bigint not null references fic(id),
+	lastSeen oil_timestamp not null,
+	status FFNFavoriteStatus default 'exists'::FFNFavoriteStatus not null,
 
-	PRIMARY KEY(userId, localId)
+	primary key(userId, localId)
 );
 

@@ -1,0 +1,15 @@
+Any modern postgres should work. To create the db from scratch execute:
+	oil.sql
+	web.sql
+	orange.sql
+		addUsers.sql
+	minerva.sql
+		addLanguages.sql
+		addSources.sql
+	minerva_user.sql
+	minerva_ffnfav.sql
+
+The sql/fresh/ folder contains numbered links to these files.
+
+Ensure you generate store_bases.py by running schema.py.
+

@@ -77,19 +77,19 @@ tables = [
 		fetched oil_timestamp,
 
 		title varchar(4096) null,
-		content bytea,
+		content bytea null,
 
 		primary key(ficId, chapterId),
 		unique(ficId, localChapterId)
 	'''),
 	('users', '''
 		id bigserial primary key,
-		created bigint,
-		updated bigint,
-		name text,
+		created int8,
+		updated int8,
+		name text unique,
 		hash text,
-		mail text,
-		apikey text
+		mail text unique,
+		apikey text unique
 	'''),
 	('user_fic', '''
 		userId int8 not null references users(id),
@@ -142,7 +142,6 @@ tables = [
 		localChapterId varchar(1024) not null,
 		created oil_timestamp not null,
 		ficStatus ficStatus not null default('complete'),
-		foreign key(userId) references users(id),
 		foreign key(ficId, localChapterId) references fic_chapter(ficId, localChapterId)
 	'''),
 ]
