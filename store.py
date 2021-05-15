@@ -426,7 +426,6 @@ class FicChapter(store_bases.FicChapter):
 	def html(self) -> Optional[str]:
 		if self.content is None:
 			return None
-		util.logMessage(repr(self.content[:10]))
 		return str(util.decompress(self.content), 'utf-8')
 
 	def setHtml(self, html: str) -> None:
