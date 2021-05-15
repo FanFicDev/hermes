@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+# scrape a reddit page, printing all potential story ids to stdout
+
+tmp="$(mktemp)"
+wget --header "Cookie: over18=1" -q -O "${tmp}" "$1"
+cat "${tmp}" | tr "'<>[]() \"\\\\" '\n' \
+	| grep -E '(fanfiction.net/s/|archiveofourown.org/works/|sufficientvelocity.com|spacebattles.com|questionablequesting.com|siye.co.uk|portkey-archive.org|fictionpress.com/s/|fictionhunt.com|harrypotterfanfiction.com|hpfanficarchive.com/stories/viewstory|royalroadl?.com)' \
+	| grep -vE '.com/forums/' | grep -v '.com/members/' \
+	| grep -vE 'portkey-archive.org/author' \
+	| grep -vE 'royalroadl?.com/profile' \
+	| sed 's/.*http/http/' | sed 's/\&amp;.*//' \
+	| sed 's|^fanfiction.net|https://fanfiction.net|' \
+	| sed 's|^nfanfiction.net|https://fanfiction.net|' \
+	| sed -r 's!^(n|u003E|)forums\.(.*)!https://forums.\2!' | sort -u
+
+cat "${tmp}" | tr "'<>[]\"\\\\" '\n' \
+	| sed 's/link/\nlink/g' | sed -n 's/linkffn(\([^)]*\).*/\1/p' \
+	| tr ' ;' '\n' | sort -u | grep -E '^[0-9]+$'
+
+rm "${tmp}"
+

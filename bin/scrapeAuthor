@@ -1,0 +1,14 @@
+#!/usr/bin/bash
+# scrape a ff.net author, printing all story ids to stdout
+
+authorId="$1"
+if [[ -z "${authorId}" ]]; then
+	echo "Usage: $0 <author id>" >&2
+	exit 0
+fi
+
+curl -s "https://www.fanfiction.net/u/${authorId}" | \
+	gunzip -f | \
+	tr '<' '\n' | grep 'z-list mystories' | tr ' ' '\n' | \
+	grep storyid | sed -r 's/.*data-storyid="([0-9]+)".*/\1/'
+

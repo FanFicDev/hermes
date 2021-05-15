@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+grep '\sCommand(' "$(dirname $(which "$0"))/hermes" \
+	| sed -r "s/.*'([^']*)'.*/\1/" | tr '\n' ' '
+echo ''
+

@@ -1,0 +1,126 @@
+Dependencies:
+	python3
+	python-dateutil
+	python-requests
+	python-beautifulsoup4
+	python-psycopg2
+	python-html5lib
+
+Usage:
+	# enter interactive mode
+	hermes
+
+	# print list of non-interactive commands
+	hermes help
+
+Controls:
+	universal:
+		^c,^x: quit
+		 |,^r: force repaint
+
+	fic viewer:
+		j/k UP/DOWN: move up/down a line
+		PAGE_UP/PAGE_DOWN: go up/down a paragraph
+		HOME/END: go to beginning/end of chapter
+		h/l LEFT/RIGHT: previous/next chapter
+
+		K/J: go up/down a paragraph
+		space: go down a paragraph
+
+		m: mark chapter as read, advance
+		s: cycle chapter status (ongoing, abandoned, complete)
+
+		u: check for an updated chapter count
+		o: open fic selection menu
+		escape: open fic selection menu
+
+		a: toggle current line underline
+		y: toggle current line highlight
+		c: change current line color
+		i: invert cursor line
+
+		  =: toggle full screen or max width
+		+/-: increase/decrease max width or l/r margin
+
+		/: force repaint
+		q: quit
+
+	fic selection:
+		 up/down: change selection up/down
+		home/end: go to the start/end of the fic list
+		right/enter: view the currently selected fic
+		page up/down: go up/down roughly a page
+
+		 ^u: unsets the last read chapter
+		 ^a: marks all chapters as read
+		 ^f: change the favorite flag
+		 ^i: check for updates to the fic
+		 ^w: cycle fic write status (ongoing, complete, abandoned)
+		+/-: change the personal rating
+
+		other/backspace: edits the fic filter
+
+		filters support basic queries on both personal rating and favorite value.
+			is:favorite shows only favorited fics
+			is:rated shows only rated fics
+			is:r>5 shows fics with a rating of 6 or more
+			is:r=6 shows fics with a rating of 6
+			is:f<2 shows fics that are not marked !
+		'favorite' and 'rated' can both be abbreviated.
+
+		The tag start can be abbreviated to 'i:' or ':'.
+
+		Relations supported are =, <, >
+			~ (subsequence match)
+			. (substring match)
+
+		Valid fields for is: tags include:
+			favorite, rated, author, description, fandom
+
+		'is:new' is a special tag that shows never opened fics only.
+		'is:complete' matches fics that have a Complete write status
+
+		if the filter is a url, only fics that matched the parsed id will be
+			shown. If the url contains a chapter id, then the fic will be loaded
+			if the info does not already exist in the database.
+
+		if the filter is a generally parseable id, the shown fics will be
+			limited to those matching the id. This can be used to open
+			`linkffn()` style ids.
+
+	TODO:
+		e: get info on current chapter/fic
+			allow edit on personal status/notes?
+
+Supported Sites:
+	ao3: https://archiveofourown.org/
+	ffn: https://www.fanfiction.net/
+	FictionHunt: http://fictionhunt.com/
+	FictionPress: https://www.fictionpress.com/
+	HPFanficArchive: https://www.hpfanficarchive.com/stories/
+	PortkeyArchive: https://portkey-archive.org/
+	SIYE: http://www.siye.co.uk/
+	SpaceBattles: https://forums.spacebattles.com/
+	SufficientVelocity: https://forums.sufficientvelocity.com/
+	QuestionableQuesting: https://forum.questionablequesting.com/
+	Harry Potter Fanfiction: https://harrypotterfanfiction.com/
+	Ward: https://www.parahumans.net/
+	Adult Fanfiction.org: http://www.adult-fanfiction.org/
+	Fanfics.Me: http://fanfics.me/
+	Royal Road: https://royalroadl.com/
+	FanficAuthors: https://*.fanficauthors.net/
+
+	manually supported:
+		dummy: dummy
+
+	TODO:
+		FictionAlley: http://www.fictionalley.org/
+		TTHFanfic: https://www.tthfanfic.org/
+
+Queue usage:
+	he queue {ident}             # add an ident to the queue
+	cat idents.lst | he queueAll # queue a bunch of idents
+	he listQueue                 # list all pending and broken idents
+	he requeueBroken             # mark broken for retrying
+	he importQueue               # try to import all queued idents
+

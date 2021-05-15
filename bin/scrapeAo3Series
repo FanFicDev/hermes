@@ -1,0 +1,22 @@
+#!/usr/bin/bash
+# scrape an ao3 series page, printing all story ids to stdout
+
+series="$1"
+if [[ -z "${series}" ]]; then
+	echo "Usage: $0 <series id>"
+	exit 0
+fi
+
+function dumpWorkLinks() {
+	fname="$1"; shift
+	cat "${fname}" | tr '"' '\n' | grep -E '^/works/[0-9]+$' | \
+		sed -r 's|/works/([0-9]+)|linkao3(\1)|'
+}
+
+curl -s "https://archiveofourown.org/series/${series}" \
+	> "tmp_ao3_${series}.html"
+
+dumpWorkLinks "tmp_ao3_${series}.html"
+
+rm "tmp_ao3_${series}.html"
+

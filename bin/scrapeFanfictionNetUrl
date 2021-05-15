@@ -1,0 +1,14 @@
+#!/usr/bin/bash
+# scrape a ff.net url, import all story urls into hermes
+
+url="$1"
+if [[ -z "${url}" ]]; then
+	echo "usage: $0 <ff.net url>"
+	exit 0
+fi
+
+curl -s "${url}" | gunzip -f | tr '<>"' '\n' | tr "'" '\n' | \
+	grep '/s/' | sed -r 's:/s/([0-9]+)/.*:\1:g' | sort -u > tmp_storyids
+
+cat tmp_storyids | hermes infoREPL
+

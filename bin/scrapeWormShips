@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+# scrape the worm ships collectian page, printing all story ids to stdout
+
+wget -O - "http://shared.by.re-becca.org/misc/worm/ship.html" | \
+	tr '<> ' '\n' | grep href | sed -e 's/^href="//' -e 's/"$//' | sort -u | \
+	grep -v 'href' | \
+	sed 's|https://questionablequesting.com|https://forum.questionablequesting.com|' | \
+	sed 's|https://sufficientvelocity.com|https://forums.sufficientvelocity.com|'  | \
+	grep -v 'questionablequesting.com' | \
+	grep -vE '/s/(12680087)' | \
+	grep -vE 'https://archiveofourown.org/works/(13510002|15128825|15232794|6099930|8444404)'
+

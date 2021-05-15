@@ -1,0 +1,22 @@
+he dumpMarkovCorpus
+
+find ./ -mindepth 0 -maxdepth 3 -type f | sort -n \
+		| while read -r info; do
+	author=$(zcat $info | head -n1);
+	title=$(zcat $info | tail -n1);
+	chapters=$(find $(dirname $info) -type f -iname 'content.gz' | wc -l);
+	for cid in $(seq 1 $chapters); do
+		zcat $(dirname $info)/$cid/content.gz | sed "s/^/PRIVMSG #$author :/";
+	done;
+done > /tmp/rated7_up
+
+find ./ -mindepth 0 -maxdepth 3 -type f | sort -n \
+		| while read -r info; do
+	author=$(zcat $info | head -n1);
+	title=$(zcat $info | tail -n1);
+	chapters=$(find $(dirname $info) -type f -iname 'content.gz' | wc -l);
+	for cid in $(seq 1 $chapters); do
+		zcat $(dirname $info)/$cid/content.gz;
+	done;
+done > /tmp/corpus.txt
+

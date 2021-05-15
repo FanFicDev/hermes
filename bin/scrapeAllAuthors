@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+# scrape all author ids listed in ./watch/authors.lst
+# import all their fics into hermes automatically
+
+for id in $(cat ./watch/authors.lst); do
+	./bin/scrapeAuthor $id
+done | hermes infoREPL
+

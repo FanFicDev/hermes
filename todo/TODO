@@ -1,0 +1,150 @@
+commit more often :'(
+
+sort filter better:
+	spaces until start
+	[total space chars in match] * [total contiguous blocks of spaces]
+
+fanficauthors
+
+epub import
+search by platform
+search by date of import/download
+search by creation or last update
+search by word and chapter count
+search by genre
+search by crossover, generic crossover and specific fandom (already done)
+search by pairings
+full automatic updating (auto scrape authors regularly?)
+
+for spacebattles:
+	parse local story id better, int(.split('.')[-1])
+	before scraping, look for urls _like_ baseUrl + '%{proper local id}/'
+	titles may change, bleh
+	updating
+	fast-cache by using reader view, "deep" cache to grab all comments
+
+	fics without threadmarks at all
+
+	when grabbing reader, if it only has 1 page it assumes it failed
+	we can look for threadmarks/reader link on first page and fallback immediately
+
+for sufficientvelocity
+	same as spacebattles?
+
+fanfiction.net
+	completely automatic handling of fandoms?
+	store original ff.net fandoms, and remap in client somewhere?
+
+ao3
+	fandom if tree is ridiculous, needs fixed
+
+fictionpress
+	can this inherit from the ffnet adapter?
+
+fictionhunt
+	do summaries exist anywhere?
+	should we associate these with the possibly removed fics on other sites?
+
+all
+	create FicChapters immediately?
+	support for fic chapter titles
+
+cleanup
+	merge methods
+	fiction hunt, press and ffn are very similar
+
+portkey-archive
+	has a real api now
+
+xenForo
+	if a response is redirected, we might need to update our local url
+	our urls should probably not be stored with the title slug
+
+hpff
+	make cacheable, only do info import to start with
+	probably should have the cache method on Adapter and not FicChapter
+
+
+scraping
+	follow like rescrcapeOld
+	have per-domain timeouts, default to 60s if not defined
+		can be overridden, or given a priority multiplier
+	continuously cache all in the background
+	cache chapters on demand, not all at once when opening fic
+	url cache queue, where we can dump all the urls
+		url for each chapter
+		url for sb, sv, qq comments
+		run in background always
+
+	most things run very slowly in background, but 1 for each domain
+	interactive with high priority like 1s to slip in required fetches
+
+	before we even define an adapter, we could do a quick crawler
+	queues urls, reads scraped result, queues more urls
+	associate logic with url?
+		when url is scraped, run function
+	may make sense to define functions and id on which they left off
+		streaming wooh, kafka
+
+	resolve url on hrefs, do not resolve to local only original domain?
+		domain whitelist? per starting domain?
+
+	allow importing 'author pages' or reddit threads
+
+	author pages can support auto-updating
+		there may be minimal metadata we can scrape from author page
+
+	scrape fanfictionbot metadata as initial non-canonical?
+
+decouple 'scrape' from 'parse'
+	should be able to delete the cached parsed story text for a story, author,
+	site or just all of it and have it reparse it from minerva.web
+
+	only certain actions should do a hard scrape, mainly updating
+		updating should probably be automatic and not influenced by user
+
+https://forums.sufficientvelocity.com/threads/shopkeeper-worm-au-crossover.33820/#post-7301951
+	chapter 4
+
+	PHO runs together, using display: block on div instead of p?
+
+intentional weird spacing:
+	the letters we never wrote -- TheSleepingKnight
+
+https://forums.bulbagarden.net/index.php?threads/rivals-story.38490/
+	kind of xenforo but kind of weird
+
+https://web.archive.org/web/20180707102616/http://letterblade.net/thirty-five_owls.html
+
+broken:
+	sqlite> select url from fics where type in (12,13,14) and lid like '%.%';
+
+broken:
+	http://fanfics.me/read2.php?id=139209&chapter=0
+	http://fanfics.me/read2.php?id=215775&chapter=0
+
+finish:
+	cd tmp_hpfanficarchive_import/
+	grep -Rl 'unable to find title' . | sed -e 's:./::' -e 's:.info::' | sort -nb | wc -l
+
+https://kokopelli.nsns.fanficauthors.net/By_right_of_conquest/Chapter_the_Third/
+
+http://home.exetel.com.au/jaina/index.html
+
+directoforums.XENFORO??
+
+he info https://forums.bulbagarden.net/index.php?threads/rivals-story.38490/
+he forceUpdate https://forum.questionablequesting.com/threads/the-masked-writers-collection.1749/
+
+
+importing fic from a user's favorite list does not parse fandom
+
+Getting The Hang Of Thursdays
+	already prescraped: https://hayseed42.wordpress.com/*
+
+fanfics.me no longer has fics?
+	http://fanfics.me/read2.php?id=139209&chapter=0
+	http://fanfics.me/read2.php?id=215775&chapter=0
+
+http://www.greyblue.net/MidnightBlue/story.php?storyid=2
+

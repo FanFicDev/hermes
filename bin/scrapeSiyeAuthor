@@ -1,0 +1,14 @@
+#!/usr/bin/bash
+# scrape a siye author, printing all story ids to stdout
+
+authorId="$1"
+if [[ -z "${authorId}" ]]; then
+	echo "Usage: $0 <author id>" >&2
+	exit 0
+fi
+
+curl -s "http://siye.co.uk/viewuser.php?uid=${authorId}" | \
+	tr '<>"[]()' '\n' | grep 'viewstory' | grep 'sid' | \
+	sed 's|^|http://siye.co.uk/|'
+	#sed -r 's/.*sid="([0-9]+)".*/\1/'
+

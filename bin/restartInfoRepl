@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+# similar to `hermes infoREPL`, but we restart hermes for each line
+
+cat /dev/stdin | while read -r line; do
+	if [[ -z "${line}" ]]; then
+		continue
+	fi
+	hermes info "${line}"
+done
+

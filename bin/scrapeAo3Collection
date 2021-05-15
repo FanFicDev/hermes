@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+# scrape an ao3 collection page, printing all story ids to stdout
+
+collection="$1"
+if [[ -z "${collection}" ]]; then
+	echo "Usage: $0 <collection name>"
+	exit 0
+fi
+
+function dumpWorkLinks() {
+	fname="$1"; shift
+	cat "${fname}" | tr '"' '\n' | \
+		grep -E "^/collections/${collection}/works/[0-9]+$" | \
+		sed -r "s|/collections/${collection}/works/([0-9]+)|linkao3(\\1)|"
+}
+
+curl -s "https://archiveofourown.org/collections/${collection}/works" \
+	> "tmp_ao3_${collection}_works.html"
+
+dumpWorkLinks "tmp_ao3_${collection}_works.html"
+
+cat "tmp_ao3_${collection}_works.html" | tr '"' '\n' | \
+		grep "/collections/${collection}/works?page=" | sort -u | while read -r addPage; do
+	addPageUrl="https://archiveofourown.org${addPage}"
+	pnum="$(echo "${addPage}" | sed -r 's/.*works\?page=([0-9]*)/\1/g')"
+	ofname="tmp_ao3_${collection}_works_${pnum}.html"
+	if [[ ! -f "${ofname}" ]]; then
+		curl -s "${addPageUrl}" > "${ofname}"
+	fi
+	dumpWorkLinks "${ofname}"
+done
+

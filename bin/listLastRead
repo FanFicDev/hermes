@@ -1,0 +1,26 @@
+#!/usr/bin/bash
+# list the last 10 fics we read
+
+(
+	echo 'select f.id '
+	echo " , case when f.rating < 0 then ' ' else f.rating end "
+	echo ', datetime(max('
+	echo '    ifnull(fc.markedRead,0),'
+	echo '    ifnull(fc.lastModified,0),'
+	echo '    ifnull(f.lastViewed, 0)'
+	echo "  ), 'unixepoch') "
+	echo ' , f.title '
+	echo 'from fics f '
+	echo 'join fic_chapters fc on fc.fic_id = f.id '
+	echo 'where f.importStatus > 0 '
+	echo $@
+	echo 'group by f.id, f.title '
+	echo 'order by max('
+	echo '    ifnull(fc.markedRead,0),'
+	echo '    ifnull(fc.lastModified,0),'
+	echo '    ifnull(f.lastViewed, 0)'
+	echo '  ) desc '
+	echo 'limit 30 '
+	echo ';'
+) | sqlite3 /opt/hermes/hermes_meta.db
+

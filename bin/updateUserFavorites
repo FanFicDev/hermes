@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+# update the ffn favorites of all users in the tracker
+# ensure all current favorites are properly cached
+
+echo 'COPY (select userId from FFNUserFavoriteTrackRequest) TO STDOUT' \
+		| psql minerva | while read -r uid; do
+	hermes parseUserFavorites $uid
+done
+
+{
+	echo "COPY ( "
+	echo "  with ids as ( "
+	echo "    select distinct fuf.ficId "
+	echo "    from ffnuserfavoritetrackrequest fuftr "
+	echo "    join ffnuserfavorite fuf on fuf.userId = fuftr.userId "
+	echo "    where fuf.status = 'exists' "
+	echo "  ) "
+	echo "  select localId from fic f join ids on ids.ficId = f.id "
+	echo ") TO STDOUT"
+} | psql minerva | hermes bulkCache
+

@@ -1,0 +1,61 @@
+#!/usr/bin/bash
+# search through the aff meta dump looking for or excluding tags, characters,
+# and fandoms; pretty print results as json
+
+rtags=('MPreg' 'M/M' 'MM')
+	#'Draco' '/DM' 'DM/' 'Snape' '/SS' 'SS/' 'Sasuke' 'Voldemort' 'Lucius' \
+rchars=(\
+	'Male/Male')
+tags=()
+chars=()
+fandoms=()
+limit=1000000
+
+extra=""
+
+while [[ -n "$1" ]]; do
+	case "${1:0:2}" in
+		f+) fandoms+=("${1:2}") ;;
+		t+) tags+=("${1:2}") ;;
+		t-) rtags+=("${1:2}") ;;
+		c+) chars+=("${1:2}") ;;
+		c-) rchars+=("${1:2}") ;;
+		*) other="${other} ${1:2}" ;;
+	esac
+	shift
+done
+
+q='. '
+for t in ${rtags[@]}; do
+	echo -$t >&2
+	q="${q} | map(select(.tags | contains([\"${t}\"]) | not)) "
+done
+
+for c in ${rchars[@]}; do
+	echo -$c >&2
+	q="${q} | map(select(.description | contains(\"${c}\") | not)) "
+	q="${q} | map(select(.located | contains(\"${c}\") | not)) "
+done
+
+for f in ${fandoms[@]}; do
+	echo +$f >&2
+	q="${q} | map(select(.fandoms | contains([\"${f}\"]))) "
+done
+
+for t in ${tags[@]}; do
+	echo +$t >&2
+	q="${q} | map(select(.tags | contains([\"${t}\"]))) "
+done
+
+for c in ${chars[@]}; do
+	echo +$c >&2
+	q="${q} | map(select(.description | contains(\"${c}\"))) "
+	q="${q} | map(select(.located | contains(\"${c}\"))) "
+done
+
+q="${q} ${extra}"
+
+zcat ./aff_meta.json.gz | jq "${q} | .[:${limit}]" \
+	| sed -n 'p; :n; n; /: \[$/bt; p; z; bn; :t; N; /\],\?$/be; bt; :e; s/\n//g; s/\([^ ]\)[\t ]\+/\1 /g; p; z; bn;'
+
+

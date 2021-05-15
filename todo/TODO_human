@@ -1,0 +1,152 @@
+
+https://reldencalder.deviantart.com/art/WhooTimeTravel-11-322272574
+
+https://snapecase.livejournal.com/50627.html
+https://www.goodreads.com/book/show/13283197-drop-dead-gorgeous
+https://www.tthfanfic.org/Story-30822
+https://www.tthfanfic.org/Series-2585
+https://www.tthfanfic.org/Story-26436/DianeCastle+The+League+of+Extraordinary+Women.htm
+https://www.tthfanfic.org/Story-26436-64/DianeCastle+The+League+of+Extraordinary+Women.htm
+https://www.tthfanfic.org/Story-30822-3/DianeCastle+Hermione+Granger+and+the+Boy+Who+Lived.htm
+
+https://www.tthfanfic.org/Story-30822
+https://www.tthfanfic.org/Story-27958-14/DianeCastle+Harry+Potter+and+the+Deadly+Heller.htm
+
+
+https://ultimatehpfanfiction.com/daphne/wrc/a/0/The+Wrong+Choice/The%20Unusual%20Suspect/20
+	note can strip www. and http => https
+
+https://fp.fanficauthors.net/Harry_Potter_and_the_Last_Horcrux_final/index/
+
+https://lop.shoesforindustry.net/
+
+http://jeconais.fanficauthors.net/This_Means_War/1__Surprise_Snog/
+already read:
+	9/4 http://jeconais.fanficauthors.net/Hope/index/
+	9/5 http://jeconais.fanficauthors.net/Happily_Ever_After/index/
+	9/25 http://jeconais.fanficauthors.net/Harry_Potter/ 1-7
+					8 on 9/26
+
+	11/30 http://jeconais.fanficauthors.net/Perfect_Situations/Perfect_Situations/
+	12/10 http://jeconais.fanficauthors.net/Matryoshka_Vignettes/Introduction/
+
+
+Embers chapter 49 end notes wonky?
+
+https://wertifloke.wordpress.com/2015/01/25/chapter-1/
+	wordpress like ward?
+	https://wertifloke.wordpress.com/table-of-contents/
+	even has toc...
+
+https://forums.darklordpotter.net/threads/out-of-the-night-by-raining-ink-t.14151/
+	fucking forums
+
+https://www.quotev.com/story/10314057/Harry-Potter-The-Fight-For-Rights
+	what is this
+
+http://home.exetel.com.au/jaina/TBWT/TBWT.html
+	we pre-scraped this entire site
+
+we pre-scraped some multi-chapter and one-shot stories from fictionalley that
+need fully imported.
+
+https://www.wattpad.com/251583422-gossip-sherlock-holmes-harry-potter-prologue
+https://www.wattpad.com/story/39375086-silent-genius
+https://www.wattpad.com/story/79601257-forsaken-book-1
+
+https://www.phoenixsong.net/fanfiction/story/2232/
+https://www.phoenixsong.net/fanfiction/story/4304/
+	actually needs trailing slash >_>
+
+
+a lot of fic_chapters have no url on their first chapter:
+	select fc.fic_id, fc.cid, f.type, f.url
+	from fic_chapters fc
+	join fics f on f.id = fc.fic_id
+	where fc.cid = 1 and fc.url is null
+this prevented them from being added in the initial hermes -> minerva import,
+which means they won't be rescraped by rescrapeOld
+
+All 1st chapters for 1-chapter only fanfiction.net stories have already been
+rescraped:
+	select url from fics where chapterCount = 1 and type = 2;
+
+	echo 'select url from fics where chapterCount = 1 and type = 2;' \
+			| sqlite3 ~/.local/share/hermes/hermes_meta.db \
+			| while read -r url; do
+		./prescrapeUrl.py "$url" 7.1
+	done
+
+need to loop back around and get 1st chapter for multi-chapter ffn works, and
+for any other type that is in there
+
+http://www.fictionalley.org/authors/chibi_squirt/AHR00a.html
+
+
+https://snapecase.livejournal.com/50627.html
+	prescraped, seems to have text in article.entry-content
+
+https://royalroadl.com/fiction/10073/the-wandering-inn
+	is also wordpress: https://wanderinginn.com/
+
+
+https://forum.questionablequesting.com/threads/the-uncanny-sex-men.6356/
+	has a lot of tables and sub-tables? tabbed things
+
+
+http://anime.adult-fanfiction.org/story.php?no=600045311
+	metadata cannot be found by searching for title
+	http://anime.adult-fanfiction.org/search.php?auth=Eline&title=&cats=0&tags=&summary=&search=Search&page=2
+	on second page by author
+	make more generic, updated meta whenever we see it for a fic we have?
+
+http://anime.adult-fanfiction.org/story.php?no=600055942&chapter=1
+http://anime.adult-fanfiction.org/story.php?no=600055918&chapter=1
+	broken summaries, seems to be – 
+
+the-tower-room.livejournal.com
+	./getScrapeById.py 234691 | tr "<>'\"" '\n' | grep the-tower-room.livejournal \
+		| grep -v tag | grep '.html' | grep http: | sed 's/http:/https:/' \
+		| while read -r url; do
+		./prescrapeUrl.py "$url" 30;
+	done
+
+
+
+private:
+	https://archiveofourown.org/works/7582462?view_full_work=true
+	https://archiveofourown.org/works/4012402/chapters/9015190
+	https://archiveofourown.org/works/2312405
+
+	https://archiveofourown.org/works/2081625/chapters/4529208?view_adult=true
+	https://archiveofourown.org/works/5281052?view_adult=true
+	https://archiveofourown.org/works/4606812
+
+	https://archiveofourown.org/works/4829807?view_full_work=true
+
+	https://archiveofourown.org/works/14410290/chapters/33280278?view_adult=true
+	https://archiveofourown.org/works/5548604?view_adult=true
+	https://archiveofourown.org/works/5553524?view_adult=true
+	https://archiveofourown.org/works/6469285/chapters/14807590?view_adult=true
+	https://archiveofourown.org/works/5552996?view_adult=true
+	https://archiveofourown.org/works/5701867?view_adult=true
+
+	https://archiveofourown.org/works/14695419/chapters/33957573?view_adult=true
+
+
+http://www.fictionalley.org/authors/lori/
+http://www.fictionalley.org/authors/la_reine_noire/BAMSR.html
+
+https://hpfanfictalk.com/archive/viewstory.php?sid=330
+
+
+https://web.archive.org/web/20080308011248/http://www.themedicinewheel.net/series/computer.html
+
+https://old.reddit.com/r/HPfanfiction/comments/cjlvug/suicidal_student_stumbles_upon_the_room_of/evekjp3/
+
+https://hayseed42.wordpress.com/2014/06/27/getting-the-hang-of-thursdays-0122/
+
+"Mito's Awful Adventure" (saEXPA) might be broken: https://forum.questionablequesting.com/threads/mitos-awful-adventure-naruto.6450/page-164
+	wrong threadmarks? need to set thread mark type to 1?
+		does this work when there's only 1 type of threadmark?
+
