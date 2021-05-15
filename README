@@ -1,6 +1,7 @@
 Dependencies:
 	python3
 	python-dateutil
+	python-pyqt5
 	python-requests
 	python-beautifulsoup4
 	python-psycopg2
