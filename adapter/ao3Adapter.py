@@ -372,7 +372,7 @@ class Ao3Adapter(Adapter):
 		else:
 			authorUrl = byline.find('a').get('href')
 			author = ' '.join(byline.find('a').contents)
-			authorId = fic.getAuthorName() # map pseudo to real?
+			authorId = author # map pseudo to real?
 			self.setAuthor(fic, author, authorUrl, authorId)
 
 		if fic.chapterCount > 1:
