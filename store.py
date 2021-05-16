@@ -128,6 +128,14 @@ class Fic(store_bases.Fic):
 		self.urlId = util.randomString(8, charset=util.urlIdCharset)
 		self.importStatus = ImportStatus.pending
 
+	def insert(self) -> None:
+		super().insert()
+		# FIXME parent insert should set the serials if present
+		fics = Fic.select({'urlId':self.urlId})
+		assert(len(fics) == 1)
+		nfic = fics[0]
+		self.id = nfic.id
+
 	def fid(self) -> FicId:
 		return FicId(FicType(self.sourceId), self.localId, ambiguous=False)
 
