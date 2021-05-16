@@ -1,0 +1,26 @@
+Dependencies are listed in alexandria_api_requirements.txt.
+
+All endpoints accept only GET requests and return JSON, unless otherwise
+noted.
+
+Endpoints:
+	/
+	/v0
+	/v0/status
+		basic liveness test endpoint
+
+	/v0/remote
+		returns IP address of client
+
+	/v0/lookup?q=<query>
+		map a url to an internal urlId and returns fic metadata
+
+	/v0/fic/<urlId>
+		fic metadata
+
+	/v0/fic/<urlId>/all
+		fic metadata and all known chapter contents
+
+	/v0/cache/<urlId>
+		ensures all chapter content is cached and returns fic metadata
+

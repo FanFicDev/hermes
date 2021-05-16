@@ -83,7 +83,8 @@ def page_not_found(e: HTTPException) -> FlaskResponse:
 @app.get('/v0/')
 @app.get('/v0/status')
 def index() -> FlaskResponse:
-	return Err.ok()
+	return Err.ok({'license':'agpl-3.0',
+		'source':'https://github.com/FanFicDev/hermes'})
 
 
 @app.get('/v0/fic/<urlId>/')
