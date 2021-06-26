@@ -1,0 +1,80 @@
+# Overview
+
+Ideally, we would be able to take any web request and extract metadata or
+chapter content from it. This would let us rebuild the fic metadata as it
+existed at any point in time by replaying the original requests used to
+construct it.
+
+	ex: given any chapter from an ffn story:
+		parse the metadata from the top of the page
+		generate a list of urls for every other chapter in the story
+
+	ex: given any ffn user page:
+		parse a list of author page metadata blobs for every story
+			(either authored or favorited by that user)
+		for each of these metadata blobs, generate a list of chapter urls
+
+In practice what we shoot for is to be able to map a story url to a stable
+"base story url", such as the first chapter on FFN or the start of the thread
+on XenForo. Ideally the key the site uses for the fic (the local id or lid) is
+inside the actual url somewhere that we can use without making any requests.
+	mapping a url to a FicId is done through Adapter.tryParseUrl
+
+We'd then like to be able to make a single request (or single group of
+requests) to get the full metadata at this point. This may include grabbing a
+list of chapter ids that are local to the site (lcids) -- for example AO3 uses
+their own ids rather than counting numbers for local chapter ids. Sites may
+have search only metadata pieces, in which case requests to the non-base page
+may also need to be made (adult-fanfiction).
+	this is entered through Adapter.get and most of the heavy lifting is done in
+	Adapter.getCurrentInfo which usually calls .parseInfoInto after fetching the
+	base page
+		TODO: does .create actually vary?
+
+Then, we can return later and cache each chapter individually.
+	this is entered through FicChapter.cache, which calls Adapter.softScrape to
+	grab the relevant page and then eventually Adapter.extractContent to narrow
+	down the page to just the actual chapter story content.
+
+This mainly breaks down on sites where the full metadata may not be visible
+from a bounded number of requests, or the individual chapter urls cannot be
+generated easily. We could likely handle XenForo like this by generating
+individual post links, but it's vastly more efficient to simply iterate over
+all relevant pages and grab 10/30/etc chapters per page.
+
+There are a few archetypes that should probably be abstracted eventually:
+	counting number lcids
+		ex: ffn, fiction press
+			{baseUrl}/{lid}/{lcid}[/{slug}]
+	shared lcid space, all lcids visible from base page
+		ex: ao3
+			{baseUrl}/works/{lid}/chapters/{lcid}
+	TODO: we probably have other archetypes...
+
+The important methods are documented in adapter/adapter.py directly on the
+base Adapter class.
+
+# Creating a new adapter
+
+1. Add a new element to htypes.FicType
+2. Add a corresponding row to sql/addSources.sql
+	TODO: we should probably generate the enum from the table data
+3. Define the new adapter in the adapter/ directory
+4. Import the new adapter in adapter/__init__.py
+	4b. add it to the registerAdapters function in the same file
+		TODO: this should probably be an auto-registering metaclass
+
+The best bet is to start by copying an adapter with a similar general url
+structure. The arguments passed to the base Adapter constructor need to be
+adjusted, specifically:
+* cacheable determines whether we can actually find and cache chapter content
+	outside the initial getCurrentInfo
+* baseUrl is often used to construct urls given a lid and lcid (see individual
+	adapter's .constructUrl or .buildUrl)
+		TODO: these can probably be generalized
+* urlFragments is used by FicId to determine which adapter should attempt
+	parsing any given url
+* ftype needs to be the newly defined FicType value
+* botLinkSuffix can generally be ignored, it enables support for parsing
+	link{suffix}({lid}) style ids
+
