@@ -1,6 +1,5 @@
 import re
 from typing import List, Optional
-import time
 import dateutil.parser
 
 from htypes import FicType, FicId
