@@ -23,6 +23,7 @@ insert into source(url, name, description) values
 	('https://forums.bulbagarden.net/index.php', 'Bulbagarden Forums', 'Bulbagarden Forums'),
 	('https://thefanfictionforum.net/xenforo/index.php', 'The Fanfiction Forum', 'The Fanfiction Forum'),
 	('https://www.fanficparadise.com/fpforum-sfw/index.php', 'Fanfiction Paradise SFW', 'Fanfiction Paradise SFW'),
-	('https://www.fanficparadise.com/fpforum-nsfw/index.php', 'Fanfiction Paradise NSFW', 'Fanfiction Paradise NSFW')
+	('https://www.fanficparadise.com/fpforum-nsfw/index.php', 'Fanfiction Paradise NSFW', 'Fanfiction Paradise NSFW'),
+	('https://wanderinginn.com/', 'The Wandering Inn', 'A tale of a girl, an inn, and a world full of levels')
 on conflict do nothing;
 

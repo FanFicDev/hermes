@@ -24,6 +24,7 @@ from adapter.theFanfictionForumAdapter import TheFanfictionForumAdapter
 from adapter.fanficParadiseAdapter import (
 	FanficParadiseSFWAdapter, FanficParadiseNSFWAdapter
 )
+from adapter.wanderingInnAdapter import WanderingInnAdapter
 
 from htypes import adapters, FicType
 
@@ -54,6 +55,7 @@ def registerAdapters() -> None:
 	adapters[FicType.thefanfictionforum] = TheFanfictionForumAdapter()
 	adapters[FicType.fanficparadisesfw] = FanficParadiseSFWAdapter()
 	adapters[FicType.fanficparadisensfw] = FanficParadiseNSFWAdapter()
+	adapters[FicType.wanderinginn] = WanderingInnAdapter()
 
 
 #registerAdapters()
