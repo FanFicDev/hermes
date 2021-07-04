@@ -11,9 +11,18 @@ from adapter.adapter import Adapter
 
 
 class WordpressAdapter(Adapter):
-    def __init__(self, baseUrl: str, urlFragments: Union[str, List[str]] = [],
+    def __init__(self, baseUrl: str, sub_patt: str, title: str, fandom: str,
+                 ageRating: str, author: str, authorUrl: str, description: str,
+                 urlFragments: Union[str, List[str]] = [],
                  ftype: FicType = FicType.broken) -> None:
         super().__init__(True, baseUrl, urlFragments, ftype)
+        self.sub_patt = sub_patt
+        self.title = title
+        self.fandom = fandom
+        self.ageRating = ageRating
+        self.author = author
+        self.authorUrl = authorUrl
+        self.description = description
         self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
 
     def canonizeUrl(self, url: str) -> str:
