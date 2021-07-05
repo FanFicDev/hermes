@@ -15,6 +15,8 @@ from lite import JSONable
 BasicFlaskResponse = Union[Response, werkzeug.wrappers.Response, str, JSONable]
 FlaskResponse = Union[BasicFlaskResponse, Tuple[BasicFlaskResponse, int]]
 
+import adapter
+adapter.registerAdapters()
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -176,7 +178,5 @@ def v0_remote() -> FlaskResponse:
 
 
 if __name__ == '__main__':
-	import adapter
-	adapter.registerAdapters()
 	app.run(debug=True)
 
