@@ -1,10 +1,11 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, cast
 import time
 import dateutil.parser
+import urllib
 
 from htypes import FicType, FicId
-from store import OilTimestamp, Language, Fic, FicChapter, Fandom
+from store import OilTimestamp, Language, Fic, FicStatus, FicChapter, Fandom
 import util
 import scrape
 
@@ -19,6 +20,7 @@ class ParahumansAdapter(Adapter):
 		self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
 
 	def canonizeUrl(self, url: str) -> str:
+		url = urllib.parse.urljoin(self.baseUrl, url)
 		url = scrape.canonizeUrl(url)
 		prefixMap = [ ('http://', 'https://'),
 				('https://{}'.format(self.urlFragments[0])
@@ -26,6 +28,8 @@ class ParahumansAdapter(Adapter):
 		for pm in prefixMap:
 			if url.startswith(pm[0]):
 				url = pm[1] + url[len(pm[0]):]
+		if not url.endswith('/'):
+			url += '/'
 		return url
 
 	def getChapterUrls(self, data: str = None) -> List[str]:
@@ -35,6 +39,27 @@ class ParahumansAdapter(Adapter):
 		soup = BeautifulSoup(data, 'html5lib')
 		entryContents = soup.findAll('div', {'class': 'entry-content'})
 		chapterUrls: List[str] = []
+
+		urlFixups = {
+				self.canonizeUrl('/2018/11/24/interlude-10-x'): None,
+				self.canonizeUrl('/2018/12/11/interlude-10-y'): None,
+				self.canonizeUrl('/2019/04/27/black-13-8'):
+				 self.canonizeUrl('/2019/04/30/black-13-x'),
+			}
+
+		for entryContent in entryContents:
+			aTags = entryContent.findAll('a')
+			for aTag in aTags:
+				href = self.canonizeUrl(aTag.get('href'))
+				if href in urlFixups \
+						and len(chapterUrls) > 0 and chapterUrls[-1] == href:
+					if urlFixups[href] is None:
+						continue
+					href = cast(str, urlFixups[href])
+				if href in chapterUrls:
+					raise Exception(f'duplicate chapter url: {href} {len(chapterUrls)}')
+				chapterUrls += [href]
+		return chapterUrls
 
 		for entryContent in entryContents:
 			aTags = entryContent.findAll('a')
@@ -113,6 +138,7 @@ class ParahumansAdapter(Adapter):
 		soup = BeautifulSoup(html, 'html5lib')
 		entryContents = soup.findAll('div', {'class': 'entry-content'})
 		if len(entryContents) != 1:
+			edumpContent(html, 'parahumans_ec')
 			raise Exception('cannot find entry-content')
 		entryContent = entryContents[0]
 
@@ -133,7 +159,6 @@ class ParahumansAdapter(Adapter):
 		fic.url = self.constructUrl(fic.localId)
 		url = self.tocUrl
 		data = scrape.scrape(url)
-		edumpContent('<!-- {} -->\n{}'.format(url, data['raw']), 'parahumans_ec')
 
 		fic = self.parseInfoInto(fic, data['raw'])
 		fic.upsert()
@@ -169,8 +194,8 @@ None feel the injustice of this new status quo or the lack of established footin
 		fic.favoriteCount = 0
 		fic.followCount = 0
 
-		if fic.ficStatus is None:
-			fic.ficStatus = FicStatus.ongoing # type: ignore
+		if fic.ficStatus is None or fic.ficStatus == FicStatus.broken:
+			fic.ficStatus = FicStatus.ongoing
 
 		fic.published = self.getChapterPublishDate(chapterUrls[0])
 		fic.updated = self.getChapterPublishDate(chapterUrls[-1])
@@ -182,10 +207,15 @@ None feel the injustice of this new status quo or the lack of established footin
 		fic.wordCount = 0
 		if fic.wordCount == 0:
 			fic.upsert()
+			# save urls first...
 			for cid in range(1, fic.chapterCount + 1):
 				c = fic.chapter(cid)
 				c.localChapterId = str(cid)
 				c.url = chapterUrls[cid - 1]
+				c.upsert()
+
+			# then attempt to set title and content
+			for cid in range(1, fic.chapterCount + 1):
 				if cid <= len(titles):
 					c.title = titles[cid - 1]
 				elif c.title is None:
@@ -200,4 +230,25 @@ None feel the injustice of this new status quo or the lack of established footin
 		# TODO: chars/relationship?
 
 		return fic
+
+	def softScrape(self, chapter: FicChapter) -> Optional[str]:
+		import scrape
+		html = scrape.softScrape(chapter.url)
+		if html is None:
+			return html
+		# TODO well this is a nightmare...
+		if html.find('You are being redirected') < 0:
+			return html
+
+		import re
+		match = re.search("window.location = ['\"]([^'\"]*)['\"];", html)
+		if match is None or match.group(1) is None:
+			return html
+
+		if chapter.url == match.group(1):
+			raise Exception('redirect loop')
+
+		chapter.url = match.group(1)
+		chapter.upsert()
+		return self.softScrape(chapter)
 

@@ -1,1 +1,0 @@
-../minerva_ffnfav.sql
