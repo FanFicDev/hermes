@@ -1,9 +1,84 @@
 #!/usr/bin/env python3
 from typing import List, Dict, Any, Tuple, Optional, IO, Sequence
+import os
+import sys
+import shutil
 import time
 import datetime
 import psycopg2
 from psycopg2.extensions import AsIs, register_adapter, new_type, register_type
+
+def initDB(symlink_only: bool) -> None:
+	indexes: List[int] = []
+	path = ['./sql/']
+	scripts = []
+	with open('./doc/db_setup') as f:
+		started = False
+		for line in f:
+			line = line.rstrip()
+			# start at sql/
+			if not started:
+				started = line == 'sql/'
+				continue
+			# end with ==
+			if started and line == '==':
+				break
+			# skip empty lines
+			if len(line.strip()) < 1:
+				continue
+
+			# count all but the first tab for depth
+			depth = -1
+			while line.startswith('\t'):
+				depth += 1
+				line = line[1:]
+
+			while len(indexes) <= depth:
+				indexes += [0]
+
+			indexes[depth] += 1
+			indexes = indexes[:1 + depth]
+			path = path[:1 + depth]
+
+			line = line.strip()
+			if not line.endswith('/'):
+				scripts += [(path, line, list(indexes))]
+			else:
+				path += [line]
+
+	maxDepth = len(indexes)
+
+	shutil.rmtree('./sql/fresh/')
+	os.mkdir('./sql/fresh/')
+	spaths = []
+	for path, fname, idxs in scripts:
+		idxs += [0] * (maxDepth - len(idxs))
+		nstub = '-'.join(map(lambda i: f'{i:02}', idxs))
+		fstub = ''.join(path[1:]).replace('/', '-')
+		lname = './sql/fresh/' + nstub + '-' + fstub + fname
+		spath = ''.join(path) + fname
+		spaths += [spath]
+		tname = '../../' + spath
+		os.symlink(tname, lname)
+
+	if symlink_only:
+		return
+
+	from lite_oil import getConnection
+	with getConnection('hermes') as conn:
+		with conn.cursor() as curs:
+			for spath in spaths:
+				print(f'executing {spath}')
+				with open(spath, 'r') as f:
+					sql = f.read()
+					curs.execute(sql)
+
+if __name__ == '__main__':
+	symlink_only = True
+	if len(sys.argv) > 1 and sys.argv[1] == '--init':
+		symlink_only = False
+
+	initDB(symlink_only)
 
 tables = [
 	('source', '''

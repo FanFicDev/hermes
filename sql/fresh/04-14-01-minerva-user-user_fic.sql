@@ -1,0 +1,1 @@
+../.././sql/minerva/user/user_fic.sql
