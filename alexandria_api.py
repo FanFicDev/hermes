@@ -3,7 +3,7 @@ import traceback
 from enum import IntEnum
 from flask import Flask, Response, request, make_response
 import werkzeug.wrappers
-from werkzeug.exceptions import HTTPException, NotFound
+from werkzeug.exceptions import NotFound
 
 from store import Fic, FicChapter
 from htypes import FicId
@@ -69,13 +69,13 @@ class Err(IntEnum):
 		return Err.success.get(extra)
 
 
-def get_request_source() -> Tuple[bool, str, str]:
+def get_request_source() -> Tuple[bool, str, Optional[str]]:
 	automated = (request.args.get('automated', None) == 'true')
 	return (automated, request.url_root, request.remote_addr)
 
 
 @app.errorhandler(404)
-def page_not_found(e: HTTPException) -> FlaskResponse:
+def page_not_found(e: Exception) -> FlaskResponse:
 	return make_response(Err.not_found.get(), 404)
 
 
