@@ -344,6 +344,9 @@ class ColumnInfo:
 	def toTuple(self) -> ColumnInfoRow:
 		return (self.cid, self.name, self.type,
 			self.notnull, self.dflt_value, self.pk, self.ptype)
+	def toSourceTuple(self) -> str:
+		return f"({self.cid}, {repr(self.name)}, {repr(self.type)}, " \
+				+ f"{self.notnull}, {self.dflt_value}, {self.pk}, {repr(self.ptype)})"
 	def __str__(self) -> str:
 		return str(self.__dict__)
 	@staticmethod
@@ -398,11 +401,13 @@ class ColumnInfo:
 				if not p.lower().startswith('default('):
 					continue
 				v = p[len('default('):-1] # strip closing ) too
-				dflt = v # FIXME coerce
+				dflt = str(v)
 				if ctype in entities['enums']:
 					dflt = f'{ptype}[{dflt}]'
 				elif ptype == 'bool':
-					dflt = True if p.lower() == 'true' else False
+					dflt = 'True' if p.lower() == 'true' else 'False'
+				elif ptype == 'str':
+					dflt = repr(dflt)
 
 			if not notnull:
 				ptype = f'Optional[{ptype}]'
@@ -416,7 +421,7 @@ class ColumnInfo:
 def writeColumnInfo(f: IO, clsName: str, columns: List[ColumnInfo]) -> None:
 	f.write('\tcolumns = [ColumnInfo(ct) for ct in [\n')
 	for column in columns:
-		f.write(f'\t\t{column.toTuple()},\n')
+		f.write(f'\t\t{column.toSourceTuple()},\n')
 	f.write('\t]]\n')
 
 	pkColumnIds = [ci.cid for ci in columns if ci.pk > 0]
