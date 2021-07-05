@@ -13,15 +13,15 @@ from adapter.adapter import Adapter
 class WanderingInnAdapter(Adapter):
     def __init__(self) -> None:
         # https://wanderinginn.com/table-of-contents/
-        super().__init__(True,
-                         'https://wanderinginn.com', 'wanderinginn.com',
+        super().__init__(True, 'https://wanderinginn.com', 'wanderinginn.com',
                          FicType.wanderinginn)
         self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
 
     def canonizeUrl(self, url: str) -> str:
         url = scrape.canonizeUrl(url)
         prefixMap = [('http://', 'https://'),
-                     ('https://{}'.format(self.urlFragments[0]), 'https://www.{}'.format(self.urlFragments[0]))]
+                     ('https://{}'.format(self.urlFragments[0]),
+                      'https://www.{}'.format(self.urlFragments[0]))]
         for pm in prefixMap:
             if url.startswith(pm[0]):
                 url = pm[1] + url[len(pm[0]):]
@@ -63,12 +63,12 @@ class WanderingInnAdapter(Adapter):
         url = self.canonizeUrl(url)
         data = scrape.softScrape(url)
         soup = BeautifulSoup(data, 'html5lib')
-        publishTimes = soup.findAll(
-            'time', {'class': ['entry-date', 'published']})
+        publishTimes = soup.findAll('time',
+                                    {'class': ['entry-date', 'published']})
         if len(publishTimes) != 1:
             raise Exception('cannot find publish time for {}'.format(url))
-        uts = util.dtToUnix(dateutil.parser.parse(
-            publishTimes[0].get('datetime')))
+        uts = util.dtToUnix(
+            dateutil.parser.parse(publishTimes[0].get('datetime')))
         return OilTimestamp(uts)
 
     def constructUrl(self, lid: str, cid: int = None) -> str:
@@ -123,7 +123,7 @@ class WanderingInnAdapter(Adapter):
 
         fic = self.parseInfoInto(fic, data['raw'])
         fic.upsert()
-        return Fic.lookup((fic.id,))
+        return Fic.lookup((fic.id, ))
 
     def parseInfoInto(self, fic: Fic, html: str) -> Fic:
         html = html.replace('\r\n', '\n')
@@ -135,8 +135,8 @@ class WanderingInnAdapter(Adapter):
         fic.title = 'The Wandering Inn'
         fic.ageRating = 'M'
 
-        self.setAuthor(fic,
-                       'pirate aba ', 'https://www.patreon.com/user?u=4240617', str(1))
+        self.setAuthor(fic, 'pirate aba ',
+                       'https://www.patreon.com/user?u=4240617', str(1))
 
         # taken from https://wanderinginn.com/
         fic.description = '''
