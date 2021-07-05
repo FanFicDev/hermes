@@ -25,6 +25,8 @@ class WanderingInnAdapter(Adapter):
         for pm in prefixMap:
             if url.startswith(pm[0]):
                 url = pm[1] + url[len(pm[0]):]
+        if not url.endswith('/'):
+            url += '/'
         return url
 
     def getChapterUrls(self, data: str = None) -> List[str]:
@@ -149,16 +151,16 @@ Actually, mostly monsters. But it’s a living, right?
 This is the story of the Wandering Inn.'''
 
         chapterUrls = self.getChapterUrls(html)
-        fic.chapterCount = len(chapterUrls)
         oldChapterCount = fic.chapterCount
+        fic.chapterCount = len(chapterUrls)
 
         # TODO?
         fic.reviewCount = 0
         fic.favoriteCount = 0
         fic.followCount = 0
 
-        if fic.ficStatus is None:
-            fic.ficStatus = FicStatus.ongoing  # type: ignore
+        if fic.ficStatus is None or fic.ficStatus == FicStatus.broken:
+            fic.ficStatus = FicStatus.ongoing
 
         fic.published = self.getChapterPublishDate(chapterUrls[0])
         fic.updated = self.getChapterPublishDate(chapterUrls[-1])
@@ -170,10 +172,15 @@ This is the story of the Wandering Inn.'''
         fic.wordCount = 0
         if fic.wordCount == 0:
             fic.upsert()
+            # save urls first...
             for cid in range(1, fic.chapterCount + 1):
                 c = fic.chapter(cid)
                 c.localChapterId = str(cid)
                 c.url = chapterUrls[cid - 1]
+                c.upsert()
+
+            # then attempt to set title and content
+            for cid in range(1, fic.chapterCount + 1):
                 if cid <= len(titles):
                     c.title = titles[cid - 1]
                 elif c.title is None:
