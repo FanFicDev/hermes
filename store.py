@@ -124,6 +124,7 @@ def initFicTagCache() -> None:
 
 class Fic(store_bases.Fic):
 	def __init__(self) -> None:
+		super().__init__()
 		self._cachedFandoms: Optional[List[Fandom]] = None
 		self.urlId = util.randomString(8, charset=util.urlIdCharset)
 		self.importStatus = ImportStatus.pending
@@ -306,6 +307,7 @@ class UserFic(store_bases.UserFic):
 
 class UserFicChapter(store_bases.UserFicChapter):
 	def __init__(self) -> None:
+		super().__init__()
 		self.lastLine: int = -1
 
 	@classmethod
@@ -358,6 +360,7 @@ class UserFicChapter(store_bases.UserFicChapter):
 
 class FicChapter(store_bases.FicChapter):
 	def __init__(self) -> None:
+		super().__init__()
 		self.fic: Optional[Fic] = None
 
 	@classmethod
