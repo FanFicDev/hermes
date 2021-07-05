@@ -548,8 +548,8 @@ class XenForoAdapter(Adapter):
 
 		fic.fetched = OilTimestamp.now()
 		fic.languageId = Language.getId("English") # TODO: don't hard code?
-		if fic.ficStatus is None:
-			fic.ficStatus = FicStatus.ongoing # type: ignore
+		if fic.ficStatus is None or fic.ficStatus == FicStatus.broken:
+			fic.ficStatus = FicStatus.ongoing
 
 		# default optional fields
 		fic.reviewCount = 0
