@@ -173,8 +173,7 @@ def v0_cache(urlId: str) -> Any:
 
 @app.get('/v0/remote')
 def v0_remote() -> FlaskResponse:
-	source = get_request_source()
-	return source.__dict__
+	return get_request_source()[2]
 
 
 if __name__ == '__main__':
