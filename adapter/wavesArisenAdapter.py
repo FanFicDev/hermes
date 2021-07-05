@@ -4,7 +4,7 @@ import time
 import dateutil.parser
 
 from htypes import FicType, FicId
-from store import OilTimestamp, Language, Fic, FicChapter, Fandom
+from store import OilTimestamp, Language, Fic, FicStatus, FicChapter, Fandom
 import util
 import scrape
 
@@ -138,8 +138,8 @@ The Waves Arisen is a complete novel-length work of Rationalist Naruto Fanfictio
 		fic.favoriteCount = 0
 		fic.followCount = 0
 
-		if fic.ficStatus is None:
-			fic.ficStatus = FicStatus.ongoing # type: ignore
+		if fic.ficStatus is None or fic.ficStatus == FicStatus.broken:
+			fic.ficStatus = FicStatus.ongoing
 
 		fic.published = self.getChapterPublishDate(chapterUrls[0])
 		fic.updated = self.getChapterPublishDate(chapterUrls[-1])

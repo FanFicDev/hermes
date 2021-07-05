@@ -1,6 +1,7 @@
 import re
 from typing import List, Optional, Union
 import dateutil.parser
+import urllib
 
 from htypes import FicType, FicId
 from store import OilTimestamp, Language, Fic, FicChapter, Fandom, FicStatus
@@ -11,8 +12,15 @@ from adapter.adapter import Adapter
 
 
 class WordpressAdapter(Adapter):
-    def __init__(self, baseUrl: str, sub_patt: str, title: str, fandom: str,
-                 ageRating: str, author: str, authorUrl: str, description: str,
+    def __init__(self,
+                 baseUrl: str,
+                 sub_patt: str,
+                 title: str,
+                 fandom: str,
+                 ageRating: str,
+                 author: str,
+                 authorUrl: str,
+                 description: str,
                  urlFragments: Union[str, List[str]] = [],
                  ftype: FicType = FicType.broken) -> None:
         super().__init__(True, baseUrl, urlFragments, ftype)
@@ -26,12 +34,16 @@ class WordpressAdapter(Adapter):
         self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
 
     def canonizeUrl(self, url: str) -> str:
+        url = urllib.parse.urljoin(self.baseUrl, url)
         url = scrape.canonizeUrl(url)
         prefixMap = [('http://', 'https://'),
-                     ('https://{}'.format(self.urlFragments[0]), 'https://www.{}'.format(self.urlFragments[0]))]
+                     ('https://{}'.format(self.urlFragments[0]),
+                      'https://www.{}'.format(self.urlFragments[0]))]
         for pm in prefixMap:
             if url.startswith(pm[0]):
                 url = pm[1] + url[len(pm[0]):]
+        if not url.endswith('/'):
+            url += '/'
         return url
 
     def getChapterPublishDate(self, url: str) -> OilTimestamp:
@@ -39,12 +51,12 @@ class WordpressAdapter(Adapter):
         url = self.canonizeUrl(url)
         data = scrape.softScrape(url)
         soup = BeautifulSoup(data, 'html5lib')
-        publishTimes = soup.findAll(
-            'time', {'class': ['entry-date', 'published']})
+        publishTimes = soup.findAll('time',
+                                    {'class': ['entry-date', 'published']})
         if len(publishTimes) != 1:
             raise Exception('cannot find publish time for {}'.format(url))
-        uts = util.dtToUnix(dateutil.parser.parse(
-            publishTimes[0].get('datetime')))
+        uts = util.dtToUnix(
+            dateutil.parser.parse(publishTimes[0].get('datetime')))
         return OilTimestamp(uts)
 
     def constructUrl(self, lid: str, cid: int = None) -> str:
@@ -98,7 +110,7 @@ class WordpressAdapter(Adapter):
 
         fic = self.parseInfoInto(fic, data['raw'])
         fic.upsert()
-        return Fic.lookup((fic.id,))
+        return Fic.lookup((fic.id, ))
 
     def parseInfoInto(self, fic: Fic, html: str) -> Fic:
         html = html.replace('\r\n', '\n')
@@ -110,8 +122,7 @@ class WordpressAdapter(Adapter):
         fic.title = self.title
         fic.ageRating = self.ageRating
 
-        self.setAuthor(fic,
-                       self.author, self.authorUrl, str(1))
+        self.setAuthor(fic, self.author, self.authorUrl, str(1))
 
         # taken from https://www.parahumans.net/about/
         fic.description = self.description
@@ -125,8 +136,8 @@ class WordpressAdapter(Adapter):
         fic.favoriteCount = 0
         fic.followCount = 0
 
-        if fic.ficStatus is None:
-            fic.ficStatus = FicStatus.ongoing  # type: ignore
+        if fic.ficStatus is None or fic.ficStatus == FicStatus.broken:
+            fic.ficStatus = FicStatus.ongoing
 
         fic.published = self.getChapterPublishDate(chapterUrls[0])
         fic.updated = self.getChapterPublishDate(chapterUrls[-1])
@@ -138,10 +149,15 @@ class WordpressAdapter(Adapter):
         fic.wordCount = 0
         if fic.wordCount == 0:
             fic.upsert()
+            # save urls first...
             for cid in range(1, fic.chapterCount + 1):
                 c = fic.chapter(cid)
                 c.localChapterId = str(cid)
                 c.url = chapterUrls[cid - 1]
+                c.upsert()
+
+            # then attempt to set title and content
+            for cid in range(1, fic.chapterCount + 1):
                 if cid <= len(titles):
                     c.title = titles[cid - 1]
                 elif c.title is None:

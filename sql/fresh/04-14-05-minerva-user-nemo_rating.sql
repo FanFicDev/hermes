@@ -1,0 +1,1 @@
+../.././sql/minerva/user/nemo_rating.sql

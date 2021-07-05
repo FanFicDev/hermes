@@ -29,21 +29,6 @@ __tableNames: Dict[str, str] = {
 autocommit: bool = True
 logQueries: bool = False
 
-def getColumns(table: str) -> List[ColumnInfo]:
-	global __columnInfo
-	sql = None
-	for tname, tsql in schema.entities['tables']:
-		if table == tname:
-			sql = tsql
-			break
-	else:
-		raise Exception(f'table does not exist: {table}')
-	if table not in __columnInfo:
-		__columnInfo[table] = ColumnInfo.fromSQL(sql)
-		if len(__columnInfo[table]) == 0:
-			raise Exception(f'table does not exist: {table}')
-	return __columnInfo[table]
-
 def getTableName(clsName: str) -> str:
 	global __tableNames
 	if clsName in __tableNames:
@@ -83,26 +68,16 @@ T = TypeVar('T', bound='StoreType')
 class StoreType(object):
 	subDB: str = 'meta'
 	columns: List[ColumnInfo]
+	pkColumns: List[ColumnInfo]
+	regColumns: List[ColumnInfo]
 
 	@classmethod
 	def getConnection(cls) -> 'psycopg2.connection':
 		return getConnection(cls.subDB)
 
 	@classmethod
-	def getColumns(cls) -> List[ColumnInfo]:
-		return getColumns(cls.getTableName())
-
-	@classmethod
-	def getPrimaryKeyColumns(cls) -> List[ColumnInfo]:
-		return [col for col in cls.getColumns() if col.pk > 0]
-
-	@classmethod
-	def getNonKeyColumns(cls) -> List[ColumnInfo]:
-		return [col for col in cls.getColumns() if col.pk == 0]
-
-	@classmethod
 	def getNonGeneratedColumns(cls) -> List[ColumnInfo]:
-		return [col for col in cls.getColumns() \
+		return [col for col in cls.columns \
 				if col.type.lower().find('serial') < 0]
 
 	@classmethod
@@ -119,11 +94,10 @@ class StoreType(object):
 	@classmethod
 	def get(cls: Type[T], pkValues: Iterable[Any]) -> Optional[T]:
 		table = cls.getTableName()
-		pks = cls.getPrimaryKeyColumns()
 
 		conn = cls.getConnection()
 		sql = 'SELECT * FROM {} WHERE '.format(table)
-		whereParts = [ '{} = %s'.format(pk.name) for pk in pks ]
+		whereParts = [ '{} = %s'.format(pk.name) for pk in cls.pkColumns ]
 		if len(whereParts) == 0:
 			raise Exception('table {} has no primary key'.format(table))
 		sql += ' AND '.join(whereParts)
@@ -203,7 +177,7 @@ class StoreType(object):
 		return tuple([self.__dict__[piece] for piece in which])
 
 	def toTuple(self) -> Iterable[Any]:
-		cols = type(self).getColumns()
+		cols = type(self).columns
 		return self.__getParts([col.name for col in cols])
 
 	def toInsertTuple(self) -> Iterable[Any]:
@@ -211,12 +185,10 @@ class StoreType(object):
 		return self.__getParts([col.name for col in cols])
 
 	def getPKTuple(self) -> Iterable[Any]:
-		pkCols = type(self).getPrimaryKeyColumns()
-		return self.__getParts([col.name for col in pkCols])
+		return self.__getParts([col.name for col in type(self).pkColumns])
 
 	def getNonPKTuple(self) -> Iterable[Any]:
-		nonPKCols = type(self).getNonKeyColumns()
-		return self.__getParts([col.name for col in nonPKCols])
+		return self.__getParts([col.name for col in type(self).regColumns])
 
 	def insert(self) -> None:
 		table = type(self).getTableName()
@@ -239,8 +211,8 @@ class StoreType(object):
 
 	def update(self) -> None:
 		table = type(self).getTableName()
-		pkCols = type(self).getPrimaryKeyColumns()
-		nkCols = type(self).getNonKeyColumns()
+		pkCols = type(self).pkColumns
+		nkCols = type(self).regColumns
 
 		sql = 'UPDATE {} '.format(table)
 		sql += ' SET ' + \
@@ -267,23 +239,19 @@ class StoreType(object):
 
 	@classmethod
 	def new(cls: Type[T]) -> T:
-		cols = cls.getColumns()
-
 		obj = cls()
-		for i in range(len(cols)):
+		for col in cls.columns:
 			# don't overwrite values set by the constructor
-			if cols[i].name in obj.__dict__:
+			if col.name in obj.__dict__:
 				continue
-			obj.__setattr__(cols[i].name, cols[i].dflt_value)
+			obj.__setattr__(col.name, col.dflt_value)
 		return obj
 
 	@classmethod
 	def create(cls: Type[T], pkValues: Sequence[Any]) -> T:
-		pks = cls.getPrimaryKeyColumns()
-
 		obj = cls.new()
-		for i in range(len(pks)):
-			obj.__setattr__(pks[i].name, pkValues[i])
+		for i in range(len(cls.pkColumns)):
+			obj.__setattr__(cls.pkColumns[i].name, pkValues[i])
 
 		obj.insert()
 		res = cls.get(pkValues)

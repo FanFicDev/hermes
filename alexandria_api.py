@@ -3,7 +3,7 @@ import traceback
 from enum import IntEnum
 from flask import Flask, Response, request, make_response
 import werkzeug.wrappers
-from werkzeug.exceptions import HTTPException, NotFound
+from werkzeug.exceptions import NotFound
 
 from store import Fic, FicChapter
 from htypes import FicId
@@ -15,6 +15,8 @@ from lite import JSONable
 BasicFlaskResponse = Union[Response, werkzeug.wrappers.Response, str, JSONable]
 FlaskResponse = Union[BasicFlaskResponse, Tuple[BasicFlaskResponse, int]]
 
+import adapter
+adapter.registerAdapters()
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -69,13 +71,13 @@ class Err(IntEnum):
 		return Err.success.get(extra)
 
 
-def get_request_source() -> Tuple[bool, str, str]:
+def get_request_source() -> Tuple[bool, str, Optional[str]]:
 	automated = (request.args.get('automated', None) == 'true')
 	return (automated, request.url_root, request.remote_addr)
 
 
 @app.errorhandler(404)
-def page_not_found(e: HTTPException) -> FlaskResponse:
+def page_not_found(e: Exception) -> FlaskResponse:
 	return make_response(Err.not_found.get(), 404)
 
 
@@ -171,12 +173,9 @@ def v0_cache(urlId: str) -> Any:
 
 @app.get('/v0/remote')
 def v0_remote() -> FlaskResponse:
-	source = get_request_source()
-	return source.__dict__
+	return get_request_source()[2]
 
 
 if __name__ == '__main__':
-	import adapter
-	adapter.registerAdapters()
 	app.run(debug=True)
 

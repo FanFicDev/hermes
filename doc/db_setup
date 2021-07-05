@@ -1,15 +1,57 @@
 Any modern postgres should work. To create the db from scratch execute:
-	oil.sql
-	web.sql
-	orange.sql
+sql/
+	oil/
+		url.sql
+		timestamp.sql
+		timestamp_fn.sql
+		touch_modified.sql
+
+	web/
+		web.sql
+			idx_web_url.sql
+
+	orange/
+		users.sql
+		sessions.sql
+
 		addUsers.sql
-	minerva.sql
+
+	minerva/
+		importStatus.sql
+		ficStatus.sql
+		source.sql
+		language.sql
+		author.sql
+		author_source.sql
+		fic.sql
+			idx_fic_source_lid.sql
+			idx_fic_url.sql
+		fic_chapter.sql
+			idx_fic_chapter_cid.sql
+			idx_fic_chapter_lid.sql
+		tag_type.sql
+		tag.sql
+		fic_tag.sql
+
 		addLanguages.sql
 		addSources.sql
-	minerva_user.sql
-	minerva_ffnfav.sql
 
-The sql/fresh/ folder contains numbered links to these files.
+		user/
+			user_fic.sql
+			user_fic_chapter.sql
+			t_user_fic_chapter_modified.sql
+			read_event.sql
+			nemo_rating.sql
+
+		ffnfav/
+			ffnFavoriteStatus.sql
+			ffnUserFavorite.sql
+
+==
+
+The sql/fresh/ folder contains numbered links to these files generated based
+on this file by schema.py. schema.py can also execute the scripts if passed
+the --init command, which _should_ be idempotent.
 
 Ensure you generate store_bases.py by running schema.py.
 
