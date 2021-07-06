@@ -1,8 +1,10 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from htypes import FicType
 from store import FicChapter
 import scrape
+
+from adapter.wordpressAdapter import WordpressAdapter
 
 
 class ParahumansAdapter(WordpressAdapter):
@@ -10,7 +12,7 @@ class ParahumansAdapter(WordpressAdapter):
         # https://www.parahumans.net/table-of-contents/
         super().__init__(
             'https://www.parahumans.net',
-            "<a href=['\"]https?://(www.)parahumans.net[^'\"]*['\"]>(Last|Previous|Next) Chapter</a>",
+            """<a href=['\"](https?://(www.)parahumans.net[^'\"]*|[^\'" >]+)['\"]>(Last|Previous|Next) Chapter</a>""",
             'Ward', 'Worm', 'M', 'Wildbow',
             'https://www.parahumans.net/support-wildbow', '''
 The unwritten rules that govern the fights and outright wars between ‘capes’ have been amended: everyone gets their second chance.  It’s an uneasy thing to come to terms with when notorious supervillains and even monsters are playing at being hero.  The world ended two years ago, and as humanity straddles the old world and the new, there aren’t records, witnesses, or facilities to answer the villains’ past actions in the present.  One of many compromises, uneasy truces and deceptions that are starting to splinter as humanity rebuilds.
