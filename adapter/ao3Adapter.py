@@ -2,8 +2,10 @@ import time
 from typing import Optional
 
 from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, \
-		Fandom, Character
+from store import (
+	OilTimestamp, Language, FicStatus, Fic, FicChapter,
+	Fandom, Character
+)
 import util
 import scrape
 
@@ -11,158 +13,159 @@ from adapter.adapter import Adapter, edumpContent
 
 # [ any of these ], [ map to all of these ]
 ao3FandomsMap = [
-		[ [ '1989 - Taylor Swift' ], [ '1989 - Taylor Swift' ] ],
-		[ [ 'Addams Family - All Media Types' ], [ 'Addams Family' ] ],
-		[ [ 'Alphas (TV)' ], [ 'Alphas' ] ],
-		[ [ 'Animorphs - Katherine A. Applegate' ], [ 'Animorphs' ] ],
-		[ [ 'Anne of Green Gables - L. M. Montgomery' ], [ 'Anne of Green Gables' ] ],
-		[ [ 'Ao no Exorcist | Blue Exorcist' ], [ 'Ao no Exorcist' ] ],
-		[ [ 'Artemis Fowl - Eoin Colfer' ], [ 'Artemis Fowl' ] ],
-		[ [ 'Arthurian Mythology' ], [ 'Arthurian Mythology' ] ],
-		[ [ 'A Series of Unfortunate Events - Lemony Snicket' ], [ 'A Series of Unfortunate Events' ] ],
-		[ [ 'Astro Boy (2009)' ], [ 'Astro Boy' ] ],
-		[ [ 'captain america civil war', 'civil war - Fandom' ], [ 'Avengers' ] ],
-		[ [ 'Batman - All Media Types', 'Batman: The Animated Series', 'Batman (Comics)', 'Batman - Fandom' ], [ 'Batman' ] ],
-		[ [ 'Beauty and the Beast (2017)' ], [ 'Beauty and the Beast' ] ],
-		[ [ 'Bishoujo Senshi Sailor Moon | Pretty Guardian Sailor Moon', 'Sailor Moon - All Media Types' ], [ 'Sailor Moon' ] ],
-		[ [ 'Black Panther (2018)' ], [ 'Black Panther' ] ],
-		[ [ 'Boruto: Naruto Next Generations' ], [ 'Boruto' ] ],
-		[ [ 'British Royalty RPF' ], [ 'British Royalty RPF' ] ],
-		[ [ 'Brooklyn Nine-Nine (TV)' ], [ 'Brooklyn Nine-Nine' ] ],
-		[ [ 'Buffy the Vampire Slayer', 'Buffy the Vampire Slayer (TV)' ], [ 'Buffy the Vampire Slayer' ] ],
-		[ [ 'Buzz Lightyear of Star Command' ], [ 'Buzz Lightyear of Star Command' ] ],
-		[ [ 'Cardcaptor Sakura' ], [ 'Cardcaptor Sakura' ] ],
-		[ [ 'Cinderella (Fairy Tale)' ], [ 'Cinderella' ] ],
-		[ [ 'Coronation Street' ], [ 'Coronation Street' ] ],
-		[ [ 'Criminal Minds', 'Criminal Minds (US TV)' ], [ 'Criminal Minds' ] ],
-		[ [ 'Criminal Minds/Harry Potter' ], [ 'Criminal Minds', 'Harry Potter' ] ],
-		[ [ 'Dangan Ronpa - All Media Types' ], [ 'Danganronpa' ] ],
-		[ [ 'Dark-Hunter Series - Sherrilyn Kenyon' ], [ 'Dark-Hunter' ] ],
-		[ [ 'Darkwing Duck (Cartoon)' ], [ 'Darkwing Duck' ] ],
-		[ [ 'Deadpool (Movieverse)', 'Deadpool - All Media Types' ], [ 'Deadpool' ] ],
-		[ [ 'Dead Space' ], [ 'Dead Space' ] ],
-		[ [ 'Death in Paradise' ], [ 'Death in Paradise' ] ],
-		[ [ 'Digimon Savers | Digimon Data Squad' ], [ 'Digimon Data Squad' ] ],
-		[ [ 'Doki Doki Literature Club! (Visual Novel)' ], [ 'Doki Doki Literature Club' ] ],
-		[ [ 'Dragonball Z' ], [ 'Dragon Ball Z' ] ],
-		[ [ 'Draka Series - S. M. Stirling', 'Draka Series - S.M. Stirling' ], [ 'Draka Series' ] ],
-		[ [ 'Drake & Josh' ], [ 'Drake & Josh' ] ],
-		[ [ 'Dragon Age (Video Games)' ], [ 'Dragon Age' ] ],
-		[ [ 'Dreaming of Sunshine - Silver Queen' ], [ 'Dreaming of Sunshine - Silver Queen' ] ],
-		[ [ 'DuckTales (Cartoon 2017)' ], [ 'DuckTales' ] ],
-		[ [ 'Elder Scrolls V: Skyrim' ], [ 'Skyrim' ] ],
-		[ [ 'Eureka', 'Eureka (TV)' ], [ 'Eureka' ] ],
-		[ [ 'Fallout (Video Games)' ], [ 'Fallout' ] ],
-		[ [ "Fantastic Four: World's Greatest Heroes", 'Fantastic Four', 'Fantastic Four (Comicverse)' ], [ 'Fantastic Four' ] ],
-		[ [ 'Fire Emblem: The Sacred Stones', 'Fire Emblem: Fuuin no Tsurugi | Fire Emblem: Binding Blade', 'Fire Emblem: Kakusei | Fire Emblem: Awakening', 'Fire Emblem: Rekka no Ken | Fire Emblem: Blazing Sword', 'Fire Emblem: If | Fire Emblem: Fates', 'Fire Emblem: Rekka no Ken' ], [ 'Fire Emblem' ] ],
-		[ [ "Friendship is Magic - Fandom" ], [ 'My Little Pony: Friendship is Magic' ] ],
-		[ [ 'Gilmore Girls' ], [ 'Gilmore Girls' ] ],
-		[ [ 'Glee' ], [ 'Glee' ] ],
-		[ [ 'Goblin Slayer (Manga)' ], [ 'Goblin Slayer' ] ],
-		[ [ 'Hamlet - Shakespeare' ], [ 'Hamlet' ] ],
-		[ [ 'Hamilton - Miranda' ], [ 'Hamilton' ] ],
-		[ [ 'Hawaii Five-0 (2010)' ], [ 'Hawaii Five-0' ] ],
-		[ [ 'Highschool DxD (Anime)' ], [ 'Highschool DxD' ] ],
-		[ [ 'Hikaru no Go' ], [ 'Hikaru no Go' ] ],
-		[ [ 'His Dark Materials - Philip Pullman' ], [ 'His Dark Materials' ] ],
-		[ [ 'Historical RPF' ], [ 'Historical RPF' ] ],
-		[ [ 'Honor Harrington Series - David Weber' ], [ 'Honor Harrington' ] ],
-		[ [ 'The Hunger Games (Movies)', 'Hunger Games Trilogy - Suzanne Collins', 'Hunger Games Series - All Media Types' ], [ 'The Hunger Games' ] ],
-		[ [ 'Into the Woods - Sondheim/Lapine', 'Into the Woods (2014)' ], [ 'Into the Woods' ] ],
-		[ [ 'Iron Fist (TV)', 'Iron Fist (Comic)' ], [ 'Iron Fist' ] ],
-		[ [ 'Jackie Chan Adventures' ], [ 'Jackie Chan Adventures' ] ],
-		[ [ 'Justice League & Justice League Unlimited (Cartoons)', 'Justice League (2017)', 'Justice League' ], [ 'Justice League' ] ],
-		[ [ 'Jurassic World (2015)' ], [ 'Jurassic World' ] ],
-		[ [ 'Katawa Shoujo' ], [ 'Katawa Shoujo' ] ],
-		[ [ 'Kill la Kill (Anime & Manga)' ], [ 'Kill la Kill' ] ],
-		[ [ 'The Legend of Zelda: The Ocarina of Time' ], [ 'Legend of Zelda' ] ],
-		[ [ 'The Librarian (Movies)' ], [ 'The Librarian' ] ],
-		[ [ 'The Librarians (TV 2014)' ], [ 'The Librarian', 'The Librarians' ] ],
-		[ [ 'Lizzie Bennet Diaries' ], [ 'Lizzie Bennet Diaries' ] ],
-		[ [ 'Luna Varga', '魔獣戦士ルナ・ヴァルガー | Majuu Senshi Luna Varga | Demon Warrior Luna Varga (Anime)' ], [ 'Luna Varga' ] ],
-		[ [ 'Magic School Bus' ], [ 'Magic School Bus' ] ],
-		[ [ 'Mahou Shoujo Lyrical Nanoha | Magical Girl Lyrical Nanoha' ], [ 'Magical Girl Lyrical Nanoha' ] ],
-		[ [ 'Matilda - Roald Dahl' ], [ 'Matilda' ] ],
-		[ [ 'Marvel Cinematic Universe', 'Marvel', 'Marvel (Comics)', 'Marvel (Movies)' ], [ 'Marvel' ] ],
-		[ [ 'Maximum Ride - James Patterson' ], [ 'Maximum Ride' ] ],
-		[ [ 'MCGUIRE Seanan - Works' ], [ 'Seanan McGuire' ] ],
-		[ [ "McLeod's Daughters" ], [ "McLeod's Daughters" ] ],
-		[ [ 'Memoir - Fandom' ], [ 'Memoir' ] ],
-		[ [ 'Minecraft (Video Game)' ], [ 'Minecraft' ] ],
-		[ [ 'Miraculous Ladybug' ], [ 'Miraculous Ladybug' ] ],
-		[ [ 'my immortal (fanfic)', '(My) Immortal: The Web Series' ], [ 'my immortal' ] ],
-		[ [ 'My Little Pony' ], [ 'My Little Pony' ] ],
-		[ [ 'Nowhere But Here - Katie McGarry' ], [ 'Nowhere But Here' ] ],
-		[ [ '大神 | Okami (Video Games)' ], [ 'Okami' ] ],
-		[ [ 'On the Jellicoe Road - Melina Marchetta' ], [ 'On the Jellicoe Road' ] ],
-		[ [ 'ワンパンマン | One-Punch Man' ], [ 'One Punch Man' ] ],
-		[ [ 'Othello - Shakespeare' ], [ 'Othello' ] ],
-		[ [ 'Pact - Fandom' ], [ 'Pact' ] ],
-		[ [ 'Paper Towns - John Green' ], [ 'Paper Towns' ] ],
-		[ [ 'Pathfinder (Roleplaying Game)' ], [ 'Pathfinder' ] ],
-		[ [ 'The Phoenix City Chronicles' ], [ 'Phoenix City Chronicles' ] ],
-		[ [ 'PKNA - Paperinik New Adventures' ], [ 'PKNA - Paperinik New Adventures' ] ],
-		[ [ 'Percy Jackson and the Olympians & Related Fandoms - All Media Types', 'Percy Jackson and the Olympians - Rick Riordan' ], [ 'Percy Jackson and the Olympians' ] ],
-		[ [ 'Pirates of the Caribbean (Movies)' ], [ 'Pirates of the Caribbean' ] ],
-		[ [ 'Pocket Monsters: Diamond & Pearl & Platinum | Pokemon Diamond Pearl Platinum Versions', 'Pocket Monsters: Ultra Sun & Ultra Moon | Pokemon Ultra Sun & Ultra Moon Versions', 'Pocket Monsters: Sun & Moon | Pokemon Sun & Moon Versions', 'very minor pokemon', 'pocket monsters | pokemon (anime)', 'pocket monsters | pokemon - all media types', 'Pocket Monsters | Pokemon (Main Video Game Series)', 'Pokemon'], [ 'Pokemon' ] ],
-		[ [ 'プリキュア | PreCure | Pretty Cure Series' ], [ 'Pretty Cure' ] ],
-		[ [ 'The Punisher (TV 2017)' ], [ 'Punisher' ] ],
-		[ [ 'Ranma 1/2' ], [ 'Ranma' ] ],
-		[ [ 'RCN Series - David Drake' ], [ 'RCN Series', 'Lt. Leary' ] ],
-		[ [ 'RWBY' ], [ 'RWBY' ] ],
-		[ [ 'Sanctuary (TV)' ], [ 'Sanctuary' ] ],
-		[ [ 'Sense8 (TV)' ], [ 'Sense8' ] ],
-		[ [ 'Shingeki no Kyojin | Attack on Titan' ], [ 'Attack on Titan' ] ],
-		[ [ 'Shugo Chara!' ], [ 'Shugo Chara!' ] ],
-		[ [ 'Sleeping Beauty (Fairy Tale)' ], [ 'Sleeping Beauty' ] ],
-		[ [ 'Sly Cooper (Video Games)' ], [ 'Sly Cooper' ] ],
-		[ [ 'Schneewittchen | Snow White (Fairy Tale)' ], [ 'Snow White' ] ],
-		[ [ 'Starfinder (Roleplaying Game)' ], [ 'Starfinder' ] ],
-		[ [ 'Star Trek: The Next Generation', 'Star Trek: Alternate Original Series (Movies)', 'Star Trek (2009)' ], [ 'Star Trek' ] ],
-		[ [ 'Star Wars Original Trilogy', 'Star Wars Sequel Trilogy' ], [ 'Star Wars' ] ],
-		[ [ 'Stranger Things (TV 2016)' ], [ 'Stranger Things' ] ],
-		[ [ 'Suicide Squad (2016)' ], [ 'Suicide Squad' ] ],
-		[ [ 'Super Friends' ], [ 'Super Friends' ] ],
-		[ [ 'Super Smash Brothers' ], [ 'Super Smash Brothers' ] ],
-		[ [ 'Team Fortress 2' ], [ 'Team Fortress 2' ] ],
-		[ [ 'Terminator Genisys (2015)' ], [ 'Terminator' ] ],
-		[ [ 'Terra Nova (TV)' ], [ 'Terra Nova' ] ],
-		[ [ 'The Aquabats! Super Show!' ], [ 'The Aquabats! Super Show!' ] ],
-		[ [ 'The Beatles' ], [ 'The Beatles' ] ],
-		[ [ 'The Defenders (Comic)' ], [ 'The Defenders' ] ],
-		[ [ 'The Heroes of Olympus - Rick Riordan' ], [ 'The Heroes of Olympus' ] ],
-		[ [ 'The Hobbit - All Media Types' ], [ 'The Hobbit' ] ],
-		[ [ 'The Incredibles (2004)' ], [ 'The Incredibles' ] ],
-		[ [ 'The Three Caballeros (1944)' ], [ 'The Three Caballeros' ] ],
-		[ [ "The Player's Haven Adventures" ], [ "The Player's Haven Adventures" ] ],
-		[ [ 'The Originals (TV)' ], [ 'The Originals' ] ],
-		[ [ 'Vampire Diaries (TV)', 'The Vampire Diaries (TV)' ], [ 'Vampire Diaries' ] ],
-		[ [ 'Hulk (2003)', 'The Incredible Hulk - All Media Types', 'The Incredible Hulk (2008)' ], [ 'Hulk' ] ],
-		[ [ 'Thor (Comics)' ], [ 'Thor' ] ],
-		[ [ 'Tomb Raider & Related Fandoms' ], [ 'Tomb Raider' ] ],
-		[ [ 'Top wo Nerae 2! Diebuster' ], [ 'GunBuster 2' ] ],
-		[ [ 'Total Drama' ], [ 'Total Drama' ] ],
-		[ [ 'Toy Story (Movies)' ], [ 'Toy Story' ] ],
-		[ [ 'Transformers (Bay Movies)' ], [ 'Transformers' ] ],
-		[ [ 'Twig - Wildbow' ], [ 'Twig' ] ],
-		[ [ 'The Umbrella Academy (TV)' ], [ 'The Umbrella Academy' ] ],
-		[ [ 'Undertale (Video Game)' ], [ 'Undertale' ] ],
-		[ [ 'Rockman.EXE | Mega Man Battle Network' ], [ 'Mega Man Battle Network' ] ],
-		[ [ 'RoboCop (2014)' ], [ 'RoboCop' ] ],
-		[ [ 'Venom (Comics)' ], [ 'Venom' ] ],
-		[ [ 'Warehouse 13' ], [ 'Warehouse 13' ] ],
-		[ [ 'We Know the Devil (Visual Novel)' ], [ 'We Know the Devil' ] ],
-		[ [ 'We Will Rock You - Elton/May/Taylor' ], [ 'We Will Rock You' ] ],
-		[ [ 'Winx Club' ], [ 'Winx Club' ] ],
-		[ [ 'W.I.T.C.H.' ], [ 'W.I.T.C.H.' ] ],
-		[ [ 'Wonder Woman (2017)', 'Wonder Woman - All Media Types' ], [ 'Wonder Woman' ] ],
-		[ [ 'Worm (Web Novel)' ], [ 'Worm' ] ],
-		[ [ 'Young Justice', 'Young Justice (cartoon)' ], [ 'Young Justice' ] ],
-		[ [ 'Yu-Gi-Oh!' ], [ 'Yu-Gi-Oh!' ] ],
-		[ [ "Yu-Gi-Oh! 5D's" ], [ "Yu-Gi-Oh! 5D's" ] ],
-		[ [ "私がモテないのはどう考えてもお前らが悪い! | Watamote - No Matter How I Look At It It's You Guys' Fault I'm Unpopular!" ], [ 'WataMote' ] ],
-		[ [ '逆転裁判 | Gyakuten Saiban | Ace Attorney' ], [ 'Ace Attorney' ] ],
-	]
+	[ [ '1989 - Taylor Swift' ], [ '1989 - Taylor Swift' ] ],
+	[ [ 'Addams Family - All Media Types' ], [ 'Addams Family' ] ],
+	[ [ 'Alphas (TV)' ], [ 'Alphas' ] ],
+	[ [ 'Animorphs - Katherine A. Applegate' ], [ 'Animorphs' ] ],
+	[ [ 'Anne of Green Gables - L. M. Montgomery' ], [ 'Anne of Green Gables' ] ],
+	[ [ 'Ao no Exorcist | Blue Exorcist' ], [ 'Ao no Exorcist' ] ],
+	[ [ 'Artemis Fowl - Eoin Colfer' ], [ 'Artemis Fowl' ] ],
+	[ [ 'Arthurian Mythology' ], [ 'Arthurian Mythology' ] ],
+	[ [ 'A Series of Unfortunate Events - Lemony Snicket' ], [ 'A Series of Unfortunate Events' ] ],
+	[ [ 'Astro Boy (2009)' ], [ 'Astro Boy' ] ],
+	[ [ 'captain america civil war', 'civil war - Fandom' ], [ 'Avengers' ] ],
+	[ [ 'Batman - All Media Types', 'Batman: The Animated Series', 'Batman (Comics)', 'Batman - Fandom' ], [ 'Batman' ] ],
+	[ [ 'Beauty and the Beast (2017)' ], [ 'Beauty and the Beast' ] ],
+	[ [ 'Bishoujo Senshi Sailor Moon | Pretty Guardian Sailor Moon', 'Sailor Moon - All Media Types' ], [ 'Sailor Moon' ] ],
+	[ [ 'Black Panther (2018)' ], [ 'Black Panther' ] ],
+	[ [ 'Boruto: Naruto Next Generations' ], [ 'Boruto' ] ],
+	[ [ 'British Royalty RPF' ], [ 'British Royalty RPF' ] ],
+	[ [ 'Brooklyn Nine-Nine (TV)' ], [ 'Brooklyn Nine-Nine' ] ],
+	[ [ 'Buffy the Vampire Slayer', 'Buffy the Vampire Slayer (TV)' ], [ 'Buffy the Vampire Slayer' ] ],
+	[ [ 'Buzz Lightyear of Star Command' ], [ 'Buzz Lightyear of Star Command' ] ],
+	[ [ 'Cardcaptor Sakura' ], [ 'Cardcaptor Sakura' ] ],
+	[ [ 'Cinderella (Fairy Tale)' ], [ 'Cinderella' ] ],
+	[ [ 'Coronation Street' ], [ 'Coronation Street' ] ],
+	[ [ 'Criminal Minds', 'Criminal Minds (US TV)' ], [ 'Criminal Minds' ] ],
+	[ [ 'Criminal Minds/Harry Potter' ], [ 'Criminal Minds', 'Harry Potter' ] ],
+	[ [ 'Dangan Ronpa - All Media Types' ], [ 'Danganronpa' ] ],
+	[ [ 'Dark-Hunter Series - Sherrilyn Kenyon' ], [ 'Dark-Hunter' ] ],
+	[ [ 'Darkwing Duck (Cartoon)' ], [ 'Darkwing Duck' ] ],
+	[ [ 'Deadpool (Movieverse)', 'Deadpool - All Media Types' ], [ 'Deadpool' ] ],
+	[ [ 'Dead Space' ], [ 'Dead Space' ] ],
+	[ [ 'Death in Paradise' ], [ 'Death in Paradise' ] ],
+	[ [ 'Digimon Savers | Digimon Data Squad' ], [ 'Digimon Data Squad' ] ],
+	[ [ 'Doki Doki Literature Club! (Visual Novel)' ], [ 'Doki Doki Literature Club' ] ],
+	[ [ 'Dragonball Z' ], [ 'Dragon Ball Z' ] ],
+	[ [ 'Draka Series - S. M. Stirling', 'Draka Series - S.M. Stirling' ], [ 'Draka Series' ] ],
+	[ [ 'Drake & Josh' ], [ 'Drake & Josh' ] ],
+	[ [ 'Dragon Age (Video Games)' ], [ 'Dragon Age' ] ],
+	[ [ 'Dreaming of Sunshine - Silver Queen' ], [ 'Dreaming of Sunshine - Silver Queen' ] ],
+	[ [ 'DuckTales (Cartoon 2017)' ], [ 'DuckTales' ] ],
+	[ [ 'Elder Scrolls V: Skyrim' ], [ 'Skyrim' ] ],
+	[ [ 'Eureka', 'Eureka (TV)' ], [ 'Eureka' ] ],
+	[ [ 'Fallout (Video Games)' ], [ 'Fallout' ] ],
+	[ [ "Fantastic Four: World's Greatest Heroes", 'Fantastic Four', 'Fantastic Four (Comicverse)' ], [ 'Fantastic Four' ] ],
+	[ [ 'Fire Emblem: The Sacred Stones', 'Fire Emblem: Fuuin no Tsurugi | Fire Emblem: Binding Blade', 'Fire Emblem: Kakusei | Fire Emblem: Awakening', 'Fire Emblem: Rekka no Ken | Fire Emblem: Blazing Sword', 'Fire Emblem: If | Fire Emblem: Fates', 'Fire Emblem: Rekka no Ken' ], [ 'Fire Emblem' ] ],
+	[ [ "Friendship is Magic - Fandom" ], [ 'My Little Pony: Friendship is Magic' ] ],
+	[ [ 'Gilmore Girls' ], [ 'Gilmore Girls' ] ],
+	[ [ 'Glee' ], [ 'Glee' ] ],
+	[ [ 'Goblin Slayer (Manga)' ], [ 'Goblin Slayer' ] ],
+	[ [ 'Hamlet - Shakespeare' ], [ 'Hamlet' ] ],
+	[ [ 'Hamilton - Miranda' ], [ 'Hamilton' ] ],
+	[ [ 'Hawaii Five-0 (2010)' ], [ 'Hawaii Five-0' ] ],
+	[ [ 'Highschool DxD (Anime)' ], [ 'Highschool DxD' ] ],
+	[ [ 'Hikaru no Go' ], [ 'Hikaru no Go' ] ],
+	[ [ 'His Dark Materials - Philip Pullman' ], [ 'His Dark Materials' ] ],
+	[ [ 'Historical RPF' ], [ 'Historical RPF' ] ],
+	[ [ 'Honor Harrington Series - David Weber' ], [ 'Honor Harrington' ] ],
+	[ [ 'The Hunger Games (Movies)', 'Hunger Games Trilogy - Suzanne Collins', 'Hunger Games Series - All Media Types' ], [ 'The Hunger Games' ] ],
+	[ [ 'Into the Woods - Sondheim/Lapine', 'Into the Woods (2014)' ], [ 'Into the Woods' ] ],
+	[ [ 'Iron Fist (TV)', 'Iron Fist (Comic)' ], [ 'Iron Fist' ] ],
+	[ [ 'Jackie Chan Adventures' ], [ 'Jackie Chan Adventures' ] ],
+	[ [ 'Justice League & Justice League Unlimited (Cartoons)', 'Justice League (2017)', 'Justice League' ], [ 'Justice League' ] ],
+	[ [ 'Jurassic World (2015)' ], [ 'Jurassic World' ] ],
+	[ [ 'Katawa Shoujo' ], [ 'Katawa Shoujo' ] ],
+	[ [ 'Kill la Kill (Anime & Manga)' ], [ 'Kill la Kill' ] ],
+	[ [ 'The Legend of Zelda: The Ocarina of Time' ], [ 'Legend of Zelda' ] ],
+	[ [ 'The Librarian (Movies)' ], [ 'The Librarian' ] ],
+	[ [ 'The Librarians (TV 2014)' ], [ 'The Librarian', 'The Librarians' ] ],
+	[ [ 'Lizzie Bennet Diaries' ], [ 'Lizzie Bennet Diaries' ] ],
+	[ [ 'Luna Varga', '魔獣戦士ルナ・ヴァルガー | Majuu Senshi Luna Varga | Demon Warrior Luna Varga (Anime)' ], [ 'Luna Varga' ] ],
+	[ [ 'Magic School Bus' ], [ 'Magic School Bus' ] ],
+	[ [ 'Mahou Shoujo Lyrical Nanoha | Magical Girl Lyrical Nanoha' ], [ 'Magical Girl Lyrical Nanoha' ] ],
+	[ [ 'Matilda - Roald Dahl' ], [ 'Matilda' ] ],
+	[ [ 'Marvel Cinematic Universe', 'Marvel', 'Marvel (Comics)', 'Marvel (Movies)' ], [ 'Marvel' ] ],
+	[ [ 'Maximum Ride - James Patterson' ], [ 'Maximum Ride' ] ],
+	[ [ 'MCGUIRE Seanan - Works' ], [ 'Seanan McGuire' ] ],
+	[ [ "McLeod's Daughters" ], [ "McLeod's Daughters" ] ],
+	[ [ 'Memoir - Fandom' ], [ 'Memoir' ] ],
+	[ [ 'Minecraft (Video Game)' ], [ 'Minecraft' ] ],
+	[ [ 'Miraculous Ladybug' ], [ 'Miraculous Ladybug' ] ],
+	[ [ 'my immortal (fanfic)', '(My) Immortal: The Web Series' ], [ 'my immortal' ] ],
+	[ [ 'My Little Pony' ], [ 'My Little Pony' ] ],
+	[ [ 'Nowhere But Here - Katie McGarry' ], [ 'Nowhere But Here' ] ],
+	[ [ '大神 | Okami (Video Games)' ], [ 'Okami' ] ],
+	[ [ 'On the Jellicoe Road - Melina Marchetta' ], [ 'On the Jellicoe Road' ] ],
+	[ [ 'ワンパンマン | One-Punch Man' ], [ 'One Punch Man' ] ],
+	[ [ 'Othello - Shakespeare' ], [ 'Othello' ] ],
+	[ [ 'Pact - Fandom' ], [ 'Pact' ] ],
+	[ [ 'Paper Towns - John Green' ], [ 'Paper Towns' ] ],
+	[ [ 'Pathfinder (Roleplaying Game)' ], [ 'Pathfinder' ] ],
+	[ [ 'The Phoenix City Chronicles' ], [ 'Phoenix City Chronicles' ] ],
+	[ [ 'PKNA - Paperinik New Adventures' ], [ 'PKNA - Paperinik New Adventures' ] ],
+	[ [ 'Percy Jackson and the Olympians & Related Fandoms - All Media Types', 'Percy Jackson and the Olympians - Rick Riordan' ], [ 'Percy Jackson and the Olympians' ] ],
+	[ [ 'Pirates of the Caribbean (Movies)' ], [ 'Pirates of the Caribbean' ] ],
+	[ [ 'Pocket Monsters: Diamond & Pearl & Platinum | Pokemon Diamond Pearl Platinum Versions', 'Pocket Monsters: Ultra Sun & Ultra Moon | Pokemon Ultra Sun & Ultra Moon Versions', 'Pocket Monsters: Sun & Moon | Pokemon Sun & Moon Versions', 'very minor pokemon', 'pocket monsters | pokemon (anime)', 'pocket monsters | pokemon - all media types', 'Pocket Monsters | Pokemon (Main Video Game Series)', 'Pokemon'], [ 'Pokemon' ] ],
+	[ [ 'プリキュア | PreCure | Pretty Cure Series' ], [ 'Pretty Cure' ] ],
+	[ [ 'The Punisher (TV 2017)' ], [ 'Punisher' ] ],
+	[ [ 'Ranma 1/2' ], [ 'Ranma' ] ],
+	[ [ 'RCN Series - David Drake' ], [ 'RCN Series', 'Lt. Leary' ] ],
+	[ [ 'RWBY' ], [ 'RWBY' ] ],
+	[ [ 'Sanctuary (TV)' ], [ 'Sanctuary' ] ],
+	[ [ 'Sense8 (TV)' ], [ 'Sense8' ] ],
+	[ [ 'Shingeki no Kyojin | Attack on Titan' ], [ 'Attack on Titan' ] ],
+	[ [ 'Shugo Chara!' ], [ 'Shugo Chara!' ] ],
+	[ [ 'Sleeping Beauty (Fairy Tale)' ], [ 'Sleeping Beauty' ] ],
+	[ [ 'Sly Cooper (Video Games)' ], [ 'Sly Cooper' ] ],
+	[ [ 'Schneewittchen | Snow White (Fairy Tale)' ], [ 'Snow White' ] ],
+	[ [ 'Starfinder (Roleplaying Game)' ], [ 'Starfinder' ] ],
+	[ [ 'Star Trek: The Next Generation', 'Star Trek: Alternate Original Series (Movies)', 'Star Trek (2009)' ], [ 'Star Trek' ] ],
+	[ [ 'Star Wars Original Trilogy', 'Star Wars Sequel Trilogy' ], [ 'Star Wars' ] ],
+	[ [ 'Stranger Things (TV 2016)' ], [ 'Stranger Things' ] ],
+	[ [ 'Suicide Squad (2016)' ], [ 'Suicide Squad' ] ],
+	[ [ 'Super Friends' ], [ 'Super Friends' ] ],
+	[ [ 'Super Smash Brothers' ], [ 'Super Smash Brothers' ] ],
+	[ [ 'Team Fortress 2' ], [ 'Team Fortress 2' ] ],
+	[ [ 'Terminator Genisys (2015)' ], [ 'Terminator' ] ],
+	[ [ 'Terra Nova (TV)' ], [ 'Terra Nova' ] ],
+	[ [ 'The Aquabats! Super Show!' ], [ 'The Aquabats! Super Show!' ] ],
+	[ [ 'The Beatles' ], [ 'The Beatles' ] ],
+	[ [ 'The Defenders (Comic)' ], [ 'The Defenders' ] ],
+	[ [ 'The Heroes of Olympus - Rick Riordan' ], [ 'The Heroes of Olympus' ] ],
+	[ [ 'The Hobbit - All Media Types' ], [ 'The Hobbit' ] ],
+	[ [ 'The Incredibles (2004)' ], [ 'The Incredibles' ] ],
+	[ [ 'The Three Caballeros (1944)' ], [ 'The Three Caballeros' ] ],
+	[ [ "The Player's Haven Adventures" ], [ "The Player's Haven Adventures" ] ],
+	[ [ 'The Originals (TV)' ], [ 'The Originals' ] ],
+	[ [ 'Vampire Diaries (TV)', 'The Vampire Diaries (TV)' ], [ 'Vampire Diaries' ] ],
+	[ [ 'Hulk (2003)', 'The Incredible Hulk - All Media Types', 'The Incredible Hulk (2008)' ], [ 'Hulk' ] ],
+	[ [ 'Thor (Comics)' ], [ 'Thor' ] ],
+	[ [ 'Tomb Raider & Related Fandoms' ], [ 'Tomb Raider' ] ],
+	[ [ 'Top wo Nerae 2! Diebuster' ], [ 'GunBuster 2' ] ],
+	[ [ 'Total Drama' ], [ 'Total Drama' ] ],
+	[ [ 'Toy Story (Movies)' ], [ 'Toy Story' ] ],
+	[ [ 'Transformers (Bay Movies)' ], [ 'Transformers' ] ],
+	[ [ 'Twig - Wildbow' ], [ 'Twig' ] ],
+	[ [ 'The Umbrella Academy (TV)' ], [ 'The Umbrella Academy' ] ],
+	[ [ 'Undertale (Video Game)' ], [ 'Undertale' ] ],
+	[ [ 'Rockman.EXE | Mega Man Battle Network' ], [ 'Mega Man Battle Network' ] ],
+	[ [ 'RoboCop (2014)' ], [ 'RoboCop' ] ],
+	[ [ 'Venom (Comics)' ], [ 'Venom' ] ],
+	[ [ 'Warehouse 13' ], [ 'Warehouse 13' ] ],
+	[ [ 'We Know the Devil (Visual Novel)' ], [ 'We Know the Devil' ] ],
+	[ [ 'We Will Rock You - Elton/May/Taylor' ], [ 'We Will Rock You' ] ],
+	[ [ 'Winx Club' ], [ 'Winx Club' ] ],
+	[ [ 'W.I.T.C.H.' ], [ 'W.I.T.C.H.' ] ],
+	[ [ 'Wonder Woman (2017)', 'Wonder Woman - All Media Types' ], [ 'Wonder Woman' ] ],
+	[ [ 'Worm (Web Novel)' ], [ 'Worm' ] ],
+	[ [ 'Young Justice', 'Young Justice (cartoon)' ], [ 'Young Justice' ] ],
+	[ [ 'Yu-Gi-Oh!' ], [ 'Yu-Gi-Oh!' ] ],
+	[ [ "Yu-Gi-Oh! 5D's" ], [ "Yu-Gi-Oh! 5D's" ] ],
+	[ [ "私がモテないのはどう考えてもお前らが悪い! | Watamote - No Matter How I Look At It It's You Guys' Fault I'm Unpopular!" ], [ 'WataMote' ] ],
+	[ [ '逆転裁判 | Gyakuten Saiban | Ace Attorney' ], [ 'Ace Attorney' ] ],
+] # yapf: disable
+
 
 class Ao3Adapter(Adapter):
 	def __init__(self) -> None:
@@ -295,8 +298,7 @@ class Ao3Adapter(Adapter):
 		if len(summaryModules) != 1:
 			prefaceGroups = soup.findAll('div', {'class': 'preface group'})
 			if len(prefaceGroups) == 1:
-				summaryModules = prefaceGroups[0].findAll('div', \
-						{'class': 'summary module'})
+				summaryModules = prefaceGroups[0].findAll('div', {'class': 'summary module'})
 
 		if len(summaryModules) == 1:
 			summaryBq = summaryModules[0].find('blockquote')
@@ -359,18 +361,17 @@ class Ao3Adapter(Adapter):
 
 		byline = soup.find('h3', {'class': 'byline heading'})
 		authorLink = byline.find('a')
-		if authorLink is None \
-				and (fic.author is not None and len(fic.author) > 0): # type: ignore
-			pass # updated author to anon, don't make changes
-		elif authorLink is None \
-				and (fic.author is None or len(fic.author) < 1): # type: ignore
-			# first loaded after it was already set to anonymous
-			authorUrl = ''
-			author = 'Anonymous'
-			authorId = 'Anonymous'
-			self.setAuthor(fic, author, authorUrl, authorId)
+		if authorLink is None:
+			if fic.authorId is not None and len(fic.getAuthorName()) > 0:
+				pass # updated author to anon, don't make changes
+			else:
+				# first loaded after it was already set to anonymous
+				authorUrl = ''
+				author = 'Anonymous'
+				authorId = 'Anonymous'
+				self.setAuthor(fic, author, authorUrl, authorId)
 		else:
-			authorUrl = byline.find('a').get('href')
+			authorUrl = authorLink.get('href')
 			author = ' '.join(byline.find('a').contents)
 			authorId = author # map pseudo to real?
 			self.setAuthor(fic, author, authorUrl, authorId)
@@ -404,15 +405,16 @@ class Ao3Adapter(Adapter):
 			for ft in fandomTags:
 				originalF = ft.contents[0].strip()
 				f = originalF.lower()
-				if (f.startswith("harry potter ") and f.endswith("rowling")) \
-						or f == 'harry potter - fandom' \
-						or f == 'fantastic beasts and where to find them (movies)' \
-						or f == 'harry potter next generation - fandom':
+				# TODO: this seriously needs reworked
+				if ((f.startswith("harry potter ") and f.endswith("rowling"))
+						or f == 'harry potter - fandom'
+						or f == 'fantastic beasts and where to find them (movies)'
+						or f == 'harry potter next generation - fandom'):
 					fic.add(Fandom.define('Harry Potter'))
-				elif f == 'sherlock - fandom' or f == 'sherlock (tv)' \
-						or f == 'sherlock holmes & related fandoms' \
-						or f == 'sherlock holmes - arthur conan doyle' \
-						or f == 'sherlock holmes (downey films)':
+				elif (f == 'sherlock - fandom' or f == 'sherlock (tv)'
+						or f == 'sherlock holmes & related fandoms'
+						or f == 'sherlock holmes - arthur conan doyle'
+						or f == 'sherlock holmes (downey films)'):
 					fic.add(Fandom.define('Sherlock Holmes'))
 				elif f == 'furry (fandom)' or f == 'harry - fandom':
 					continue # skip
@@ -422,39 +424,39 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('James Bond'))
 				elif f == 'orphan black (tv)':
 					fic.add(Fandom.define('Orphan Black'))
-				elif f == 'naruto' or f == 'naruto shippuden' \
-						or f == 'naruto shippuuden - fandom':
+				elif (f == 'naruto' or f == 'naruto shippuden'
+						or f == 'naruto shippuuden - fandom'):
 					fic.add(Fandom.define('Naruto'))
 				elif f == 'naruto/harry potter':
 					fic.add(Fandom.define('Naruto'))
 					fic.add(Fandom.define('Harry Potter'))
 				elif f == 'bleach':
 					fic.add(Fandom.define('Bleach'))
-				elif f == 'iron man (movies)' or f == 'iron man - all media types' \
-						or f == 'iron man (comic)' or f == 'iron man - fandom' \
-						or f == 'iron man (comics)':
+				elif (f == 'iron man (movies)' or f == 'iron man - all media types'
+						or f == 'iron man (comic)' or f == 'iron man - fandom'
+						or f == 'iron man (comics)'):
 					fic.add(Fandom.define('Iron Man'))
-				elif f == 'the avengers (marvel) - all media types' \
-						or f == 'the avengers (marvel movies)' \
-						or f == 'the avengers - ambiguous fandom' \
-						or f == 'the avengers (2012)' \
-						or f == 'the avengers' \
-						or f == 'avengers (marvel) - all media types' \
-						or f == 'marvel avengers movies universe' \
-						or f == 'avengers':
+				elif (f == 'the avengers (marvel) - all media types'
+						or f == 'the avengers (marvel movies)'
+						or f == 'the avengers - ambiguous fandom'
+						or f == 'the avengers (2012)'
+						or f == 'the avengers'
+						or f == 'avengers (marvel) - all media types'
+						or f == 'marvel avengers movies universe'
+						or f == 'avengers'):
 					fic.add(Fandom.define('Avengers'))
 				elif f == 'marvel 616':
 					fic.add(Fandom.define('Marvel'))
 					fic.add(Fandom.define('Marvel 616'))
 				elif f == 'thor (movies)' or f == 'thor - all media types':
 					fic.add(Fandom.define('Thor'))
-				elif f == 'captain america (movies)' \
-						or f == 'captain america - all media types' \
-						or f == 'captain america (comics)':
+				elif (f == 'captain america (movies)'
+						or f == 'captain america - all media types'
+						or f == 'captain america (comics)'):
 					fic.add(Fandom.define('Captain America'))
-				elif f == 'avatar: the last airbender' \
-						or f == 'avatar: legend of korra' \
-						or f == 'avatar the last airbender - fandom':
+				elif (f == 'avatar: the last airbender'
+						or f == 'avatar: legend of korra'
+						or f == 'avatar the last airbender - fandom'):
 					fic.add(Fandom.define('Avatar'))
 				elif f == 'original work':
 					fic.add(Fandom.define('Original Work'))
@@ -473,19 +475,19 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Teen Wolf'))
 				elif f == 'grimm (tv)':
 					fic.add(Fandom.define('Grimm'))
-				elif f == 'the amazing spider-man (movies - webb)' \
-						or f == 'spider-man - all media types' \
-						or f == 'spider-man: homecoming (2017)':
+				elif (f == 'the amazing spider-man (movies - webb)'
+						or f == 'spider-man - all media types'
+						or f == 'spider-man: homecoming (2017)'):
 					fic.add(Fandom.define('Spiderman'))
-				elif f == 'x-men - all media types' or f == 'x-men (movieverse)' \
-						or f == 'x-men (comicverse)':
+				elif (f == 'x-men - all media types' or f == 'x-men (movieverse)'
+						or f == 'x-men (comicverse)'):
 					fic.add(Fandom.define('X-Men'))
-				elif f == 'lord of the rings - j. r. r. tolkien' \
-						or f == 'the lord of the rings - j. r. r. tolkien':
+				elif (f == 'lord of the rings - j. r. r. tolkien'
+						or f == 'the lord of the rings - j. r. r. tolkien'):
 					fic.add(Fandom.define('Lord of the Rings'))
-				elif f == 'crisis core: final fantasy vii' \
-						or f == 'compilation of final fantasy vii' \
-						or f == 'final fantasy vii':
+				elif (f == 'crisis core: final fantasy vii'
+						or f == 'compilation of final fantasy vii'
+						or f == 'final fantasy vii'):
 					fic.add(Fandom.define('Final Fantasy VII'))
 					fic.add(Fandom.define('Final Fantasy'))
 				elif f == 'sen to chihiro no kamikakushi | spirited away':
@@ -494,12 +496,11 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Howl\'s Moving Castle'))
 				elif f == 'rise of the guardians (2012)':
 					fic.add(Fandom.define('Rise of the Guardians'))
-				elif f == 'doctor who' \
-						or f == 'doctor who (2005)' \
-						or f == 'doctor who & related fandoms':
+				elif (f == 'doctor who'
+						or f == 'doctor who (2005)'
+						or f == 'doctor who & related fandoms'):
 					fic.add(Fandom.define('Doctor Who'))
-				elif f == 'daredevil (tv)' \
-						or f == 'daredevil (comics)':
+				elif f == 'daredevil (tv)' or f == 'daredevil (comics)':
 					fic.add(Fandom.define('DareDevil'))
 				elif f == 'labyrinth (1986)':
 					fic.add(Fandom.define('Labyrinth'))
@@ -513,9 +514,9 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('The Sentinel'))
 				elif f == 'teen titans (animated series)':
 					fic.add(Fandom.define('Teen Titans'))
-				elif f == 'dcu' or f == 'dcu animated' \
-						or f == 'dcu (comics)' or f == 'dc extended universe' \
-						or f == 'dc animated universe':
+				elif (f == 'dcu' or f == 'dcu animated'
+						or f == 'dcu (comics)' or f == 'dc extended universe'
+						or f == 'dc animated universe'):
 					fic.add(Fandom.define('DC'))
 				elif f == 'vampire hunter d':
 					fic.add(Fandom.define('Vampire Hunter D'))
@@ -531,8 +532,8 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Discworld'))
 				elif f == 'gossip girl':
 					fic.add(Fandom.define('Gossip Girl'))
-				elif f == 'a song of ice and fire - george r. r. martin' \
-						or f == 'a song of ice and fire & related fandoms':
+				elif (f == 'a song of ice and fire - george r. r. martin'
+						or f == 'a song of ice and fire & related fandoms'):
 					fic.add(Fandom.define('A Song of Ice and Fire'))
 				elif f == 'supergirl (tv 2015)':
 					fic.add(Fandom.define('Supergirl'))
@@ -566,19 +567,18 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Twilight'))
 				elif f == 'dungeons and dragons - fandom':
 					fic.add(Fandom.define('Dungeons and Dragons'))
-				elif f == 'american horror story' \
-						or f == 'american horror story: cult':
+				elif f == 'american horror story' or f == 'american horror story: cult':
 					fic.add(Fandom.define('American Horror Story'))
-				elif f == 'worm (web serial novel)' \
-						or f == 'worm - wildbow' \
-						or f == 'parahumans series - wildbow' \
-						or f == 'worm (web serial) | wildbow' \
-						or f == 'worm - fandom' \
-						or f == 'parahumans - fandom' \
-						or f == 'worm (parahumans)' \
-						or f == 'worm (web serial)' \
-						or f == 'worm | parahumans' \
-						or f == 'worm (web novel)':
+				elif (f == 'worm (web serial novel)'
+						or f == 'worm - wildbow'
+						or f == 'parahumans series - wildbow'
+						or f == 'worm (web serial) | wildbow'
+						or f == 'worm - fandom'
+						or f == 'parahumans - fandom'
+						or f == 'worm (parahumans)'
+						or f == 'worm (web serial)'
+						or f == 'worm | parahumans'
+						or f == 'worm (web novel)'):
 					fic.add(Fandom.define('Worm'))
 				elif f == 'toaru kagaku no railgun | a certain scientific railgun':
 					fic.add(Fandom.define('A Certain Scientific Railgun'))
@@ -604,17 +604,17 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Flash'))
 				elif f == 'senki zesshou symphogear':
 					fic.add(Fandom.define('Symphogear'))
-				elif f == 'fullmetal alchemist: brotherhood & manga' \
-						or f == 'fullmetal alchemist - all media types' \
-						or f == 'fullmetal alchemist (anime 2003)':
+				elif (f == 'fullmetal alchemist: brotherhood & manga'
+						or f == 'fullmetal alchemist - all media types'
+						or f == 'fullmetal alchemist (anime 2003)'):
 					fic.add(Fandom.define('Fullmetal Alchemist'))
-				elif f == 'star wars - all media types' \
-						or f == 'star wars episode vii: the force awakens (2015)' \
-						or f == 'star wars prequel trilogy':
+				elif (f == 'star wars - all media types'
+						or f == 'star wars episode vii: the force awakens (2015)'
+						or f == 'star wars prequel trilogy'):
 					fic.add(Fandom.define('Star Wars'))
-				elif f == 'guardians of the galaxy (2014)' \
-						or f == 'guardians of the galaxy - all media types' \
-						or f == 'guardians of the galaxy (movies)':
+				elif (f == 'guardians of the galaxy (2014)'
+						or f == 'guardians of the galaxy - all media types'
+						or f == 'guardians of the galaxy (movies)'):
 					fic.add(Fandom.define('Guardians of the Galaxy'))
 				elif f == 'ant man (2015)' or f == 'ant-man (movies)':
 					fic.add(Fandom.define('Ant Man'))
@@ -674,8 +674,8 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Fall of Ile-Rien'))
 				elif f == 'vorkosigan saga - lois mcmaster bujold':
 					fic.add(Fandom.define('Vorkosigan Saga'))
-				elif f == 'highlander: the series' \
-						or f == 'highlander - all media types':
+				elif (f == 'highlander: the series'
+						or f == 'highlander - all media types'):
 					fic.add(Fandom.define('Highlander'))
 				elif f == 'yoroiden samurai troopers | ronin warriors':
 					fic.add(Fandom.define('Ronin Warriors'))
@@ -693,8 +693,8 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Leverage'))
 				elif f == 'valdemar series - mercedes lackey':
 					fic.add(Fandom.define('Valdemar Series'))
-				elif f == 'b.p.r.d.' \
-						or f == 'bureau for paranormal research and defense':
+				elif (f == 'b.p.r.d.'
+						or f == 'bureau for paranormal research and defense'):
 					fic.add(Fandom.define('B.P.R.D.'))
 				elif f == 'hellboy (comic)':
 					fic.add(Fandom.define('Hellboy'))

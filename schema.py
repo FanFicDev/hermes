@@ -278,6 +278,12 @@ class OilTimestamp:
 		self.ots = int(uts * 1000)
 	def toUTS(self) -> int:
 		return self.ots // 1000
+	def withinDelta(self, rhs: Optional['OilTimestamp'] = None, seconds: int = 0,
+			minutes: int = 0, hours: int = 0, days: int = 0) -> bool:
+		if rhs is None:
+			rhs = OilTimestamp.now()
+		deltaSeconds = ((days * 24 + hours) * 60 + minutes) * 60 + seconds
+		return (rhs.toUTS() - self.toUTS()) < deltaSeconds
 	def toDateTime(self) -> 'datetime.datetime':
 		return datetime.datetime.fromtimestamp(self.toUTS())
 	def toDateString(self) -> str:
@@ -339,14 +345,14 @@ for enum in entities['enums']:
 ColumnInfoRow = Tuple[int, str, str, bool, Optional[Any], int, str]
 class ColumnInfo:
 	def __init__(self, row: ColumnInfoRow):
-		self.cid, self.name, self.type, \
-			self.notnull, self.dflt_value, self.pk, self.ptype = row
+		(self.cid, self.name, self.type,
+			self.notnull, self.dflt_value, self.pk, self.ptype) = row
 	def toTuple(self) -> ColumnInfoRow:
 		return (self.cid, self.name, self.type,
 			self.notnull, self.dflt_value, self.pk, self.ptype)
 	def toSourceTuple(self) -> str:
-		return f"({self.cid}, {repr(self.name)}, {repr(self.type)}, " \
-				+ f"{self.notnull}, {self.dflt_value}, {self.pk}, {repr(self.ptype)})"
+		return (f"({self.cid}, {repr(self.name)}, {repr(self.type)}, "
+				+ f"{self.notnull}, {self.dflt_value}, {self.pk}, {repr(self.ptype)})")
 	def __str__(self) -> str:
 		return str(self.__dict__)
 	@staticmethod

@@ -120,7 +120,7 @@ def importFic(fdata):
 		print('  adding fandom "{}"'.format(fandom))
 		fic.add(Fandom.define(fandom))
 	for character in fdata['characters']:
-		print('  adding character "{}" from fandom "{}"'.format( \
+		print('  adding character "{}" from fandom "{}"'.format(
 				character['name'], character['fandom']))
 		fic.add(Character.define(
 			Fandom.define(character['fandom']), character['name']))

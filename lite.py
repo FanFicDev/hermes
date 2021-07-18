@@ -77,8 +77,7 @@ class StoreType(object):
 
 	@classmethod
 	def getNonGeneratedColumns(cls) -> List[ColumnInfo]:
-		return [col for col in cls.columns \
-				if col.type.lower().find('serial') < 0]
+		return [col for col in cls.columns if col.type.lower().find('serial') < 0]
 
 	@classmethod
 	def getTableName(cls) -> str:
@@ -128,8 +127,8 @@ class StoreType(object):
 			whereParts: List[str] = []
 			for col in whereData:
 				bit = whereData[col]
-				if isinstance(bit, tuple) and len(bit) == 2 \
-						and isinstance(bit[0], str) and bit[0] in operators:
+				if (isinstance(bit, tuple) and len(bit) == 2
+						and isinstance(bit[0], str) and bit[0] in operators):
 					whereParts += [f'{col} {bit[0]} %s']
 					data += [bit[1]]
 				else:
@@ -215,10 +214,8 @@ class StoreType(object):
 		nkCols = type(self).regColumns
 
 		sql = 'UPDATE {} '.format(table)
-		sql += ' SET ' + \
-				', '.join([col.name + ' = %s' for col in nkCols])
-		sql += ' WHERE ' + \
-				' AND '.join([col.name + ' = %s' for col in pkCols])
+		sql += ' SET ' + (', '.join([col.name + ' = %s' for col in nkCols]))
+		sql += ' WHERE ' + (' AND '.join([col.name + ' = %s' for col in pkCols]))
 		data = tuple(list(self.getNonPKTuple()) + list(self.getPKTuple()))
 
 		conn = type(self).getConnection()

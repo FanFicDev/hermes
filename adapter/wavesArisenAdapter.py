@@ -19,9 +19,10 @@ class WavesArisenAdapter(Adapter):
 
 	def canonizeUrl(self, url: str) -> str:
 		url = scrape.canonizeUrl(url)
-		prefixMap = [ ('http://', 'https://'),
-				('https://www.{}'.format(self.urlFragments[0])
-				,'https://{}'.format(self.urlFragments[0])) ]
+		prefixMap = [
+			('http://', 'https://'),
+			('https://www.', 'https://'),
+		]
 		for pm in prefixMap:
 			if url.startswith(pm[0]):
 				url = pm[1] + url[len(pm[0]):]

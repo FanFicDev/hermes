@@ -9,8 +9,10 @@ import urllib
 from html import escape as htmlEscape
 
 from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, \
-		Fandom, Character, Tag
+from store import (
+	OilTimestamp, Language, FicStatus, Fic, FicChapter,
+	Fandom, Character, Tag
+)
 import util
 import scrape
 from view import HtmlView
@@ -146,8 +148,7 @@ class XenForoAdapter(Adapter):
 
 		# general 'click to expand' nonsense
 		for div in soup.find_all('div', {'class': 'quoteExpand'}):
-			if div.get_text().strip() == 'Click to expand...' \
-					or div.get_text().strip() == 'Click to expand…':
+			if div.get_text().strip() in {'Click to expand...', 'Click to expand…'}:
 				div.extract()
 
 		# CloudFlare protected "emails"
@@ -194,8 +195,8 @@ class XenForoAdapter(Adapter):
 	def getPageCount(self, soup: Any) -> Tuple[int, bool]:
 		# old style
 		pageNav = soup.find_all('div', { 'class': 'PageNav' })
-		if len(pageNav) >= 1 and pageNav[0] is not None \
-				and pageNav[0].get('data-last') is not None:
+		if (len(pageNav) >= 1 and pageNav[0] is not None
+				and pageNav[0].get('data-last') is not None):
 			pageNav = pageNav[0]
 			pageCount = int(pageNav.get('data-last'))
 			return (pageCount, True)
@@ -329,7 +330,7 @@ class XenForoAdapter(Adapter):
 		for url in urls:
 			pageContent = self.scrapeLike(url)
 			pageSoup = BeautifulSoup(pageContent, 'html5lib')
-			posts = pageSoup.find_all(self.postContainer, \
+			posts = pageSoup.find_all(self.postContainer,
 					{ 'class': 'message', 'data-author': fic.getAuthorName() })
 			for post in posts:
 				soups[post.get('id')] = post
@@ -923,8 +924,8 @@ class XenForoAdapter(Adapter):
 		# FIXME canon may find an older url than ulike :/
 
 		canonRes = scrape.getMostRecentScrapeWithMeta(canon)
-		if canonRes is not None \
-				and int(time.time()) - self.mustyThreshold < canonRes['fetched']:
+		if (canonRes is not None
+				and int(time.time()) - self.mustyThreshold < canonRes['fetched']):
 			return cast(str, canonRes['raw'])
 
 		data = scrape.softScrape(url, delay, ulike, mustyThreshold=self.mustyThreshold)

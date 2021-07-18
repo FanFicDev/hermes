@@ -51,8 +51,7 @@ class FicSelect(Widget):
 		if key == curses.KEY_END:
 			self.idx = len(self.list) - 1
 			return True
-		if key == ord('\n') or key == ord('\r') or key == curses.KEY_ENTER \
-				or key == curses.KEY_RIGHT:
+		if key in {ord('\n'), ord('\r'), curses.KEY_ENTER, curses.KEY_RIGHT}:
 			if len(self.list) == 0:
 				ficId = FicId.parse(self.filter)
 				fic = Fic.load(ficId)
@@ -73,13 +72,12 @@ class FicSelect(Widget):
 			return True
 
 		# TODO: this is out of hand
-		if (key >= ord(' ') and key <= ord('~')) \
-				and ((chr(key).isalnum()) or ':/ .<>?&()=~'.find(chr(key)) != -1 \
-				or (len(self.filter) > 0 and key == ord('-'))):
+		if ((key >= ord(' ') and key <= ord('~'))
+				and ((chr(key).isalnum()) or ':/ .<>?&()=~'.find(chr(key)) != -1
+				or (len(self.filter) > 0 and key == ord('-')))):
 			self.appendToFilter(chr(key).lower())
 			return True
-		if (key == curses.KEY_BACKSPACE or key == 127) \
-				and len(self.filter) > 0:
+		if key in {curses.KEY_BACKSPACE, 127} and len(self.filter) > 0:
 			self.backspace()
 			return True
 		if key == curses.KEY_PPAGE:
@@ -292,8 +290,8 @@ class FicSelect(Widget):
 		pfilter = ' '.join(plain).lower()
 
 		nfics: List[Fic] = []
-		completelyRefilter = force or \
-				(self.filter[-1] == ' ' or self.filter[-1] == ':')
+		completelyRefilter = (force or
+				(self.filter[-1] == ' ' or self.filter[-1] == ':'))
 
 		# TODO FIXME bleh
 		userFics = {uf.ficId: uf for uf in UserFic.select({'userId': 1})}
@@ -354,9 +352,9 @@ class FicSelect(Widget):
 		fic = self.list[idx]
 		userFic = self.getUserFic(fic)
 		onC = ''
-		if (userFic.lastChapterViewed or 0) > 0 \
-				and (userFic.readStatus == FicStatus.ongoing \
-					or (userFic.lastChapterViewed or 0) < (fic.chapterCount or -1)):
+		if ((userFic.lastChapterViewed or 0) > 0
+				and (userFic.readStatus == FicStatus.ongoing
+					or (userFic.lastChapterViewed or 0) < (fic.chapterCount or -1))):
 			onC = '({}/{})'.format(userFic.lastChapterViewed, fic.chapterCount)
 		if width - 5 - len(onC) <= 0:
 			onC = ''

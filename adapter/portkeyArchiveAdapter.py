@@ -24,8 +24,8 @@ class PortkeyArchiveAdapter(ManualAdapter):
 			return None
 		if parts[3] != 'story':
 			return None
-		if len(parts) < 5 or len(parts[4].strip()) < 1  \
-				or not parts[4].strip().isnumeric():
+		if (len(parts) < 5 or len(parts[4].strip()) < 1
+				or not parts[4].strip().isnumeric()):
 			return None
 
 		storyId = int(parts[4])

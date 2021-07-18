@@ -21,8 +21,9 @@ from adapter.wavesArisenAdapter import WavesArisenAdapter
 from adapter.sugarQuillAdapter import SugarQuillAdapter
 from adapter.bulbagardenAdapter import BulbagardenAdapter
 from adapter.theFanfictionForumAdapter import TheFanfictionForumAdapter
-from adapter.fanficParadiseAdapter \
-		import FanficParadiseSFWAdapter, FanficParadiseNSFWAdapter
+from adapter.fanficParadiseAdapter import (
+	FanficParadiseSFWAdapter, FanficParadiseNSFWAdapter
+)
 
 from htypes import adapters, FicType
 def registerAdapters() -> None:

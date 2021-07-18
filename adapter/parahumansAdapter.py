@@ -22,9 +22,10 @@ class ParahumansAdapter(Adapter):
 	def canonizeUrl(self, url: str) -> str:
 		url = urllib.parse.urljoin(self.baseUrl, url)
 		url = scrape.canonizeUrl(url)
-		prefixMap = [ ('http://', 'https://'),
-				('https://{}'.format(self.urlFragments[0])
-				,'https://www.{}'.format(self.urlFragments[0])) ]
+		prefixMap = [
+			('http://', 'https://'),
+			('https://', 'https://www.'),
+		]
 		for pm in prefixMap:
 			if url.startswith(pm[0]):
 				url = pm[1] + url[len(pm[0]):]
@@ -51,29 +52,11 @@ class ParahumansAdapter(Adapter):
 			aTags = entryContent.findAll('a')
 			for aTag in aTags:
 				href = self.canonizeUrl(aTag.get('href'))
-				if href in urlFixups \
-						and len(chapterUrls) > 0 and chapterUrls[-1] == href:
+				if (href in urlFixups
+						and len(chapterUrls) > 0 and chapterUrls[-1] == href):
 					if urlFixups[href] is None:
 						continue
 					href = cast(str, urlFixups[href])
-				if href in chapterUrls:
-					raise Exception(f'duplicate chapter url: {href} {len(chapterUrls)}')
-				chapterUrls += [href]
-		return chapterUrls
-
-		for entryContent in entryContents:
-			aTags = entryContent.findAll('a')
-			for aTag in aTags:
-				href = self.canonizeUrl(aTag.get('href'))
-				if href == 'https://www.parahumans.net/2018/11/24/interlude-10-x' \
-						and len(chapterUrls) > 0 and chapterUrls[-1] == href:
-					continue
-				if href == 'https://www.parahumans.net/2018/12/11/interlude-10-y' \
-						and len(chapterUrls) > 0 and chapterUrls[-1] == href:
-					continue
-				if href == 'https://www.parahumans.net/2019/04/27/black-13-8' \
-						and len(chapterUrls) > 0 and chapterUrls[-1] == href:
-					href = 'https://www.parahumans.net/2019/04/30/black-13-x'
 				if href in chapterUrls:
 					raise Exception(f'duplicate chapter url: {href} {len(chapterUrls)}')
 				chapterUrls += [href]
@@ -90,12 +73,12 @@ class ParahumansAdapter(Adapter):
 			aTags = entryContent.findAll('a')
 			for aTag in aTags:
 				content = aTag.get_text().strip()
-				if content == '(Tats)' \
-						and len(chapterTitles) > 0 and chapterTitles[-1] == '10.x':
+				if (content == '(Tats)'
+						and len(chapterTitles) > 0 and chapterTitles[-1] == '10.x'):
 					chapterTitles[-1] = '10.x (Tats)'
 					continue
-				if content == '(Boy in the shell)' \
-						and len(chapterTitles) > 0 and chapterTitles[-1] == '10.y':
+				if (content == '(Boy in the shell)'
+						and len(chapterTitles) > 0 and chapterTitles[-1] == '10.y'):
 					chapterTitles[-1] = '10.y (Boy in the shell)'
 					continue
 				chapterTitles += [content]

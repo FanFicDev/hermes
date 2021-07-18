@@ -100,8 +100,7 @@ class FanficsMeAdapter(Adapter):
 			if t == 'Автор:':
 				author = v
 			elif t == 'Фандом:':
-				if v == 'Harry Potter' \
-						or v == 'Harry Potter - J. K. Rowling':
+				if v == 'Harry Potter' or v == 'Harry Potter - J. K. Rowling':
 					fandoms += ['Harry Potter']
 				else:
 					raise Exception('unknown fandom: ' + v)

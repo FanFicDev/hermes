@@ -41,16 +41,14 @@ class HtmlView:
 		line = line.replace('Sony', 'Sonny') # TODO: hack...
 		line = line.strip()
 
-		if line == 'Work Text:' or line == 'Chapter Text' \
-				or line == 'Next Chapter' or line == 'Last Chapter Next Chapter':
+		if line in {'Work Text:', 'Chapter Text', 'Next Chapter', 'Last Chapter Next Chapter'}:
 			return
 
 		# filter out blank/all-space lines
 		if line.isspace() or len(line) == 0:
 			return
 
-		if line.strip() == '_‗_' or line.strip() == '___' \
-				or line.strip() == 'Prev Main Next':
+		if line.strip() in {'_‗_', '___', 'Prev Main Next'}:
 			return
 
 		hrTitles = ["~~bonds of blood~~", "~~bonds of bloods~~",
@@ -81,8 +79,8 @@ class HtmlView:
 		mhr = line.strip('*_').lower()
 
 		# strip non-markdown tags
-		while (mhr.startswith('<strong>') and mhr.endswith('</strong>')) \
-				or (mhr.startswith('<em>') and mhr.endswith('</em>')):
+		while ((mhr.startswith('<strong>') and mhr.endswith('</strong>'))
+				or (mhr.startswith('<em>') and mhr.endswith('</em>'))):
 			if (mhr.startswith('<strong>') and mhr.endswith('</strong>')):
 				mhr = mhr[len('<strong>'):-len('</strong>')]
 			if (mhr.startswith('<em>') and mhr.endswith('</em>')):
@@ -98,8 +96,8 @@ class HtmlView:
 		if matchesHrRe and self.gamerRe.match(mhr):
 			matchesHrRe = False
 		# normalize weird h-rules
-		if line == '***' or mhr == '<hr />' or mhr == '-' or mhr == '--' \
-				or (len(line) > 0 and len(mhr) == 0) or matchesHrRe:
+		if (line == '***' or mhr == '<hr />' or mhr == '-' or mhr == '--'
+				or (len(line) > 0 and len(mhr) == 0) or matchesHrRe):
 			line = '<hr />'
 		else:
 			for hrTitle in hrTitles:
@@ -111,8 +109,8 @@ class HtmlView:
 				if sq == squiggleBreak:
 					line = '<hr />'
 					break
-		if (len(line) - len(line.strip('=')) > 8) \
-				and (line.strip('=') == 'HG/MM' or line.strip('=') == 'MM/HG'):
+		if ((len(line) - len(line.strip('=')) > 8)
+				and (line.strip('=') == 'HG/MM' or line.strip('=') == 'MM/HG')):
 			line = '<hr />'
 		if (mhr.strip('~') == 'avengers tower'):
 			line = '*Avengers Tower*' # TODO
@@ -234,8 +232,8 @@ class HtmlView:
 		# FIXME https://www.fanfiction.net/s/26926/1/Destiny-s-Child
 		htmlText = htmlText.replace('<saran@first.com.my>', 'saran@first.com.my')
 		htmlText = htmlText.replace('<ranmas@kode.net>', 'ranmas@kode.net')
-		if htmlText.find("<\"I'm sorry Miss") >= 0 \
-				or htmlText.find("<\"Great Grandmother,") >= 0:
+		if (htmlText.find("<\"I'm sorry Miss") >= 0
+				or htmlText.find("<\"Great Grandmother,") >= 0):
 			from bs4 import BeautifulSoup # type: ignore
 			soup = BeautifulSoup(htmlText, 'html5lib')
 			htmlText = str(soup)
@@ -245,93 +243,94 @@ class HtmlView:
 
 		# skip all tags that start with... (case insensitive)
 		ignoreTags = [
-				'!doctype', '!--', 'html', '/html',
-				'head', '/head', 'peta', '/peta', 'title', '/title',
-				'body', '/body', 'pont', '/pont', 'font', '/font',
-				'o:p', '/o:p', 'fido', '/fido',
-				'span', '/span',
-				'h2',
-				'/hr', '/br',
-				'select', '/select', 'option',
-				'button', '/button',
-				'center', '/center',
-				'sup', '/sup',
-				'h3', 'ul', '/ul', 'li', '/li',
-				'iframe', '/iframe',
-				'h1', 'u', '/u',
-				'x1',
-				'del', '/del', 'address', '/address',
-				'big', '/big', 'ol', '/ol',
-				'table', '/table', 'tbody', '/tbody', 'tr', '/tr', 'td', '/td',
-				'thead', '/thead',
-				'time', '/time', 'footer', '/footer',
-				'small', '/small',
-				'xtml', '/xtml', 'xead', '/xead', 'dir', '/dir',
-				'strike', '/strike', # TODO don't ignore
-				'h4', '/h4', 'h5', '/h5', 'h6', '/h6',
-				'pre', '/pre', # TODO
-				'article', '/article',
-				'aside', '/aside', # TODO
-				'noscript', '/noscript', # TODO
-				'dl', '/dl', 'dt', '/dt', 'dd', '/dd', # TODO
-				'script', '/script', # TODO: dump contents too
-				'![cdata[', # TODO
-				'ppan', '/ppan', # TODO
-				'cite', '/cite', # TODO
-				'abbr', '/abbr', # TODO
-				'sub', '/sub', # TODO
-				'code', '/code', # TODO
-				'meta', # TODO
-				'kbd', '/kbd', # TODO
-				'link', # TODO
-				'xink', # TODO https://www.fanfiction.net/s/194972/1/Evolution
-				'xlink', 'xmeta', 'xbody', # TODO https://www.fanfiction.net/s/736414
-				'acronym', '/acronym', # TODO
+			'!doctype', '!--', 'html', '/html',
+			'head', '/head', 'peta', '/peta', 'title', '/title',
+			'body', '/body', 'pont', '/pont', 'font', '/font',
+			'o:p', '/o:p', 'fido', '/fido',
+			'span', '/span',
+			'h2',
+			'/hr', '/br',
+			'select', '/select', 'option',
+			'button', '/button',
+			'center', '/center',
+			'sup', '/sup',
+			'h3', 'ul', '/ul', 'li', '/li',
+			'iframe', '/iframe',
+			'h1', 'u', '/u',
+			'x1',
+			'del', '/del', 'address', '/address',
+			'big', '/big', 'ol', '/ol',
+			'table', '/table', 'tbody', '/tbody', 'tr', '/tr', 'td', '/td',
+			'thead', '/thead',
+			'time', '/time', 'footer', '/footer',
+			'small', '/small',
+			'xtml', '/xtml', 'xead', '/xead', 'dir', '/dir',
+			'strike', '/strike', # TODO don't ignore
+			'h4', '/h4', 'h5', '/h5', 'h6', '/h6',
+			'pre', '/pre', # TODO
+			'article', '/article',
+			'aside', '/aside', # TODO
+			'noscript', '/noscript', # TODO
+			'dl', '/dl', 'dt', '/dt', 'dd', '/dd', # TODO
+			'script', '/script', # TODO: dump contents too
+			'![cdata[', # TODO
+			'ppan', '/ppan', # TODO
+			'cite', '/cite', # TODO
+			'abbr', '/abbr', # TODO
+			'sub', '/sub', # TODO
+			'code', '/code', # TODO
+			'meta', # TODO
+			'kbd', '/kbd', # TODO
+			'link', # TODO
+			'xink', # TODO https://www.fanfiction.net/s/194972/1/Evolution
+			'xlink', 'xmeta', 'xbody', # TODO https://www.fanfiction.net/s/736414
+			'acronym', '/acronym', # TODO
 
-				'xml', '/xml',
-				'style', '/style', 'ptyle', '/ptyle',
-				'form', '/form', 'object', '/object',
-				'al', '/al', 'blink', '/blink', 'blue', '/blue', 'doc', '/doc',
-				'input', '/input', 'marquee', '/marquee', 'noembed', '/noembed',
-				'option', '/option', 'o:smarttagtype', '/o:smarttagtype',
-				'u1:p', '/u1:p', 'u2:p', '/u2:p',
+			'xml', '/xml',
+			'style', '/style', 'ptyle', '/ptyle',
+			'form', '/form', 'object', '/object',
+			'al', '/al', 'blink', '/blink', 'blue', '/blue', 'doc', '/doc',
+			'input', '/input', 'marquee', '/marquee', 'noembed', '/noembed',
+			'option', '/option', 'o:smarttagtype', '/o:smarttagtype',
+			'u1:p', '/u1:p', 'u2:p', '/u2:p',
 
-				'th', '/th', 'tt', '/tt',
-				'url', '/url', 'vr', '/vr', 'wbr', '/wbr',
+			'th', '/th', 'tt', '/tt',
+			'url', '/url', 'vr', '/vr', 'wbr', '/wbr',
 
-				'fieldset', '/fieldset',
-				'legend', '/legend',
+			'fieldset', '/fieldset',
+			'legend', '/legend',
 
-				'nav', '/nav',
+			'nav', '/nav',
 
-				'caption', '/caption', # TODO
-				'main', '/main', # TODO
-				'section', '/section', # TODO
-				'header', '/header', # TODO
-				'base', '/base', # TODO
-				'label', '/label', # TODO
-				'![if', '![endif]--', '![endif]', # TODO
+			'caption', '/caption', # TODO
+			'main', '/main', # TODO
+			'section', '/section', # TODO
+			'header', '/header', # TODO
+			'base', '/base', # TODO
+			'label', '/label', # TODO
+			'![if', '![endif]--', '![endif]', # TODO
 
-				'ruby', '/ruby', 'rb', '/rb', 'rp', '/rp', 'rt', '/rt', # TODO oogways owl
+			'ruby', '/ruby', 'rb', '/rb', 'rp', '/rp', 'rt', '/rt', # TODO oogways owl
 
-				'colgroup', '/colgroup', 'col', '/col', # TODO
+			'colgroup', '/colgroup', 'col', '/col', # TODO
 
-				# TODO svg elements
-				'svg', '/svg', 'g', '/g', 'path', '/path', 'text', '/text',
-				'circle', '/circle',
+			# TODO svg elements
+			'svg', '/svg', 'g', '/g', 'path', '/path', 'text', '/text',
+			'circle', '/circle',
 
-				'figure', '/figure', # TODO is this also svg or just caption like?
+			'figure', '/figure', # TODO is this also svg or just caption like?
 
-				'dfn', '/dfn', # FIXME https://royalroad.com/fiction/25137
+			'dfn', '/dfn', # FIXME https://royalroad.com/fiction/25137
 
-				# FIXME https://forums.spacebattles.com/threads/476176
-				'video', '/video', 'source', '/source',
+			# FIXME https://forums.spacebattles.com/threads/476176
+			'video', '/video', 'source', '/source',
 
-				'o:documentproperties', '/o:documentproperties',
-				'o:author', '/o:author', 'o:lastauthor', '/o:lastauthor',
-				'o:template', '/o:template',
-				'o:revision', '/o:revision',
-			]
+			'o:documentproperties', '/o:documentproperties',
+			'o:author', '/o:author', 'o:lastauthor', '/o:lastauthor',
+			'o:template', '/o:template',
+			'o:revision', '/o:revision',
+		] # yapf: disable
+
 		# FIXME nested tags: <!-- <p>thing</p> -->
 		if self.markdown:
 			ignoreTags += ['div', '/div']
@@ -385,10 +384,10 @@ class HtmlView:
 					idx = nclose + 1
 					didIgnore = True
 					break
-			if inner[:4] == 'st1:' or inner[:4] == 'st2:' \
-					or inner[:5] == '/st1:' or inner[:5] == '/st2:' \
-					or inner[:2] == 'o:' or inner[:3] == '/o:' \
-					or inner[:2] == 'w:' or inner[:3] == '/w:':
+			if (inner[:4] == 'st1:' or inner[:4] == 'st2:'
+					or inner[:5] == '/st1:' or inner[:5] == '/st2:'
+					or inner[:2] == 'o:' or inner[:3] == '/o:'
+					or inner[:2] == 'w:' or inner[:3] == '/w:'):
 				idx = nclose + 1
 				didIgnore = True
 			if didIgnore:
@@ -457,8 +456,7 @@ class HtmlView:
 				continue
 
 			# horizontal rules remain like html; translate blockquote into hr
-			if inner == 'hr' or inner == 'hr/' \
-					or inner == 'blockquote' or inner == '/blockquote':
+			if inner in {'hr', 'hr/', 'blockquote', '/blockquote'}:
 				self.__addLines([cline, '<hr />'])
 				cline = ''
 				idx = nclose + 1
@@ -473,8 +471,7 @@ class HtmlView:
 				idx = nclose + 1
 				continue
 
-			if inner == 'p' or inner == '/p' \
-					or inner == '/h2' or inner == '/h3' or inner == '/h1':
+			if inner in {'p', '/p', '/h1', '/h2', '/h3'}:
 				if len(cline) > 0:
 					self.__addLine(cline)
 				cline = ''
@@ -518,8 +515,8 @@ class HtmlView:
 					idx = nclose + 1
 				continue
 			if inner == '/strong' or inner == '/b' or inner == '/bold':
-				if len(cline.strip()) == 0 and len(self.text) > 0 \
-						and self.text[-1] != '<hr />':
+				if (len(cline.strip()) == 0 and len(self.text) > 0
+						and self.text[-1] != '<hr />'):
 					self.text[-1] += '*'
 				elif cline.endswith(' '):
 					cline = cline[:-1] + '* '
@@ -538,8 +535,8 @@ class HtmlView:
 					idx = nclose + 1
 				continue
 			if inner == '/em' or inner == '/i':
-				if len(cline.strip()) == 0 and len(self.text) > 0 \
-						and self.text[-1] != '<hr />':
+				if (len(cline.strip()) == 0 and len(self.text) > 0
+						and self.text[-1] != '<hr />'):
 					self.text[-1] += '_'
 				elif cline.endswith(' '):
 					cline = cline[:-1] + '_ '
@@ -647,8 +644,9 @@ class ChapterView:
 		self.totalWrappedLines = sum([len(self.wtext[i]) for i in self.wtext])
 		self.cumulativeTotalWrappedLines = [0] * (len(self.text) + 1)
 		for i in range(len(self.text)):
-			self.cumulativeTotalWrappedLines[i + 1] = \
-					self.cumulativeTotalWrappedLines[i] + len(self.wtext[i])
+			self.cumulativeTotalWrappedLines[i + 1] = (
+				self.cumulativeTotalWrappedLines[i] + len(self.wtext[i])
+			)
 
 	def getLine(self, idx: int) -> List[str]:
 		# TODO: should we handle this here?
@@ -820,8 +818,7 @@ class StoryView(Widget):
 		self.highlightCurrentLine = True
 		self.currentLineColorOptions = [4, 1, 2, 3, 5, 6]
 		self.currentLineColorIdx = 0
-		self.currentLineColor = \
-			self.currentLineColorOptions[self.currentLineColorIdx]
+		self.currentLineColor = self.currentLineColorOptions[self.currentLineColorIdx]
 		self.currentLineAttr = 1
 
 		self.targetWidth = 80
@@ -928,8 +925,8 @@ class StoryView(Widget):
 			self.cview.chapter.getUserFicChapter().markRead()
 			userFic = self.fic.getUserFic()
 			userFic.updateLastRead(self.chapterId)
-			if userFic.lastChapterRead == self.fic.chapterCount \
-					and userFic.readStatus == FicStatus.ongoing:
+			if (userFic.lastChapterRead == self.fic.chapterCount
+					and userFic.readStatus == FicStatus.ongoing):
 				userFic.readStatus = FicStatus.complete
 			userFic.upsert()
 
@@ -1112,7 +1109,7 @@ class StoryView(Widget):
 
 		rightParts = [
 				'C' if self.fic.ficStatus == FicStatus.complete else 'I',
-				'~{}/{}'.format(1 + self.cursor.subLine + \
+				'~{}/{}'.format(1 + self.cursor.subLine +
 					self.cview.cumulativeTotalWrappedLines[self.cursor.line],
 					self.cview.totalWrappedLines),
 				# local paragraph and percentage

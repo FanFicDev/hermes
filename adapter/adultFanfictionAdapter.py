@@ -69,10 +69,9 @@ class AdultFanfictionMeta:
 		rhead = ''.join(['C' if self.ficStatus == FicStatus.complete else 'I' ])
 
 		title = self.title or '[MISSING TITLE]'
-		print('{:<{}} {}'.format(
-					'"' + title[:twidth - len(rhead) - 3] + '"',
-					twidth - len(rhead) - 1,
-					rhead))
+		title = title[:twidth - len(rhead) - 3]  # abbreviate
+
+		print('{:<{}} {}'.format('"' + title + '"', twidth - len(rhead) - 1, rhead))
 
 		print(util.equiPad([
 							#'words: {}'.format(util.formatNumber(fic.wordCount)),
@@ -207,10 +206,10 @@ class AdultFanfictionAdapter(Adapter):
 		fic.title = str(titleH2.getText())
 
 		membersUrl = 'http://members.adult-fanfiction.org/profile.php?no='
-		memberLink = soup.find(lambda t: t.name == 'a' \
-				and t.has_attr("href") \
-				and t.get("href") is not None \
-				and t.get("href").startswith(membersUrl))
+		memberLink = soup.find(lambda t: (t.name == 'a'
+				and t.has_attr("href")
+				and t.get("href") is not None
+				and (t.get("href").startswith(membersUrl))))
 
 		author = memberLink.getText()
 		authorId = memberLink.get('href')[len(membersUrl):]
@@ -278,8 +277,8 @@ class AdultFanfictionAdapter(Adapter):
 		storyUrl = self.constructUrl(fic.localId, chapterId = None)
 
 		# more metadata from search page
-		searchUrl = 'http://{}.adult-fanfiction.org/search.php?' \
-				+ 'auth={}&title={}&summary=&tags=&cats=0&search=Search'
+		searchUrl = ('http://{}.adult-fanfiction.org/search.php?'
+				+ 'auth={}&title={}&summary=&tags=&cats=0&search=Search')
 		searchUrl = searchUrl.format(archive, author, fic.title.replace(' ', '+'))
 		data = scrape.scrape(searchUrl)['raw']
 
@@ -287,8 +286,8 @@ class AdultFanfictionAdapter(Adapter):
 
 		# fallback to pure author search
 		if storyUrl not in metas:
-			searchUrl = 'http://{}.adult-fanfiction.org/search.php?' \
-					+ 'auth={}&title=&summary=&tags=&cats=0&search=Search'
+			searchUrl = ('http://{}.adult-fanfiction.org/search.php?'
+					+ 'auth={}&title=&summary=&tags=&cats=0&search=Search')
 			searchUrl = searchUrl.format(archive, author)
 			data = scrape.scrape(searchUrl)['raw']
 			metas = self.extractSearchMetadata(data)

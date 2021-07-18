@@ -187,7 +187,9 @@ class RoyalRoadlAdapter(Adapter):
 			if chapterUrls[cid - 1].startswith('/fiction/chapter/'):
 				# alternate chapter syntax if the chapter itself has no slug
 				# /fiction/chapter/<lcid>fid=<lid>&fslug=<fic slug>
-				chapter.localChapterId = chapterUrls[cid - 1].split('/')[3].split('?')[0]
+				chapter.localChapterId = (
+					chapterUrls[cid - 1].split('/')[3].split('?')[0]
+				)
 			else:
 				# standard chapter syntax
 				# /fiction/<lid>/<fic slug>/chapter/<lcid>/<chapter slug>

@@ -89,8 +89,8 @@ def saveWebRequest(created: int, url: str, status: int,
 	conn = openMinerva()
 
 	curs = conn.cursor()
-	curs.execute('insert into web(created, url, status, response, source)' + \
-	             'values(%s, %s, %s, %s, %s)',
+	curs.execute(('insert into web(created, url, status, response, source)' +
+	             'values(%s, %s, %s, %s, %s)'),
 		(created, url, status, responseBytes, source))
 
 	curs.close()
@@ -99,9 +99,12 @@ def saveWebRequest(created: int, url: str, status: int,
 def getAllUrlLike(like: str) -> List[str]:
 	conn = openMinerva()
 	curs = conn.cursor()
-	stmt = 'select url from web where status = 200 ' \
-		+ ' and url like %s ' \
-		+ ' order by created desc '
+	stmt = '''
+		select url from web
+		where status = 200
+			and url like %s
+		order by created desc
+	'''
 
 	curs.execute(stmt, (like,))
 	res = curs.fetchall()
@@ -112,10 +115,13 @@ def getAllUrlLike(like: str) -> List[str]:
 def getLastUrlLike(like: str) -> Optional[str]:
 	conn = openMinerva()
 	curs = conn.cursor()
-	stmt = 'select url from web where status = 200 ' \
-		+ ' and url like %s ' \
-		+ ' order by created desc ' \
-		+ ' limit 1 '
+	stmt = '''
+		select url from web
+		where status = 200
+			and url like %s
+		order by created desc
+		limit 1
+	'''
 
 	curs.execute(stmt, (like,))
 	res = curs.fetchone()
@@ -129,11 +135,13 @@ def getLastUrlLike(like: str) -> Optional[str]:
 def getLastUrlLikeOrDefault(defaultAndLikes: Sequence[str]) -> str:
 	conn = openMinerva()
 	curs = conn.cursor()
-	stmt = 'select url from web where status = 200 ' \
-		+ ' and (url = %s ' \
-		+ ('or url like %s ' * len(defaultAndLikes[1:])) \
-		+ ') order by created desc ' \
-		+ ' limit 1 '
+	stmt = ''.join([
+		' select url from web where status = 200 ',
+		' and (url = %s ',
+		(' or url like %s ' * len(defaultAndLikes[1:])),
+		' ) order by created desc ',
+		' limit 1 ',
+	])
 
 	curs.execute(stmt, defaultAndLikes)
 	res = curs.fetchone()
@@ -215,8 +223,8 @@ def softScrapeWithMeta(url: str, delay: float = 3, ulike: str = None,
 		mustyThreshold: int = None, timeout: int = 15) -> Optional[ScrapeMeta]:
 	url = canonizeUrl(url)
 	mostRecent = getMostRecentScrapeWithMeta(url, ulike, beforeId = _staleBefore)
-	if mostRecent is not None and mustyThreshold is not None \
-			and int(time.time()) - mustyThreshold > mostRecent['fetched']:
+	if (mostRecent is not None and mustyThreshold is not None
+			and int(time.time()) - mustyThreshold > mostRecent['fetched']):
 		mostRecent = None
 		time.sleep(1)
 	if mostRecent is None:
@@ -280,11 +288,8 @@ def decodeRequest(data: Optional[bytes], url: str) -> Optional[str]:
 	# handle Mórrigan and façade in
 	# http://www.fictionalley.org/authors/irina/galatea05.html
 	# looks aggressively misencoded
-	data = \
-		data.replace(b'M\xc3\x83\xc2\xb3rr\xc3\x83\xc2\xadgan',
-			b'M\xf3rrigan')
-	data = \
-		data.replace(b'fa\xc3\x83\xc2\xa7ade', b'fa\xe7ade')
+	data = data.replace(b'M\xc3\x83\xc2\xb3rr\xc3\x83\xc2\xadgan', b'M\xf3rrigan')
+	data = data.replace(b'fa\xc3\x83\xc2\xa7ade', b'fa\xe7ade')
 
 	data = data.replace(b'#8211;&#8212;&#8211;\xb5&#8211;\xbb&#8211;\xb8',
 			b'#8211;&#8212;&#8211;&#8211;&#8211;')

@@ -154,8 +154,9 @@ class Fic(store_bases.Fic):
 		if self.sourceId not in _authorSourceCache:
 			_authorSourceCache[self.sourceId] = {}
 		if len(_authorSourceCache[self.sourceId]) == 0:
-			_authorSourceCache[self.sourceId] = \
-				{s.authorId: s for s in AuthorSource.select({'sourceId': self.sourceId})}
+			_authorSourceCache[self.sourceId] = {
+				s.authorId: s for s in AuthorSource.select({'sourceId': self.sourceId})
+			}
 
 		if self.authorId in _authorSourceCache[self.sourceId]:
 			return _authorSourceCache[self.sourceId][self.authorId].name
@@ -272,6 +273,17 @@ class Fic(store_bases.Fic):
 
 	def getUserFic(self, userId: int = defaultUserId) -> 'UserFic':
 		return UserFic.getOrDefault((userId, self.id))
+
+	def getUpdatedDateString(self) -> str:
+		if self.updated is None:
+			return '{missing}'
+		return self.updated.toDateString()
+
+	def getPublishedDateString(self) -> str:
+		if self.published is None:
+			return '{missing}'
+		return self.published.toDateString()
+
 
 class UserFic(store_bases.UserFic):
 	@classmethod

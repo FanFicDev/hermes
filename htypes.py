@@ -62,8 +62,7 @@ class FicId:
 		return (self.sourceId, self.localId, self.chapterId, self.ambiguous)
 
 	def __eq__(self, other: Any) -> bool:
-		return isinstance(other, type(self)) \
-				and self.__key() == other.__key()
+		return (isinstance(other, type(self)) and self.__key() == other.__key())
 
 	def __hash__(self) -> int:
 		return hash(self.__key())
@@ -106,16 +105,16 @@ class FicId:
 			ident = '/'.join(ident.split('/')[5:])
 
 		# if this is a google redirect url, extract the target
-		if ident.find('//') >= 0 and ident.find('google') >= 0 \
-				and ident.find('/url?') >= 0 and ident.find('url=') >= 0:
+		if (ident.find('//') >= 0 and ident.find('google') >= 0
+				and ident.find('/url?') >= 0 and ident.find('url=') >= 0):
 			try:
 				o = urllib.parse.urlparse(ident)
 				q = urllib.parse.parse_qs(o.query)
 				ident = q['url'][0]
 			except:
 				pass
-		if ident.find('//') >= 0 and ident.find('google') >= 0 \
-				and ident.find('/url?') >= 0 and ident.find('q=') >= 0:
+		if (ident.find('//') >= 0 and ident.find('google') >= 0
+				and ident.find('/url?') >= 0 and ident.find('q=') >= 0):
 			try:
 				o = urllib.parse.urlparse(ident)
 				q = urllib.parse.parse_qs(o.query)
@@ -124,8 +123,8 @@ class FicId:
 				pass
 
 		# if this is a facebook redirect url, extract the target
-		if ident.find('//') >= 0 and ident.find('facebook.com/l.php') >= 0 \
-				and ident.find('?') >= 0 and ident.find('u=') >= 0:
+		if (ident.find('//') >= 0 and ident.find('facebook.com/l.php') >= 0
+				and ident.find('?') >= 0 and ident.find('u=') >= 0):
 			try:
 				o = urllib.parse.urlparse(ident)
 				q = urllib.parse.parse_qs(o.query)
@@ -253,9 +252,10 @@ class FicId:
 
 	@staticmethod
 	def help() -> str:
-		return \
-			'FicId: #FFNetId\n' + \
-			'       #FFNetId/#ChapterId\n' + \
-			'       <story url>'
+		return '\n'.join([
+				'FicId: #FFNetId',
+				'       #FFNetId/#ChapterId',
+				'       <story url>',
+		])
 
 

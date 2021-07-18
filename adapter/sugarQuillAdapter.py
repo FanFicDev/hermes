@@ -120,7 +120,8 @@ class SugarQuillAdapter(Adapter):
 		chapterOptions = infoPane.findAll('option')
 		chapterTitles = {}
 		for chapterOption in chapterOptions:
-			chapterTitles[int(chapterOption.get('value'))] = chapterOption.getText().strip()
+			cid = int(chapterOption.get('value'))
+			chapterTitles[cid] = chapterOption.getText().strip()
 		fic.chapterCount = len(chapterOptions)
 
 		fic.ageRating = '<unkown>' # TODO
@@ -130,8 +131,7 @@ class SugarQuillAdapter(Adapter):
 		fic.ficStatus = FicStatus.ongoing # TODO: no uniform way to detect?
 
 		authorProfileHtml = scrape.scrape(authorUrl)['raw']
-		authorProfileHtml = authorProfileHtml \
-				.replace('\r\n', '\n').replace('\r', '')
+		authorProfileHtml = authorProfileHtml.replace('\r', '')
 		authorSoup = BeautifulSoup(authorProfileHtml, 'html5lib')
 
 		storyTables = authorSoup.findAll('table', {'width': '90%'})

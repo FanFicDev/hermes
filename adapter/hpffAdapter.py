@@ -151,7 +151,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 	def getCurrentInfo(self, fic: Fic) -> Fic:
 		# grab the content from disk
 		info = self.getArchiveStoryInfo(int(fic.localId))
-		spath = '{}/archive/{}/{}/summary.html.gz'.format( \
+		spath = '{}/archive/{}/{}/summary.html.gz'.format(
 				self.archivePath, info[1], info[2])
 		data = self.slurp(spath)
 		fic = self.parseInfoInto(fic, data)
@@ -162,7 +162,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 		localChapterIdMap = self.getChapterIds(int(fic.localId))
 		for cid in range(1, chapterCount + 1):
 			pcid = str(cid).zfill(dCount)
-			fpath = '{}/archive/{}/{}/chapters/chapter_{}.html.gz'.format( \
+			fpath = '{}/archive/{}/{}/chapters/chapter_{}.html.gz'.format(
 					self.archivePath, info[1], info[2], pcid)
 			data = self.slurp(fpath)
 			chapter = fic.chapter(cid)
@@ -186,8 +186,8 @@ class HarryPotterFanfictionAdapter(Adapter):
 		disclaimerJs = "javascript:if (confirm('Please note. This story may contain adult themes. By clicking here you are stating that you are over 17. Click cancel if you do not meet this requirement.')) location = '?psid="
 		for a in soup.findAll('a'):
 			href = a.get('href')
-			if not href.startswith(disclaimerJs) \
-					and href != '?psid={}'.format(fic.localId):
+			if (not href.startswith(disclaimerJs)
+					and href != '?psid={}'.format(fic.localId)):
 				continue
 			fic.title = a.getText()
 			break

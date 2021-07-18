@@ -67,9 +67,11 @@ def dtToUnix(dt: datetime.datetime) -> int:
 	return int(dt.strftime('%s'))
 
 _writtenMonths = [
+		# full
 		'January', 'February', 'March', 'April',
 		'May', 'June', 'July', 'August',
-		'September', 'October', 'November', 'December'
+		'September', 'October', 'November', 'December',
+		# abbreviated
 		'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 		'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 	]
@@ -128,8 +130,8 @@ def parseDateAsUnix(updated: Union[OilTimestamp, str, int],
 		return uts
 
 	dottedParts = updated.split('.')
-	if len(dottedParts) == 3 and dottedParts[0].isnumeric() \
-			and dottedParts[1].isnumeric() and dottedParts[2].isnumeric():
+	if (len(dottedParts) == 3 and dottedParts[0].isnumeric()
+			and dottedParts[1].isnumeric() and dottedParts[2].isnumeric()):
 		dt = dateutil.parser.parse(updated)
 		uts = dtToUnix(dt)
 		return uts
@@ -277,7 +279,8 @@ def cleanChapterTitle(title: str, cid: int) -> str:
 			'chapter {}'.format(cid),
 			'chapter {}'.format(cid + 1),
 			'chapter {}'.format(cid - 1),
-			':', '-']
+			':', '-',
+		]
 	foundAny = True
 	while foundAny:
 		foundAny = False

@@ -124,8 +124,7 @@ class FanficAuthorsAdapter(Adapter):
 
 		summaryQuote = divWell.find('blockquote')
 
-		fic.description = str(summaryQuote.getText()) \
-				.replace('\t', ' ').replace('\r', ' ').replace('\n', ' ')
+		fic.description = str(summaryQuote.getText()).replace('\t', ' ').replace('\r', ' ').replace('\n', ' ')
 		while fic.description.find('  ') != -1:
 			fic.description = fic.description.replace('  ', ' ')
 		fic.description = fic.description.strip()

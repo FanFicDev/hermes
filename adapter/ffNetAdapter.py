@@ -12,6 +12,7 @@ import skitter
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
 
+# yapf: disable
 ffNetGenres = {"Adventure", "Angst", "Crime", "Drama", "Family", "Fantasy",
 	"Friendship", "General", "Horror", "Humor", "Hurt/Comfort", "Mystery",
 	"Parody", "Poetry", "Romance", "Sci-Fi", "Spiritual", "Supernatural",
@@ -603,6 +604,7 @@ ffNetFandomIdMap = {
 	13176: 'Luke-Cage',
 	13878: 'Black-Panther',
 }
+# yapf: enable
 
 
 class FFNAdapter(Adapter):
@@ -637,21 +639,21 @@ class FFNAdapter(Adapter):
 			return None
 		if parts[3] != 's' and parts[3] != 'r':
 			return None
-		if len(parts) < 5 or len(parts[4].strip()) < 1  \
-				or not parts[4].strip().isnumeric():
+		if (len(parts) < 5 or len(parts[4].strip()) < 1
+				or not parts[4].strip().isnumeric()):
 			return None
 
 		storyId = int(parts[4])
 		chapterId = None
 		ambi = True
-		if len(parts) >= 6 and parts[3] == 's' \
-				and len(parts[5].strip()) > 0 and parts[5].strip().isnumeric():
+		if (len(parts) >= 6 and parts[3] == 's'
+				and len(parts[5].strip()) > 0 and parts[5].strip().isnumeric()):
 			chapterId = int(parts[5].strip())
 			ambi = False
 		# upstream supports a chapter id after the story slug too, but it does not
 		# normally generate such urls -- only use it as a fallback
-		if ambi and len(parts) >= 7 and parts[3] == 's' \
-				and len(parts[6].strip()) > 0 and parts[6].strip().isnumeric():
+		if (ambi and len(parts) >= 7 and parts[3] == 's'
+				and len(parts[6].strip()) > 0 and parts[6].strip().isnumeric()):
 			chapterId = int(parts[6].strip())
 			ambi = False
 		return FicId(self.ftype, str(storyId), chapterId, ambi)
@@ -694,23 +696,22 @@ class FFNAdapter(Adapter):
 		return Fic.lookup((fic.id,))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		if html.lower().find('chapter not found.') != -1 \
-				and html.lower().find("id='storytext'") == -1:
+		if (html.lower().find('chapter not found.') != -1
+				and html.lower().find("id='storytext'") == -1):
 			raise Exception('unable to find chapter content')
 		lines = html.replace('\r', '\n').replace('>', '>\n').split('\n')
 		parts: List[str] = []
 		inStory = False
 		for line in lines:
-			if line.find("id='storytext'") != -1 \
-					or line.find('id="storytext"') != -1:
+			if line.find("id='storytext'") != -1 or line.find('id="storytext"') != -1:
 				inStory = True
 			if inStory:
-				if line.find("SELECT id=chap_select") != -1 \
-						or line.lower().find('<script') != -1:
+				if (line.find("SELECT id=chap_select") != -1
+						or line.lower().find('<script') != -1):
 					inStory = False
 					break
 				parts += [line]
-		while len(parts) > 0 and (parts[-1].startswith('&lt; Prev</button') \
+		while len(parts) > 0 and (parts[-1].startswith('&lt; Prev</button')
 				or parts[-1].startswith('<button class=btn TYPE=BUTTON')):
 			parts = parts[:-1]
 		return ' '.join(parts)
@@ -723,7 +724,7 @@ class FFNAdapter(Adapter):
 	def getCurrentInfo(self, fic: Fic) -> Fic:
 		# scrape fresh info
 		# FIXME if we do this we lose a periodic record of meta
-		#data = scrape.scrape(self.constructUrl(\
+		#data = scrape.scrape(self.constructUrl(
 		#		fic.localId, fic.chapterCount + 1, fic.title))
 		#if str(data).find('Chapter not found.') >= 0:
 		#	data = self.scrape(self.constructUrl(fic.localId, 1))
@@ -753,7 +754,7 @@ class FFNAdapter(Adapter):
 		# check for missing id maps
 		missingIds = [fId for fId in fIds if fId not in ffNetFandomIdMap]
 		if len(missingIds) > 0:
-			util.logMessage('unknown fandom ids: {} from {} in {}'.format( \
+			util.logMessage('unknown fandom ids: {} from {} in {}'.format(
 					missingIds, href, fic.url))
 			return fandoms
 
@@ -762,14 +763,14 @@ class FFNAdapter(Adapter):
 		# check for missing messy
 		missingMessy = [m for m in messys if m not in ffNetFandomMap]
 		if len(missingMessy) > 0:
-			util.logMessage('unknown messy fandom: {} from {}'.format( \
+			util.logMessage('unknown messy fandom: {} from {}'.format(
 					missingMessy, href))
 			return fandoms
 
 		# check crossover value
 		expected = '{}_and_{}_Crossovers'.format(messys[0], messys[1])
 		if expected != fandom:
-			util.logMessage('crossover got "{}" expected "{}"'.format( \
+			util.logMessage('crossover got "{}" expected "{}"'.format(
 					fandom, expected))
 			return fandoms
 
@@ -822,8 +823,8 @@ class FFNAdapter(Adapter):
 		descriptionFound = False
 		for div in profile_top.find_all('div'):
 			div_class = div.get('class')
-			if div.get('style') == 'margin-top:2px' \
-					and len(div_class) == 1 and div_class[0] == 'xcontrast_txt':
+			if (div.get('style') == 'margin-top:2px'
+					and len(div_class) == 1 and div_class[0] == 'xcontrast_txt'):
 				fic.description = div.get_text()
 				descriptionFound = True
 				break
@@ -890,23 +891,23 @@ class FFNAdapter(Adapter):
 			hrefParts = href.split('/')
 
 			# if it's a top level category
-			if len(hrefParts) == 3 \
-					and len(hrefParts[0]) == 0 and len(hrefParts[2]) == 0:
+			if (len(hrefParts) == 3
+					and len(hrefParts[0]) == 0 and len(hrefParts[2]) == 0):
 				cat = hrefParts[1]
 				if cat in ffNetFandomCategories:
 					continue # skip categories
 				raise Exception('unknown category: {}'.format(cat))
 
 			# if it's a crossover /Fandom1_and_Fandm2_Crossovers/f1id/f2id/
-			if len(hrefParts) == 5 and hrefParts[1].endswith("_Crossovers") \
-					and len(hrefParts[0]) == 0 and len(hrefParts[4]) == 0:
+			if (len(hrefParts) == 5 and hrefParts[1].endswith("_Crossovers")
+					and len(hrefParts[0]) == 0 and len(hrefParts[4]) == 0):
 				fIds = [int(hrefParts[2]), int(hrefParts[3])]
 				pendingFandoms += self.handleCrossoverFandom(fic, hrefParts[1], fIds, href)
 				continue
 
 			# if it's a regular fandom in some category
-			if len(hrefParts) == 4 \
-					and len(hrefParts[0]) == 0 and len(hrefParts[3]) == 0:
+			if (len(hrefParts) == 4
+					and len(hrefParts[0]) == 0 and len(hrefParts[3]) == 0):
 				# ensure category is in our map
 				if hrefParts[1] not in ffNetFandomCategories:
 					raise Exception('unknown category: {}'.format(hrefParts[1]))
@@ -1188,8 +1189,8 @@ class FFNAdapter(Adapter):
 
 		if data is None:
 			raise Exception('unable to scrape? FIXME')
-		if data.lower().find('chapter not found.') != -1 \
-				and data.lower().find("id='storytext'") == -1:
+		if (data.lower().find('chapter not found.') != -1
+				and data.lower().find("id='storytext'") == -1):
 			ts = scrape.getMostRecentScrapeTime(url)
 			if ts is None:
 				raise Exception('no most recent scrape time? FIXME')
@@ -1200,8 +1201,8 @@ class FFNAdapter(Adapter):
 		if data is None:
 			raise Exception('unable to scrape? FIXME')
 
-		if data.lower().find('chapter not found.') != -1 \
-				and data.lower().find("id='storytext'") == -1:
+		if (data.lower().find('chapter not found.') != -1
+				and data.lower().find("id='storytext'") == -1):
 			raise Exception('unable to find chapter content {}'.format(url))
 
 		return data
