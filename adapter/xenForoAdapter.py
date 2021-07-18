@@ -1,7 +1,7 @@
 from typing import Dict, List, Set, Optional, Tuple, Union, Any, cast
 import typing
 if typing.TYPE_CHECKING:
-	from bs4 import BeautifulSoup # type: ignore
+	from bs4 import BeautifulSoup  # type: ignore
 import time
 import dateutil.parser
 import traceback
@@ -10,8 +10,7 @@ from html import escape as htmlEscape
 
 from htypes import FicType, FicId
 from store import (
-	OilTimestamp, Language, FicStatus, Fic, FicChapter,
-	Fandom, Character, Tag
+	OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom, Character, Tag
 )
 import util
 import scrape
@@ -19,12 +18,18 @@ from view import HtmlView
 
 from adapter.adapter import Adapter, edumpContent
 
+
 class XenForoAdapter(Adapter):
-	def __init__(self, baseUrl: str, urlFragments: Union[str, List[str]] = [],
-			ftype: FicType = FicType.broken, titleSuffix: str = '',
-			rewrites: List[Tuple[str, str]] = None,
-			postContainer: Union[str, List[str]] = 'li',
-			postsPerPage: int = 10):
+	def __init__(
+		self,
+		baseUrl: str,
+		urlFragments: Union[str, List[str]] = [],
+		ftype: FicType = FicType.broken,
+		titleSuffix: str = '',
+		rewrites: List[Tuple[str, str]] = None,
+		postContainer: Union[str, List[str]] = 'li',
+		postsPerPage: int = 10
+	):
 		super().__init__(True, baseUrl, urlFragments, ftype)
 		self.titleSuffix = titleSuffix
 		self.defaultDelay = 10
@@ -32,7 +37,7 @@ class XenForoAdapter(Adapter):
 		self.rewrites = [] if rewrites is None else rewrites
 		self.postContainer = postContainer
 		self.postsPerPage = postsPerPage
-		self.mustyThreshold = 60 * 60 * 24 * 30 * 3 # 3 months ago
+		self.mustyThreshold = 60 * 60 * 24 * 30 * 3  # 3 months ago
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
 		if self.baseUrl.endswith('/'):
@@ -64,10 +69,10 @@ class XenForoAdapter(Adapter):
 		storyId_s = parts[1]
 		storyId_s = storyId_s.split('.')[-1]
 		if not storyId_s.isnumeric():
-			return None # might not have a full id yet
+			return None  # might not have a full id yet
 		storyId = int(storyId_s)
 		chapterId = None
-		ambi = True # TODO: ? len(parts) < 6
+		ambi = True  # TODO: ? len(parts) < 6
 		if ambi == False and len(parts[2].strip()) > 0:
 			chapterId = int(parts[2])
 		return FicId(self.ftype, str(storyId), chapterId, ambi)
@@ -95,7 +100,7 @@ class XenForoAdapter(Adapter):
 		fic = self.parseInfoInto(fic, data)
 		fic.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
 		from bs4 import BeautifulSoup
@@ -179,7 +184,7 @@ class XenForoAdapter(Adapter):
 
 		soup = BeautifulSoup(data, 'html5lib')
 
-		posts = soup.find_all(self.postContainer, { 'class': 'message'})
+		posts = soup.find_all(self.postContainer, {'class': 'message'})
 		if len(posts) < 1:
 			edumpContent(data, 'xen')
 			raise Exception(f'error: unable to find author from {url}')
@@ -194,19 +199,21 @@ class XenForoAdapter(Adapter):
 
 	def getPageCount(self, soup: Any) -> Tuple[int, bool]:
 		# old style
-		pageNav = soup.find_all('div', { 'class': 'PageNav' })
-		if (len(pageNav) >= 1 and pageNav[0] is not None
-				and pageNav[0].get('data-last') is not None):
+		pageNav = soup.find_all('div', {'class': 'PageNav'})
+		if (
+			len(pageNav) >= 1 and pageNav[0] is not None
+			and pageNav[0].get('data-last') is not None
+		):
 			pageNav = pageNav[0]
 			pageCount = int(pageNav.get('data-last'))
 			return (pageCount, True)
 
 		# new style
-		pageNav = soup.find('div', { 'class': 'pageNav' })
+		pageNav = soup.find('div', {'class': 'pageNav'})
 		if pageNav is None:
-			return (1, True) # TODO?
+			return (1, True)  # TODO?
 		pageCount = 1
-		for link in pageNav.findAll('li', { 'class': 'pageNav-page' }):
+		for link in pageNav.findAll('li', {'class': 'pageNav-page'}):
 			a = link.find('a')
 			t = a.getText().strip()
 			if not t.isnumeric():
@@ -235,7 +242,8 @@ class XenForoAdapter(Adapter):
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 		pageCount, oldStyle = self.getPageCount(soup)
 		if pageCount <= 1:
-			return [readerUrl] # TODO? raise Exception('error: unable to find PageNav')
+			# TODO? raise Exception('error: unable to find PageNav')
+			return [readerUrl]
 		urls = [readerUrl]
 		for i in range(2, pageCount + 1):
 			if oldStyle:
@@ -262,7 +270,9 @@ class XenForoAdapter(Adapter):
 
 	def readerSoftScrape(self, fic: Fic) -> None:
 		urls = self.getReaderUrls(fic)
-		util.logMessage('readerSoftScrape|fic.id: {}|len(urls): {}'.format(fic.id, len(urls)))
+		util.logMessage(
+			'readerSoftScrape|fic.id: {}|len(urls): {}'.format(fic.id, len(urls))
+		)
 		for url in urls:
 			self.scrapeLike(url)
 
@@ -274,30 +284,42 @@ class XenForoAdapter(Adapter):
 			if len(labelSpans) < 1:
 				return None
 			if len(labelSpans) > 1:
-				util.logMessage(f'XenForoAdapter: too many threadmark labels: len: {len(labelSpans)}')
+				util.logMessage(
+					f'XenForoAdapter: too many threadmark labels: len: {len(labelSpans)}'
+				)
 			return str(labelSpans[0].get_text()).strip()
 		except Exception as e:
-			util.logMessage('XenForoAdapter.extractPostThreadmarkTitle: exception FIXME: {}\n{}'
-					.format(e, traceback.format_exc()))
+			util.logMessage(
+				'\n'.join(
+					[
+						f'XenForoAdapter.extractPostThreadmarkTitle: exception FIXME: {e}',
+						traceback.format_exc()
+					]
+				)
+			)
 		return None
 
 	def getReaderPosts(self, fic: Fic) -> Tuple[Dict[str, Any], Dict[int, str]]:
 		from bs4 import BeautifulSoup
 		urls = self.getReaderUrls(fic)
-		soups = { }
-		titles = { }
+		soups = {}
+		titles = {}
 		for url in urls:
 			pageContent = self.scrapeLike(url)
 			pageSoup = BeautifulSoup(pageContent, 'html5lib')
-			posts = pageSoup.find_all(self.postContainer, { 'class': 'message'})
+			posts = pageSoup.find_all(self.postContainer, {'class': 'message'})
 			if len(posts) < self.postsPerPage and url != urls[-1]:
-				util.logMessage(f'XenForoAdapter.getReaderPosts: {url} is not the last page but is incomplete with {len(posts)} posts; attempting to refetch')
+				util.logMessage(
+					f'XenForoAdapter.getReaderPosts: {url} is not the last page but is incomplete with {len(posts)} posts; attempting to refetch'
+				)
 				pageContent = scrape.scrape(url, timeout=30)['raw']
 				time.sleep(self.defaultDelay)
 				pageSoup = BeautifulSoup(pageContent, 'html5lib')
-				posts = pageSoup.find_all(self.postContainer, { 'class': 'message'})
+				posts = pageSoup.find_all(self.postContainer, {'class': 'message'})
 			if len(posts) < self.postsPerPage and url != urls[-1]:
-				raise Exception(f'XenForoAdapter.getReaderPosts: {url} is not the last page but is incomplete with {len(posts)} posts')
+				raise Exception(
+					f'XenForoAdapter.getReaderPosts: {url} is not the last page but is incomplete with {len(posts)} posts'
+				)
 			for post in posts:
 				pid = post.get('id')
 				if pid.startswith('js-'):
@@ -318,7 +340,7 @@ class XenForoAdapter(Adapter):
 		for url in urls:
 			pageContent = self.scrapeLike(url)
 			pageSoup = BeautifulSoup(pageContent, 'html5lib')
-			posts = pageSoup.find_all(self.postContainer, { 'class': 'message'})
+			posts = pageSoup.find_all(self.postContainer, {'class': 'message'})
 			for post in posts:
 				postUrls += [url + '#' + post.get('id')]
 		return postUrls
@@ -330,8 +352,12 @@ class XenForoAdapter(Adapter):
 		for url in urls:
 			pageContent = self.scrapeLike(url)
 			pageSoup = BeautifulSoup(pageContent, 'html5lib')
-			posts = pageSoup.find_all(self.postContainer,
-					{ 'class': 'message', 'data-author': fic.getAuthorName() })
+			posts = pageSoup.find_all(
+				self.postContainer, {
+					'class': 'message',
+					'data-author': fic.getAuthorName()
+				}
+			)
 			for post in posts:
 				soups[post.get('id')] = post
 		return soups
@@ -374,18 +400,18 @@ class XenForoAdapter(Adapter):
 					postUrl = url + '#' + idStub
 					if idStub not in seenIdStubs:
 						postUrls += [postUrl]
-					seenIdStubs |= { idStub }
+					seenIdStubs |= {idStub}
 		util.logMessage(f'XenForo.getDeepAuthorPostUrls|postUrls: {postUrls}')
 		return postUrls
 
 	def cacheAuthorPostImages(self, fic: Fic) -> None:
 		purls = self.getDeepAuthorPostUrls(fic)
-		posts = self.getDeepAuthorPosts(fic) # Dict[str, BeautifulSoup]:
+		posts = self.getDeepAuthorPosts(fic)  # Dict[str, BeautifulSoup]:
 		dataUrls: Set[str] = set()
 		imgSrc: Set[str] = set()
 
-		ignoredAttrs = { 'height', 'width', 'class', 'data-url', 'data-src' }
-		usedAttrs = { 'src', 'alt', 'title' }
+		ignoredAttrs = {'height', 'width', 'class', 'data-url', 'data-src'}
+		usedAttrs = {'src', 'alt', 'title'}
 		attrs: Set[str] = set()
 
 		for purl in purls:
@@ -403,10 +429,10 @@ class XenForoAdapter(Adapter):
 
 				src = img.get('src')
 				if src is None:
-					dataUrls |= { img.get('data-url') }
+					dataUrls |= {img.get('data-url')}
 					continue
 				if src.startswith('proxy.php?'):
-					r = src[src.find('?')+1:]
+					r = src[src.find('?') + 1:]
 					qs = urllib.parse.parse_qs(r)
 					if 'image' in qs and len(qs['image']) == 1:
 						src = qs['image'][0]
@@ -416,7 +442,7 @@ class XenForoAdapter(Adapter):
 
 				title = img.get('title')
 				alt = img.get('alt')
-				if alt is not None: # get rid of ZWS
+				if alt is not None:  # get rid of ZWS
 					alt = alt.replace('\u200b', '').strip()
 
 				# throwaway useless alts
@@ -438,44 +464,56 @@ class XenForoAdapter(Adapter):
 
 	def getLastFetchedThreadmarksUrl(self, fic: Fic) -> str:
 		if self.baseUrl.find('?') >= 0:
-			return self.getLastLikeOrDefault([
+			return self.getLastLikeOrDefault(
+				[
 					f'{self.baseUrl}threads/{fic.localId}/threadmarks&category_id=1',
 					f'{self.baseUrl}threads/%.{fic.localId}/threadmarks&category_id=1',
-				], f'{self.baseUrl}threads/{fic.localId}/threadmarks&category_id=1')
-		return self.getLastLikeOrDefault([
+				], f'{self.baseUrl}threads/{fic.localId}/threadmarks&category_id=1'
+			)
+		return self.getLastLikeOrDefault(
+			[
 				f'{self.baseUrl}threads/{fic.localId}/threadmarks?category_id=1',
 				f'{self.baseUrl}threads/%.{fic.localId}/threadmarks?category_id=1',
-			], f'{self.baseUrl}threads/{fic.localId}/threadmarks?category_id=1')
+			], f'{self.baseUrl}threads/{fic.localId}/threadmarks?category_id=1'
+		)
 
 	def getLastFetchedReaderUrl(self, fic: Fic) -> str:
-		return self.getLastLikeOrDefault([
+		return self.getLastLikeOrDefault(
+			[
 				'{}threads/{}/reader_%'.format(self.baseUrl, fic.localId),
 				'{}threads/%.{}/reader_%'.format(self.baseUrl, fic.localId),
-			], '{}threads/{}/reader'.format(self.baseUrl, fic.localId))
+			], '{}threads/{}/reader'.format(self.baseUrl, fic.localId)
+		)
 
 	def getLastFetchedReaderStartUrl(self, fic: Fic) -> str:
-		return self.getLastLikeOrDefault([
+		return self.getLastLikeOrDefault(
+			[
 				'{}threads/{}/reader'.format(self.baseUrl, fic.localId),
 				'{}threads/%.{}/reader'.format(self.baseUrl, fic.localId),
-			], '{}threads/{}/reader'.format(self.baseUrl, fic.localId))
+			], '{}threads/{}/reader'.format(self.baseUrl, fic.localId)
+		)
 
 	def getLastFetchedDeepUrl(self, fic: Fic) -> str:
-		return self.getLastLikeOrDefault([
+		return self.getLastLikeOrDefault(
+			[
 				'{}threads/{}/page-%'.format(self.baseUrl, fic.localId),
 				'{}threads/%.{}/page-%'.format(self.baseUrl, fic.localId),
-			], '{}threads/{}'.format(self.baseUrl, fic.localId))
+			], '{}threads/{}'.format(self.baseUrl, fic.localId)
+		)
 
 	def getLastFetchedDeepStartUrl(self, fic: Fic) -> str:
-		return self.getLastLikeOrDefault([
+		return self.getLastLikeOrDefault(
+			[
 				'{}threads/{}'.format(self.baseUrl, fic.localId),
 				'{}threads/%.{}'.format(self.baseUrl, fic.localId),
-			], '{}threads/{}'.format(self.baseUrl, fic.localId))
+			], '{}threads/{}'.format(self.baseUrl, fic.localId)
+		)
 
 	def getUrlsToRefetch(self, fic: Fic) -> Set[str]:
 		return {
-				self.getLastFetchedDeepUrl(fic),
-				self.getLastFetchedDeepStartUrl(fic),
-			}
+			self.getLastFetchedDeepUrl(fic),
+			self.getLastFetchedDeepStartUrl(fic),
+		}
 
 	def rescrapeFreshInfo(self, fic: Fic) -> None:
 		if scrape._staleOnly:
@@ -486,10 +524,10 @@ class XenForoAdapter(Adapter):
 			time.sleep(self.defaultDelay)
 
 		canFail = {
-				self.getLastFetchedThreadmarksUrl(fic),
-				self.getLastFetchedReaderUrl(fic),
-				self.getLastFetchedReaderStartUrl(fic),
-			}
+			self.getLastFetchedThreadmarksUrl(fic),
+			self.getLastFetchedReaderUrl(fic),
+			self.getLastFetchedReaderStartUrl(fic),
+		}
 		for url in canFail:
 			try:
 				scrape.scrape(url, timeout=30)
@@ -503,15 +541,15 @@ class XenForoAdapter(Adapter):
 
 	def getPostUpdatedOrPublished(self, post: Any) -> int:
 		# old style xen foro
-		messageMeta = post.find_all('div', { 'class': 'messageMeta' })
+		messageMeta = post.find_all('div', {'class': 'messageMeta'})
 		if len(messageMeta) == 1:
-			dt = messageMeta[0].find_all('span', { 'class': 'DateTime' })
+			dt = messageMeta[0].find_all('span', {'class': 'DateTime'})
 			ts = None
 			if len(dt) == 1:
 				dt = dt[0]
 				ts = dt.get('title')
 			else:
-				dt = messageMeta[0].find_all('abbr', { 'class': 'DateTime' })
+				dt = messageMeta[0].find_all('abbr', {'class': 'DateTime'})
 				if len(dt) != 1:
 					raise Exception('error: unable to find message meta datetime')
 				dt = dt[0]
@@ -525,17 +563,17 @@ class XenForoAdapter(Adapter):
 			raise Exception('error: unable to find message meta')
 
 		# new xen foro style
-		lastEdit = post.find('div', { 'class': 'message-lastEdit' })
+		lastEdit = post.find('div', {'class': 'message-lastEdit'})
 		if lastEdit is not None:
 			t = lastEdit.find('time')
 			return int(t.get('data-time'))
 
-		postPublish = post.find('div', { 'class': 'message-attribution-main' })
+		postPublish = post.find('div', {'class': 'message-attribution-main'})
 		if postPublish is not None:
 			t = postPublish.find('time')
 			return int(t.get('data-time'))
 
-		postPublish = post.find('header', { 'class': 'message-attribution' })
+		postPublish = post.find('header', {'class': 'message-attribution'})
 		if postPublish is not None:
 			t = postPublish.find('time')
 			return int(t.get('data-time'))
@@ -548,7 +586,7 @@ class XenForoAdapter(Adapter):
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 		if fic.ficStatus is None or fic.ficStatus == FicStatus.broken:
 			fic.ficStatus = FicStatus.ongoing
 
@@ -556,7 +594,7 @@ class XenForoAdapter(Adapter):
 		fic.reviewCount = 0
 		fic.favoriteCount = 0
 		fic.followCount = 0
-		fic.ageRating = 'M' # TODO?
+		fic.ageRating = 'M'  # TODO?
 
 		# grab title from <title> element
 		titles = soup.find('head').find_all('title')
@@ -566,7 +604,7 @@ class XenForoAdapter(Adapter):
 		try:
 			ntitle = titles[0].get_text()
 		except:
-			pass # TODO FIXME
+			pass  # TODO FIXME
 		if fic.title is None or len(ntitle.strip()) > 0:
 			fic.title = ntitle
 		if len(self.titleSuffix) > 0 and fic.title.endswith(self.titleSuffix):
@@ -575,7 +613,7 @@ class XenForoAdapter(Adapter):
 
 		# determine author
 		authorPost = self.getRealAuthorPost(fic)
-		authorPostUsernames = authorPost.find_all('a', { 'class': 'username' })
+		authorPostUsernames = authorPost.find_all('a', {'class': 'username'})
 		if len(authorPostUsernames) < 1:
 			raise Exception('error: unable to find author username')
 		author = authorPostUsernames[0].get_text()
@@ -597,7 +635,7 @@ class XenForoAdapter(Adapter):
 		threadmarksHtml = None
 		try:
 			sep = '?' if self.baseUrl.find('?') < 0 else '&'
-			url = self.baseUrl + 'threads/' + str(fic.localId) + '/threadmarks' + sep + 'category_id=1'
+			url = f'{self.baseUrl}threads/{fic.localId}/threadmarks{sep}category_id=1'
 			threadmarksHtml = self.scrapeLike(url)
 			self.readerSoftScrape(fic)
 		except:
@@ -605,17 +643,18 @@ class XenForoAdapter(Adapter):
 			# soft scrape all thread pages to ensure we have everything
 			self.deepSoftScrape(fic)
 
-		postSoups: Dict[str, Any] = { }
+		postSoups: Dict[str, Any] = {}
 
 		postUrls: List[str] = []
-		chapterTitles = { }
+		chapterTitles = {}
 		try:
 			# scrape the threadmarks page, assuming there is one
 			threadmarksSoup = BeautifulSoup(threadmarksHtml, 'html5lib')
 
 			# attempt to extract a fic description
-			threadmarkExtraInfo = threadmarksSoup.find('div',
-					{ 'class': 'threadmarkListingHeader-extraInfo' })
+			threadmarkExtraInfo = threadmarksSoup.find(
+				'div', {'class': 'threadmarkListingHeader-extraInfo'}
+			)
 			if threadmarkExtraInfo is not None:
 				bbWrapper = threadmarkExtraInfo.find('div', {'class': 'bbWrapper'})
 				if bbWrapper is not None:
@@ -624,12 +663,16 @@ class XenForoAdapter(Adapter):
 					fic.description = ''.join([f'<p>{l}</p>' for l in descView.text])
 
 			# determine chapter count based on threadmarks
-			threadmarkList = threadmarksSoup.find('div', { 'class': 'threadmarkList' })
+			threadmarkList = threadmarksSoup.find('div', {'class': 'threadmarkList'})
 			threadmarks = None
 			if threadmarkList is not None:
-				threadmarks = threadmarkList.find_all('li', { 'class': 'threadmarkListItem' })
+				threadmarks = threadmarkList.find_all(
+					'li', {'class': 'threadmarkListItem'}
+				)
 			else:
-				threadmarkList = threadmarksSoup.find('div', { 'class': 'block-body--threadmarkBody' })
+				threadmarkList = threadmarksSoup.find(
+					'div', {'class': 'block-body--threadmarkBody'}
+				)
 				if threadmarkList is None:
 					raise Exception('error: unable to find threadmark menu')
 				if threadmarkList.find(class_='fa-ellipsis-h') is not None:
@@ -640,7 +683,9 @@ class XenForoAdapter(Adapter):
 				util.logMessage(f'XenForo|new threadmarks count|{len(threadmarks)}')
 
 			for threadmark in threadmarks:
-				if threadmark.find('span', { 'class': 'message-newIndicator' }) is not None:
+				if threadmark.find(
+					'span', {'class': 'message-newIndicator'}
+				) is not None:
 					continue
 				a = threadmark.find('a')
 				purl = a.get('href')
@@ -659,17 +704,26 @@ class XenForoAdapter(Adapter):
 				# https://forum.questionablequesting.com/threads/worm-cyoa-things-to-do-in-brockton-bay-when-youre-a-bored-demigod.1247/reader
 				# Reader page says 36 threadmarks, but actual threadmark list says 33
 				# First reader page abruptly stops at 27 threadmarks
-				util.logMessage('XenForoAdapter: unable to getReaderPosts: {}\n{}'
-						.format(ie, traceback.format_exc()))
+				util.logMessage(
+					'XenForoAdapter: unable to getReaderPosts: {}\n{}'.format(
+						ie, traceback.format_exc()
+					)
+				)
 		except Exception as e:
-			util.logMessage('XenForoAdapter: unable to parse threadmarks: {}\n{}'
-					.format(e, traceback.format_exc()))
+			util.logMessage(
+				'XenForoAdapter: unable to parse threadmarks: {}\n{}'.format(
+					e, traceback.format_exc()
+				)
+			)
 			try:
 				postUrls = self.getReaderPostUrls(fic)
 				postSoups, chapterTitles = self.getReaderPosts(fic)
 			except Exception as ie:
-				util.logMessage('XenForoAdapter: unable to parse reader posts: {}\n{}'
-						.format(ie, traceback.format_exc()))
+				util.logMessage(
+					'XenForoAdapter: unable to parse reader posts: {}\n{}'.format(
+						ie, traceback.format_exc()
+					)
+				)
 				postUrls = self.getDeepAuthorPostUrls(fic)
 				# if we fallback to here, don't immediately setup postSoups at all;
 				# they'll be fetched as needed later
@@ -702,17 +756,19 @@ class XenForoAdapter(Adapter):
 					pageSoup = BeautifulSoup(pageContent, 'html5lib')
 					lastSoupUrl = burl
 					lastSoup = pageSoup
-				assert(pageSoup is not None)
+				assert (pageSoup is not None)
 				if postId is not None:
-					poss = pageSoup.find_all(self.postContainer, { 'id': postId })
+					poss = pageSoup.find_all(self.postContainer, {'id': postId})
 					if len(poss) != 1:
 						# XenForo2 often has js- prefixed on the actual id attr
-						poss = pageSoup.find_all(self.postContainer, { 'id': 'js-' + postId })
+						poss = pageSoup.find_all(self.postContainer, {'id': 'js-' + postId})
 					if len(poss) != 1:
 						raise Exception(f'error: cannot find post for chapter {postId}')
 					rawPost = str(poss[0])
 				else:
-					rawPost = str(pageSoup.find_all(self.postContainer, { 'class': 'message'})[0])
+					rawPost = str(
+						pageSoup.find_all(self.postContainer, {'class': 'message'})[0]
+					)
 
 			chapterPosts += [rawPost]
 			chapterUrls += [burl]
@@ -725,7 +781,9 @@ class XenForoAdapter(Adapter):
 		chapterContents: List[str] = []
 		for rawPost in chapterPosts:
 			post = BeautifulSoup(rawPost, 'html5lib')
-			content = post.find_all('div', { 'class': ['messageContent', 'message-content'] })
+			content = post.find_all(
+				'div', {'class': ['messageContent', 'message-content']}
+			)
 			if len(content) != 1:
 				raise Exception('error: cannot find content for chapter post')
 			content = content[0]
@@ -745,7 +803,9 @@ class XenForoAdapter(Adapter):
 			fic.updated = OilTimestamp(uts)
 
 		if fic.updated is None:
-			raise Exception(f'unable to determine updated date: {len(chapterPosts)} {len(postUrls)}')
+			raise Exception(
+				f'unable to determine updated date: {len(chapterPosts)} {len(postUrls)}'
+			)
 
 		fic.upsert()
 		for cid in range(fic.chapterCount):
@@ -787,7 +847,7 @@ class XenForoAdapter(Adapter):
 			nloc = fic.title.lower().find(ntag)
 			if nloc != -1:
 				fic.title = fic.title[:nloc] + fic.title[nloc + len(ntag):]
-				fic.ageRating = 'M' # TODO?
+				fic.ageRating = 'M'  # TODO?
 			fic.title = fic.title.strip()
 			fic.title = fic.title.replace('  ', ' ')
 
@@ -804,75 +864,83 @@ class XenForoAdapter(Adapter):
 		# things like , and /, then match against existing known fandoms
 		# (fragment, [fandom], [tags])
 		fandomFragments: List[Tuple[str, List[str], List[str]]] = [
-				('Alt!Power', [], ['altpower']),
-				('Altpower!Taylor / Worm', ['Worm'], ['altpower']),
-				('A:tLA', ['Avatar'], []),
-				('Dragon Ball', ['Dragon Ball'], []),
-				('Exalted/Worm', ['Worm', 'Exalted'], []),
-				('Gundam x Worm', ['Worm', 'Gundam'], []),
-				('Harry Potter AU', ['Harry Potter'], []),
-				('Harry Potter', ['Harry Potter'], []),
-				('Harry Potter/Star Wars', ['Harry Potter', 'Star Wars'], []),
-				('Infinite Stratos', ['Infinite Stratos'], []),
-				('LoZ', ['Legend of Zelda'], []),
-				('Modified Pokemon CYOA', ['Pokemon'], ['CYOA']),
-				('Naruto', ['Naruto'], []),
-				('Neon Genesis Evangelion', ['Neon Genesis Evangelion'], []),
-				('Overwatch', ['Overwatch'], []),
-				('Pokemon', ['Pokemon'], []),
-				('RWBY/The Gamer', ['RWBY', 'The Gamer'], []),
-				('Sailor Moon', ['Sailor Moon'], []),
-				('SAO', ['Sword Art Online'], []),
-				('Stargate: Atlantis', ['Stargate Atlantis'], []),
-				('Worm Altpower/AU', ['Worm'], ['altpower']),
-				('Worm alt power/crossover Hellsing Ultimate', ['Worm', 'Hellsing'], ['altpower']),
-				('Worm Altpower Fic', ['Worm'], ['altpower']),
-				('Worm | AltPower | Simurgh!Taylor', ['Worm'], ['altpower', 'Simurgh!Taylor']),
-				('Worm altpower!Taylor', ['Worm'], ['altpower']),
-				('Worm Altpower', ['Worm'], ['altpower']),
-				('Worm Alt!Power', ['Worm'], ['altpower']),
-				('Worm, Alt Power', ['Worm'], ['altpower']),
-				('Worm Alt Power/X-Men', ['Worm', 'X-Men'], ['altpower']),
-				('Worm AU, Altpower', ['Worm'], ['altpower']),
-				('Worm AU/Altpower', ['Worm'], ['altpower']),
-				('Worm/AU/Altpower', ['Worm'], ['altpower']),
-				('Worm AU Alt!Power', ['Worm'], ['altpower']),
-				('Worm, AU, Alt-Power', ['Worm'], ['altpower']),
-				('Worm, AU, AltPower', ['Worm'], ['altpower']),
-				('Worm/AU/Alt-Power', ['Worm'], ['altpower']),
-				('Worm AU fanfic', ['Worm'], []),
-				('Worm AU', ['Worm'], []),
-				('Worm/Bayonetta', ['Worm', 'Bayonetta'], []),
-				('Worm/Bionicle', ['Worm', 'Bionicle'], []),
-				('Worm/Bleach', ['Worm', 'Bleach'], []),
-				('Worm/Bloodborne Crackfic', ['Worm', 'Bloodborne'], ['crackfic']),
-				('Worm CYOA/SI', ['Worm'], ['CYOA', "SI"]),
-				('Worm/Diebuster', ['Worm', 'Diebuster'], []),
-				('Worm/Dragonball', ['Worm', 'Dragon Ball'], []),
-				('Worm/Exalted Crossover', ['Worm', 'Exalted'], []),
-				('Worm/Exalted', ['Worm', 'Exalted'], []),
-				('Worm Fanfic (AU)', ['Worm'], []),
-				('Worm Fic', ['Worm'], []),
-				('Worm/Heroes', ['Worm', 'Heroes'], []),
-				('Worm/JoJo SI', ['Worm', "JoJo's Bizarre Adventure"], ["SI"]),
-				('Worm/Lilo and Stitch', ['Worm', 'Lilo and Stitch'], []),
-				('Worm/Okami', ['Worm', 'Okami'], []),
-				('Worm/Overwatch', ['Worm', 'Overwatch'], []),
-				('Worm/Pokemon', ['Worm', 'Pokemon'], []),
-				('Worm/Skyrim/Gamer', ['Worm', 'Skyrim'], ['gamer']),
-				('Worm/Spore', ['Worm', 'Spore'], []),
-				('Worm/Stargate', ['Worm', 'Stargate'], []),
-				('Worm/Steven Universe', ['Worm', 'Steven Universe'], []),
-				('Worm/SupCom', ['Worm', 'Supreme Commander'], []),
-				('Worm/Supreme Commander', ['Worm', 'Supreme Commander'], []),
-				('Worm/Tokyo Ghoul', ['Worm', 'Tokyo Ghoul'], []),
-				('Worm/Transformers', ['Worm', 'Transformers'], []),
-				('Worm', ['Worm'], []),
-				('Worm/WTNV', ['Worm', 'Welcome to Night Vale'], []),
-				('Worm|Xiaolin Showdown', ['Worm', 'Xiaolin Showdown'], []),
-				('Worm x Naruto', ['Worm', 'Naruto'], []),
-				('Worm X Undertale', ['Worm', 'Undertale'], []),
-			]
+			('Alt!Power', [], ['altpower']),
+			('Altpower!Taylor / Worm', ['Worm'], ['altpower']),
+			('A:tLA', ['Avatar'], []),
+			('Dragon Ball', ['Dragon Ball'], []),
+			('Exalted/Worm', ['Worm', 'Exalted'], []),
+			('Gundam x Worm', ['Worm', 'Gundam'], []),
+			('Harry Potter AU', ['Harry Potter'], []),
+			('Harry Potter', ['Harry Potter'], []),
+			('Harry Potter/Star Wars', ['Harry Potter', 'Star Wars'], []),
+			('Infinite Stratos', ['Infinite Stratos'], []),
+			('LoZ', ['Legend of Zelda'], []),
+			('Modified Pokemon CYOA', ['Pokemon'], ['CYOA']),
+			('Naruto', ['Naruto'], []),
+			('Neon Genesis Evangelion', ['Neon Genesis Evangelion'], []),
+			('Overwatch', ['Overwatch'], []),
+			('Pokemon', ['Pokemon'], []),
+			('RWBY/The Gamer', ['RWBY', 'The Gamer'], []),
+			('Sailor Moon', ['Sailor Moon'], []),
+			('SAO', ['Sword Art Online'], []),
+			('Stargate: Atlantis', ['Stargate Atlantis'], []),
+			('Worm Altpower/AU', ['Worm'], ['altpower']),
+			(
+				'Worm alt power/crossover Hellsing Ultimate', ['Worm', 'Hellsing'], [
+					'altpower'
+				]
+			),
+			('Worm Altpower Fic', ['Worm'], ['altpower']),
+			(
+				'Worm | AltPower | Simurgh!Taylor', ['Worm'], [
+					'altpower', 'Simurgh!Taylor'
+				]
+			),
+			('Worm altpower!Taylor', ['Worm'], ['altpower']),
+			('Worm Altpower', ['Worm'], ['altpower']),
+			('Worm Alt!Power', ['Worm'], ['altpower']),
+			('Worm, Alt Power', ['Worm'], ['altpower']),
+			('Worm Alt Power/X-Men', ['Worm', 'X-Men'], ['altpower']),
+			('Worm AU, Altpower', ['Worm'], ['altpower']),
+			('Worm AU/Altpower', ['Worm'], ['altpower']),
+			('Worm/AU/Altpower', ['Worm'], ['altpower']),
+			('Worm AU Alt!Power', ['Worm'], ['altpower']),
+			('Worm, AU, Alt-Power', ['Worm'], ['altpower']),
+			('Worm, AU, AltPower', ['Worm'], ['altpower']),
+			('Worm/AU/Alt-Power', ['Worm'], ['altpower']),
+			('Worm AU fanfic', ['Worm'], []),
+			('Worm AU', ['Worm'], []),
+			('Worm/Bayonetta', ['Worm', 'Bayonetta'], []),
+			('Worm/Bionicle', ['Worm', 'Bionicle'], []),
+			('Worm/Bleach', ['Worm', 'Bleach'], []),
+			('Worm/Bloodborne Crackfic', ['Worm', 'Bloodborne'], ['crackfic']),
+			('Worm CYOA/SI', ['Worm'], ['CYOA', "SI"]),
+			('Worm/Diebuster', ['Worm', 'Diebuster'], []),
+			('Worm/Dragonball', ['Worm', 'Dragon Ball'], []),
+			('Worm/Exalted Crossover', ['Worm', 'Exalted'], []),
+			('Worm/Exalted', ['Worm', 'Exalted'], []),
+			('Worm Fanfic (AU)', ['Worm'], []),
+			('Worm Fic', ['Worm'], []),
+			('Worm/Heroes', ['Worm', 'Heroes'], []),
+			('Worm/JoJo SI', ['Worm', "JoJo's Bizarre Adventure"], ["SI"]),
+			('Worm/Lilo and Stitch', ['Worm', 'Lilo and Stitch'], []),
+			('Worm/Okami', ['Worm', 'Okami'], []),
+			('Worm/Overwatch', ['Worm', 'Overwatch'], []),
+			('Worm/Pokemon', ['Worm', 'Pokemon'], []),
+			('Worm/Skyrim/Gamer', ['Worm', 'Skyrim'], ['gamer']),
+			('Worm/Spore', ['Worm', 'Spore'], []),
+			('Worm/Stargate', ['Worm', 'Stargate'], []),
+			('Worm/Steven Universe', ['Worm', 'Steven Universe'], []),
+			('Worm/SupCom', ['Worm', 'Supreme Commander'], []),
+			('Worm/Supreme Commander', ['Worm', 'Supreme Commander'], []),
+			('Worm/Tokyo Ghoul', ['Worm', 'Tokyo Ghoul'], []),
+			('Worm/Transformers', ['Worm', 'Transformers'], []),
+			('Worm', ['Worm'], []),
+			('Worm/WTNV', ['Worm', 'Welcome to Night Vale'], []),
+			('Worm|Xiaolin Showdown', ['Worm', 'Xiaolin Showdown'], []),
+			('Worm x Naruto', ['Worm', 'Naruto'], []),
+			('Worm X Undertale', ['Worm', 'Undertale'], []),
+		]
 		titleFandoms: Set[str] = set()
 		titleTags: Set[str] = set()
 
@@ -892,9 +960,9 @@ class XenForoAdapter(Adapter):
 						hadFrag = True
 						title = title[:fragLoc] + title[fragLoc + len(frag):]
 						for fan in fans:
-							titleFandoms |= { fan }
+							titleFandoms |= {fan}
 						for tag in tags:
-							titleTags |= { tag }
+							titleTags |= {tag}
 
 		if title.startswith('- '):
 			title = title[len('- '):]
@@ -924,12 +992,15 @@ class XenForoAdapter(Adapter):
 		# FIXME canon may find an older url than ulike :/
 
 		canonRes = scrape.getMostRecentScrapeWithMeta(canon)
-		if (canonRes is not None
-				and int(time.time()) - self.mustyThreshold < canonRes['fetched']):
+		if (
+			canonRes is not None
+			and int(time.time()) - self.mustyThreshold < canonRes['fetched']
+		):
 			return cast(str, canonRes['raw'])
 
-		data = scrape.softScrape(url, delay, ulike, mustyThreshold=self.mustyThreshold)
+		data = scrape.softScrape(
+			url, delay, ulike, mustyThreshold=self.mustyThreshold
+		)
 		if data is None:
 			raise Exception('unable to soft scrape? FIXME')
 		return data
-

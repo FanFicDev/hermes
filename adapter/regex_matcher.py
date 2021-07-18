@@ -1,6 +1,7 @@
 import re
 from typing import Dict, Optional, Tuple, Any
 
+
 # used to extract values from text given regex and types
 class RegexMatcher:
 	def __init__(self, text: str, patterns: Dict[str, Tuple[str, type]]):
@@ -33,6 +34,8 @@ class RegexMatcher:
 		if which.endswith('?'):
 			return None
 		else:
-			raise Exception('error: cannot find {} ({}) in {}'.format(
-				which, self.patterns[which], self.text))
-
+			raise Exception(
+				'error: cannot find {} ({}) in {}'.format(
+					which, self.patterns[which], self.text
+				)
+			)

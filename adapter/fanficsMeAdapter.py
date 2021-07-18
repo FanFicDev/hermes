@@ -9,11 +9,10 @@ import scrape
 
 from adapter.adapter import Adapter
 
+
 class FanficsMeAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'http://fanfics.me', 'fanfics.me',
-				FicType.fanficsme)
+		super().__init__(True, 'http://fanfics.me', 'fanfics.me', FicType.fanficsme)
 		self.baseStoryUrl = self.baseUrl + '/read2.php'
 
 	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
@@ -24,7 +23,7 @@ class FanficsMeAdapter(Adapter):
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		if chapter.fic is None:
-			chapter.fic = Fic.lookup((chapter.ficId,))
+			chapter.fic = Fic.lookup((chapter.ficId, ))
 		return self.constructUrl(chapter.fic.localId, chapter.chapterId)
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
@@ -55,20 +54,20 @@ class FanficsMeAdapter(Adapter):
 		fic = self.parseInfoInto(fic, data)
 		fic.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
 		# TODO: is this ok? it will never be called if its always prefetched by
 		# TODO: getLatest grabbing it without the cid?
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(html, 'html5lib')
-		readContent = soup.find('div', { 'class': 'ReadContent' })
-		header = readContent.find('h2') # TODO: this is the chapter title
-		chapter = readContent.find('div', { 'class': 'chapter' })
+		readContent = soup.find('div', {'class': 'ReadContent'})
+		header = readContent.find('h2')  # TODO: this is the chapter title
+		chapter = readContent.find('div', {'class': 'chapter'})
 		return str(chapter)
 
 	def getCurrentInfo(self, fic: Fic) -> Fic:
-		data = scrape.scrape(fic.url)['raw'] # scrape fresh info
+		data = scrape.scrape(fic.url)['raw']  # scrape fresh info
 		return self.parseInfoInto(fic, data)
 
 	def parseRussianDate(self, datestr: str) -> OilTimestamp:
@@ -79,20 +78,20 @@ class FanficsMeAdapter(Adapter):
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
 		raise Exception('FIXME TODO fanfics me format has changed')
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 
-		ficHead = soup.find('div', { 'class': 'FicHead' })
+		ficHead = soup.find('div', {'class': 'FicHead'})
 
 		titleH1 = ficHead.find('h1')
 		fic.title = titleH1.getText().strip()
 
 		fandoms: List[str] = []
-		trs = ficHead.findAll('div', { 'class': 'tr' })
+		trs = ficHead.findAll('div', {'class': 'tr'})
 		author = None
 		for tr in trs:
-			divTitle = tr.find('div', { 'class': 'title' })
-			divContent = tr.find('div', { 'class': 'content' })
+			divTitle = tr.find('div', {'class': 'title'})
+			divContent = tr.find('div', {'class': 'content'})
 
 			t = str(divTitle.getText()).strip()
 			v = str(divContent.getText()).strip()
@@ -116,7 +115,7 @@ class FanficsMeAdapter(Adapter):
 			elif t == 'Изменен:':
 				fic.updated = self.parseRussianDate(v)
 			elif t == 'Ссылка:':
-				src = v # source archive url
+				src = v  # source archive url
 			elif t == 'Читателей:':
 				fic.followCount = int(v)
 			elif t == 'Персонажи:':
@@ -131,20 +130,20 @@ class FanficsMeAdapter(Adapter):
 				raise Exception('unknown metadata: ' + t)
 
 		# TODO?
-		assert(author is not None)
+		assert (author is not None)
 		authorUrl = author
 		authorId = author
 		self.setAuthor(fic, author, authorUrl, authorId)
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		if fic.url is None:
 			fic.url = self.constructUrl(fic.localId)
 
-		summaryTextDiv = soup.find('div', { 'class': 'summary_text' })
+		summaryTextDiv = soup.find('div', {'class': 'summary_text'})
 		if summaryTextDiv is None:
-			summaryTextDiv = soup.find('div', { 'class': 'summary_text_fic3' })
+			summaryTextDiv = soup.find('div', {'class': 'summary_text_fic3'})
 		fic.description = summaryTextDiv.getText()
 
 		# default optional fields
@@ -155,8 +154,8 @@ class FanficsMeAdapter(Adapter):
 
 		fic.ageRating = 'M'
 
-		ficContentsUl = soup.find('ul', { 'class': 'FicContents' })
-		chapterLinks = ficContentsUl.findAll('li', { 'class': 't-b-dotted' })
+		ficContentsUl = soup.find('ul', {'class': 'FicContents'})
+		chapterLinks = ficContentsUl.findAll('li', {'class': 't-b-dotted'})
 		fic.chapterCount = len(chapterLinks)
 
 		if fic.wordCount is None:
@@ -171,12 +170,14 @@ class FanficsMeAdapter(Adapter):
 
 			# try to get it out of current blob first
 			if chapter.html() is None:
-				contentDiv = soup.find('div', { 'id': 'c{}'.format(cid - 1) })
+				contentDiv = soup.find('div', {'id': 'c{}'.format(cid - 1)})
 				if contentDiv is not None:
-					chapter.setHtml('<div class="ReadContent">' + str(contentDiv) + '</div>')
+					chapter.setHtml(
+						'<div class="ReadContent">' + str(contentDiv) + '</div>'
+					)
 
 			if chapter.title is None or len(chapter.title) < 1:
-				contentDiv = soup.find('div', { 'id': 'c{}'.format(cid - 1) })
+				contentDiv = soup.find('div', {'id': 'c{}'.format(cid - 1)})
 				if contentDiv is not None:
 					chapterTitle = contentDiv.previous_sibling
 					if chapterTitle is not None and chapterTitle.name == 'h2':
@@ -185,10 +186,10 @@ class FanficsMeAdapter(Adapter):
 			# fallback to scraping it directly
 			if chapter.html() is None:
 				cdata = scrape.softScrape(chapter.url)
-				assert(cdata is not None)
+				assert (cdata is not None)
 				chapter.setHtml(self.extractContent(fic, cdata))
 				csoup = BeautifulSoup(cdata, 'html5lib')
-				contentDiv = csoup.find('div', { 'id': 'c{}'.format(cid - 1) })
+				contentDiv = csoup.find('div', {'id': 'c{}'.format(cid - 1)})
 				chapterTitle = contentDiv.previous_sibling
 				if chapterTitle is not None and chapterTitle.name == 'h2':
 					chapter.title = chapterTitle.getText()
@@ -205,4 +206,3 @@ class FanficsMeAdapter(Adapter):
 			fic.add(Fandom.define(fandom))
 
 		return fic
-

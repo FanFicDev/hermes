@@ -11,12 +11,13 @@ import scrape
 
 from adapter.adapter import Adapter, edumpContent
 
+
 class ParahumansAdapter(Adapter):
 	def __init__(self) -> None:
 		# https://www.parahumans.net/table-of-contents/
-		super().__init__(True,
-				'https://www.parahumans.net', 'parahumans.net',
-				FicType.parahumans)
+		super().__init__(
+			True, 'https://www.parahumans.net', 'parahumans.net', FicType.parahumans
+		)
 		self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
 
 	def canonizeUrl(self, url: str) -> str:
@@ -34,7 +35,7 @@ class ParahumansAdapter(Adapter):
 		return url
 
 	def getChapterUrls(self, data: str = None) -> List[str]:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		if data is None:
 			data = scrape.softScrape(self.tocUrl)
 		soup = BeautifulSoup(data, 'html5lib')
@@ -42,18 +43,21 @@ class ParahumansAdapter(Adapter):
 		chapterUrls: List[str] = []
 
 		urlFixups = {
-				self.canonizeUrl('/2018/11/24/interlude-10-x'): None,
-				self.canonizeUrl('/2018/12/11/interlude-10-y'): None,
-				self.canonizeUrl('/2019/04/27/black-13-8'):
-				 self.canonizeUrl('/2019/04/30/black-13-x'),
-			}
+			self.canonizeUrl('/2018/11/24/interlude-10-x'):
+				None,
+			self.canonizeUrl('/2018/12/11/interlude-10-y'):
+				None,
+			self.canonizeUrl('/2019/04/27/black-13-8'):
+				self.canonizeUrl('/2019/04/30/black-13-x'),
+		}
 
 		for entryContent in entryContents:
 			aTags = entryContent.findAll('a')
 			for aTag in aTags:
 				href = self.canonizeUrl(aTag.get('href'))
-				if (href in urlFixups
-						and len(chapterUrls) > 0 and chapterUrls[-1] == href):
+				if (
+					href in urlFixups and len(chapterUrls) > 0 and chapterUrls[-1] == href
+				):
 					if urlFixups[href] is None:
 						continue
 					href = cast(str, urlFixups[href])
@@ -73,12 +77,16 @@ class ParahumansAdapter(Adapter):
 			aTags = entryContent.findAll('a')
 			for aTag in aTags:
 				content = aTag.get_text().strip()
-				if (content == '(Tats)'
-						and len(chapterTitles) > 0 and chapterTitles[-1] == '10.x'):
+				if (
+					content == '(Tats)' and len(chapterTitles) > 0
+					and chapterTitles[-1] == '10.x'
+				):
 					chapterTitles[-1] = '10.x (Tats)'
 					continue
-				if (content == '(Boy in the shell)'
-						and len(chapterTitles) > 0 and chapterTitles[-1] == '10.y'):
+				if (
+					content == '(Boy in the shell)' and len(chapterTitles) > 0
+					and chapterTitles[-1] == '10.y'
+				):
 					chapterTitles[-1] = '10.y (Boy in the shell)'
 					continue
 				chapterTitles += [content]
@@ -145,7 +153,7 @@ class ParahumansAdapter(Adapter):
 
 		fic = self.parseInfoInto(fic, data['raw'])
 		fic.upsert()
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def parseInfoInto(self, fic: Fic, html: str) -> Fic:
 		from bs4 import BeautifulSoup
@@ -159,8 +167,9 @@ class ParahumansAdapter(Adapter):
 		fic.title = 'Ward'
 		fic.ageRating = 'M'
 
-		self.setAuthor(fic,
-				'Wildbow', 'https://www.parahumans.net/support-wildbow', str(1))
+		self.setAuthor(
+			fic, 'Wildbow', 'https://www.parahumans.net/support-wildbow', str(1)
+		)
 
 		# taken from https://www.parahumans.net/about/
 		fic.description = '''
@@ -234,4 +243,3 @@ None feel the injustice of this new status quo or the lack of established footin
 		chapter.url = match.group(1)
 		chapter.upsert()
 		return self.softScrape(chapter)
-

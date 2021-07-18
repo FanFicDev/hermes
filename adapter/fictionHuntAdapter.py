@@ -10,10 +10,12 @@ import scrape
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
 
+
 class FictionHuntAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'http://fictionhunt.com', 'fictionhunt.com', FicType.fictionhunt)
+		super().__init__(
+			True, 'http://fictionhunt.com', 'fictionhunt.com', FicType.fictionhunt
+		)
 
 	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
 		if chapterId is None:
@@ -23,7 +25,7 @@ class FictionHuntAdapter(Adapter):
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		if chapter.fic is None:
-			chapter.fic = Fic.lookup((chapter.ficId,))
+			chapter.fic = Fic.lookup((chapter.ficId, ))
 		return self.constructUrl(chapter.fic.localId, chapter.chapterId)
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
@@ -35,8 +37,10 @@ class FictionHuntAdapter(Adapter):
 			return None
 		if parts[3] != 'read':
 			return None
-		if (len(parts) < 5 or len(parts[4].strip()) < 1
-				or not parts[4].strip().isnumeric()):
+		if (
+			len(parts) < 5 or len(parts[4].strip()) < 1
+			or not parts[4].strip().isnumeric()
+		):
 			return None
 
 		storyId = int(parts[4])
@@ -59,7 +63,7 @@ class FictionHuntAdapter(Adapter):
 		chapter.setHtml(data['raw'])
 		chapter.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
 		lines = html.replace('\r', '\n').split('\n')
@@ -69,8 +73,10 @@ class FictionHuntAdapter(Adapter):
 			if line.find('class="text') != -1:
 				inStory = True
 			if inStory:
-				if (line.find('<div class="pagerHolder') != -1
-						or line.lower().find('<script') != -1):
+				if (
+					line.find('<div class="pagerHolder') != -1
+					or line.lower().find('<script') != -1
+				):
 					inStory = False
 					break
 				parts += [line]
@@ -83,9 +89,9 @@ class FictionHuntAdapter(Adapter):
 		return self.parseInfoInto(fic, data['raw'])
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(wwwHtml, 'html.parser')
-		divDetails = soup.find_all('div', { 'class': 'details' })
+		divDetails = soup.find_all('div', {'class': 'details'})
 		if len(divDetails) != 1:
 			raise Exception('error: unable to find details\n')
 		else:
@@ -95,9 +101,9 @@ class FictionHuntAdapter(Adapter):
 		pt_str = str(divDetails)
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
-		divTitle = soup.find_all('div', { 'class': 'title' })
+		divTitle = soup.find_all('div', {'class': 'title'})
 		if len(divTitle) == 1:
 			fic.title = divTitle[0].get_text().strip()
 		else:
@@ -113,16 +119,18 @@ class FictionHuntAdapter(Adapter):
 		fic.favoriteCount = 0
 		fic.followCount = 0
 
-		matcher = RegexMatcher(text, {
-			'ageRating': ('Rated:\s+(\S+)', str),
-			'chapterCount?': ('Chapters:\s+(\d+)', int),
-			'wordCount': ('Words:\s+(\S+)', int),
-			'reviewCount?': ('Reviews:\s+(\S+)', int),
-			'favoriteCount?': ('Favs:\s+(\S+)', int),
-			'followCount?': ('Follows:\s+(\S+)', int),
-			'updated?': ('Updated:\s+(\S+)', str),
-			'published': ('Published:\s+(\S+)', str),
-		})
+		matcher = RegexMatcher(
+			text, {
+				'ageRating': ('Rated:\s+(\S+)', str),
+				'chapterCount?': ('Chapters:\s+(\d+)', int),
+				'wordCount': ('Words:\s+(\S+)', int),
+				'reviewCount?': ('Reviews:\s+(\S+)', int),
+				'favoriteCount?': ('Favs:\s+(\S+)', int),
+				'followCount?': ('Follows:\s+(\S+)', int),
+				'updated?': ('Updated:\s+(\S+)', str),
+				'published': ('Published:\s+(\S+)', str),
+			}
+		)
 		matcher.matchAll(fic)
 
 		if fic.published is not None:
@@ -158,4 +166,3 @@ class FictionHuntAdapter(Adapter):
 		# TODO: hardcode Harry Potter fanfic?
 
 		return fic
-

@@ -13,11 +13,13 @@ from view import HtmlView
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
 
+
 class RoyalRoadlAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'https://www.royalroad.com', ['royalroad.com', 'royalroadl.com'],
-				FicType.royalroadl)
+		super().__init__(
+			True, 'https://www.royalroad.com', ['royalroad.com', 'royalroadl.com'],
+			FicType.royalroadl
+		)
 		self.baseStoryUrl = self.baseUrl + '/fiction/'
 
 	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
@@ -63,12 +65,12 @@ class RoyalRoadlAdapter(Adapter):
 		fic = self.parseInfoInto(fic, data)
 		fic.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(html, 'html5lib')
-		content = soup.find('div', { 'class': 'chapter-content' })
+		content = soup.find('div', {'class': 'chapter-content'})
 		return str(content)
 
 	def getCurrentInfo(self, fic: Fic) -> Fic:
@@ -92,7 +94,7 @@ class RoyalRoadlAdapter(Adapter):
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		fic.url = self.constructUrl(fic.localId)
 
@@ -101,9 +103,9 @@ class RoyalRoadlAdapter(Adapter):
 		fic.favoriteCount = 0
 		fic.followCount = 0
 
-		fic.ageRating = 'M' # TODO?
+		fic.ageRating = 'M'  # TODO?
 
-		ficTitleDiv = soup.find('div', { 'class': 'fic-title' })
+		ficTitleDiv = soup.find('div', {'class': 'fic-title'})
 		fic.title = ficTitleDiv.find('h1').getText().strip()
 
 		authorLink = ficTitleDiv.find('h4', {'property': 'author'}).find('a')
@@ -126,9 +128,9 @@ class RoyalRoadlAdapter(Adapter):
 		elif fictionInfo.find('>COMPLETED<') != -1:
 			fic.ficStatus = FicStatus.complete
 		elif fictionInfo.find('>HIATUS<') != -1:
-			fic.ficStatus = FicStatus.ongoing # TODO?
+			fic.ficStatus = FicStatus.ongoing  # TODO?
 		elif fictionInfo.find('>STUB<') != -1:
-			fic.ficStatus = FicStatus.ongoing # TODO?
+			fic.ficStatus = FicStatus.ongoing  # TODO?
 		elif fictionInfo.find('>DROPPED<') != -1:
 			fic.ficStatus = FicStatus.abandoned
 		else:
@@ -138,16 +140,17 @@ class RoyalRoadlAdapter(Adapter):
 		followers = divStatsContent.find(text='Followers :')
 		ul = followers.parent.parent
 
-		RegexMatcher(ul.getText(), {
-			'followCount?': ('Followers\s+:\s+([\d,]+)', str),
-			'favoriteCount?': ('Favorites\s+:\s+([\d,]+)', str),
-			}).matchAll(fic)
+		RegexMatcher(
+			ul.getText(), {
+				'followCount?': ('Followers\s+:\s+([\d,]+)', str),
+				'favoriteCount?': ('Favorites\s+:\s+([\d,]+)', str),
+			}
+		).matchAll(fic)
 
 		if str(fic.followCount).find(','):
 			fic.followCount = int(str(fic.followCount).replace(',', ''))
 		if str(fic.favoriteCount).find(','):
 			fic.favoriteCount = int(str(fic.favoriteCount).replace(',', ''))
-
 
 		tableChapters = soup.find('table', {'id': 'chapters'})
 		chapterLinks = tableChapters.findAll('a')
@@ -170,8 +173,8 @@ class RoyalRoadlAdapter(Adapter):
 				chapterDates += [int(timeElement.get('unixtime'))]
 			else:
 				chapterDates += [
-						util.parseDateAsUnix(timeElement.get('title'), fic.fetched)
-					]
+					util.parseDateAsUnix(timeElement.get('title'), fic.fetched)
+				]
 
 		fic.published = OilTimestamp(min(chapterDates))
 		fic.updated = OilTimestamp(max(chapterDates))
@@ -234,4 +237,3 @@ class RoyalRoadlAdapter(Adapter):
 	def softScrape(self, chapter: FicChapter) -> Optional[str]:
 		curl = self.buildUrl(chapter)
 		return self.softScrapeUrl(curl)
-

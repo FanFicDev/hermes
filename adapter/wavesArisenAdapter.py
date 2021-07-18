@@ -10,11 +10,13 @@ import scrape
 
 from adapter.adapter import Adapter, edumpContent
 
+
 class WavesArisenAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'https://wertifloke.wordpress.com', 'wertifloke.wordpress.com',
-				FicType.wavesarisen)
+		super().__init__(
+			True, 'https://wertifloke.wordpress.com', 'wertifloke.wordpress.com',
+			FicType.wavesarisen
+		)
 		self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
 
 	def canonizeUrl(self, url: str) -> str:
@@ -29,7 +31,7 @@ class WavesArisenAdapter(Adapter):
 		return url
 
 	def getChapterUrls(self, data: str = None) -> List[str]:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		if data is None:
 			data = scrape.softScrape(self.tocUrl)
 		soup = BeautifulSoup(data, 'html5lib')
@@ -83,7 +85,7 @@ class WavesArisenAdapter(Adapter):
 		soup = BeautifulSoup(html, 'html5lib')
 		entryContents = soup.findAll('div', {'class': 'entry-content'})
 		if len(entryContents) != 1:
-			return 'TODO' # TODO
+			return 'TODO'  # TODO
 			raise Exception('cannot find entry-content')
 		entryContent = entryContents[0]
 
@@ -107,7 +109,7 @@ class WavesArisenAdapter(Adapter):
 
 		fic = self.parseInfoInto(fic, data['raw'])
 		fic.upsert()
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def parseInfoInto(self, fic: Fic, html: str) -> Fic:
 		from bs4 import BeautifulSoup
@@ -121,8 +123,9 @@ class WavesArisenAdapter(Adapter):
 		fic.title = 'The Waves Arisen'
 		fic.ageRating = 'M'
 
-		self.setAuthor(fic,
-				'wertifloke', 'https://wertifloke.wordpress.com/', str(2))
+		self.setAuthor(
+			fic, 'wertifloke', 'https://wertifloke.wordpress.com/', str(2)
+		)
 
 		# taken from https://www.parahumans.net/about/
 		fic.description = '''
@@ -160,4 +163,3 @@ The Waves Arisen is a complete novel-length work of Rationalist Naruto Fanfictio
 		# TODO: chars/relationship?
 
 		return fic
-

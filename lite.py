@@ -14,20 +14,21 @@ JSONable = Dict[str, Any]
 __threadData = threading.local()
 __columnInfo: Dict[str, List[ColumnInfo]] = {}
 __tableNames: Dict[str, str] = {
-		'TagBase': 'tag',
-		'Genre': 'tag',
-		'Tag': 'tag',
-		'Fandom': 'tag',
-		'Character': 'tag',
-		'FicTagBase': 'fic_tag',
-		'FicGenre': 'fic_tag',
-		'FicTag': 'fic_tag',
-		'FicFandom': 'fic_tag',
-		'FicCharacter': 'fic_tag',
-	}
+	'TagBase': 'tag',
+	'Genre': 'tag',
+	'Tag': 'tag',
+	'Fandom': 'tag',
+	'Character': 'tag',
+	'FicTagBase': 'fic_tag',
+	'FicGenre': 'fic_tag',
+	'FicTag': 'fic_tag',
+	'FicFandom': 'fic_tag',
+	'FicCharacter': 'fic_tag',
+}
 
 autocommit: bool = True
 logQueries: bool = False
+
 
 def getTableName(clsName: str) -> str:
 	global __tableNames
@@ -44,6 +45,7 @@ def getTableName(clsName: str) -> str:
 	__tableNames[clsName] = name
 	return name
 
+
 def transformQueryData(data: Iterable[Any]) -> Iterable[Any]:
 	ld = list(data)
 	nd = []
@@ -54,6 +56,7 @@ def transformQueryData(data: Iterable[Any]) -> Iterable[Any]:
 			nd.append(d)
 	return tuple(nd)
 
+
 def logQuery(kind: str, table: str, sql: str, data: Iterable[Any]) -> None:
 	if not logQueries:
 		return
@@ -63,7 +66,9 @@ def logQuery(kind: str, table: str, sql: str, data: Iterable[Any]) -> None:
 	data = transformQueryData(data)
 	util.logMessage(f'{kind}: sql={sql} data={data}')
 
+
 T = TypeVar('T', bound='StoreType')
+
 
 class StoreType(object):
 	subDB: str = 'meta'
@@ -96,7 +101,7 @@ class StoreType(object):
 
 		conn = cls.getConnection()
 		sql = 'SELECT * FROM {} WHERE '.format(table)
-		whereParts = [ '{} = %s'.format(pk.name) for pk in cls.pkColumns ]
+		whereParts = ['{} = %s'.format(pk.name) for pk in cls.pkColumns]
 		if len(whereParts) == 0:
 			raise Exception('table {} has no primary key'.format(table))
 		sql += ' AND '.join(whereParts)
@@ -127,8 +132,10 @@ class StoreType(object):
 			whereParts: List[str] = []
 			for col in whereData:
 				bit = whereData[col]
-				if (isinstance(bit, tuple) and len(bit) == 2
-						and isinstance(bit[0], str) and bit[0] in operators):
+				if (
+					isinstance(bit, tuple) and len(bit) == 2 and isinstance(bit[0], str)
+					and bit[0] in operators
+				):
 					whereParts += [f'{col} {bit[0]} %s']
 					data += [bit[1]]
 				else:
@@ -138,8 +145,11 @@ class StoreType(object):
 		return (tuple(data), whereSql)
 
 	@classmethod
-	def select(cls: Type[T], whereData: Dict[str, Any] = None, orderBy: str = None
-			) -> List[T]:
+	def select(
+		cls: Type[T],
+		whereData: Dict[str, Any] = None,
+		orderBy: str = None
+	) -> List[T]:
 		table = cls.getTableName()
 		conn = cls.getConnection()
 
@@ -169,7 +179,7 @@ class StoreType(object):
 			logQuery('count', table, sql, data)
 			curs.execute(sql, data)
 			r = curs.fetchone()
-		assert(r is not None)
+		assert (r is not None)
 		return int(r[0])
 
 	def __getParts(self, which: List[str]) -> Iterable[Any]:
@@ -193,7 +203,8 @@ class StoreType(object):
 		table = type(self).getTableName()
 		cols = type(self).getNonGeneratedColumns()
 		sql = 'INSERT INTO {}({}) VALUES({})'.format(
-				table, ', '.join([c.name for c in cols]), ', '.join(['%s'] * len(cols)))
+			table, ', '.join([c.name for c in cols]), ', '.join(['%s'] * len(cols))
+		)
 		data = self.toInsertTuple()
 		conn = type(self).getConnection()
 		with conn.cursor() as curs:
@@ -201,7 +212,7 @@ class StoreType(object):
 				logQuery('insert', table, sql, data)
 				curs.execute(sql, data)
 			except:
-				util.logMessage('failed to insert: {}: {}'.format(sql, data), 'lite.log')
+				util.logMessage(f'failed to insert: {sql}: {data}', 'lite.log')
 				raise
 
 		global autocommit
@@ -262,4 +273,3 @@ class StoreType(object):
 		if obj is not None:
 			return obj
 		return cls.create(pkValues)
-

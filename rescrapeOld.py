@@ -19,16 +19,17 @@ import sys
 from typing import List, Iterable, Sequence, Any
 
 firstGoodId = 68830
-batchSize = 100 # somewhere around an hours worth...
+batchSize = 100  # somewhere around an hours worth...
 globalPattern = '%'
 
 
-def getBatch(firstGoodId: int, batchSize: int, pattern: str
-		) -> List[Sequence[Any]]:
+def getBatch(firstGoodId: int, batchSize: int,
+							pattern: str) -> List[Sequence[Any]]:
 	conn = scrape.openMinerva()
 
 	curs = conn.cursor()
-	curs.execute('''
+	curs.execute(
+		'''
 	select w.id, w.url
 		--, r.id, w.id, w.created, w.url, w.status, octet_length(w.response)
 	from web w
@@ -38,29 +39,34 @@ def getBatch(firstGoodId: int, batchSize: int, pattern: str
 	where w.id < %s and r.id is null and w.url like %s
 	order by random() -- w.id asc
 	limit %s
-	''', (firstGoodId, firstGoodId, pattern, batchSize))
+	''', (firstGoodId, firstGoodId, pattern, batchSize)
+	)
 	res = curs.fetchall()
 
 	curs.close()
 	scrape.closeMinerva()
 	return list(res)
 
+
 def isOld(firstGoodId: int, url: str) -> bool:
 	matching = getBatch(firstGoodId, 1, url)
 	return len(matching) > 0
+
 
 def getLastScrapeTime(pattern: str, source: str) -> int:
 	conn = scrape.openMinerva()
 
 	curs = conn.cursor()
-	curs.execute('''
+	curs.execute(
+		'''
 	select w.status, w.created
 	from web w
 	where w.url like %s and w.created is not null
 		and (w.source = %s or w.source is null)
 	order by w.created desc
 	limit 1
-	''', (pattern, source))
+	''', (pattern, source)
+	)
 	res = curs.fetchone()
 
 	curs.close()
@@ -73,6 +79,7 @@ def getLastScrapeTime(pattern: str, source: str) -> int:
 		return int(res[1]) + 60
 	return int(res[1])
 
+
 def getDomain(url: str) -> str:
 	strip = ['http://', 'https://']
 	for s in strip:
@@ -83,12 +90,13 @@ def getDomain(url: str) -> str:
 	base = '.'.join(d[-2:])
 	return base
 
+
 if len(sys.argv) > 1:
 	globalPattern = sys.argv[1]
 
 scrape.importEnvironment()
 print('source: {}'.format(scrape.__scrapeSource))
-assert(scrape.__scrapeSource is not None)
+assert (scrape.__scrapeSource is not None)
 
 while True:
 	batch = getBatch(firstGoodId, batchSize, globalPattern)
@@ -103,7 +111,7 @@ while True:
 		while True:
 			if not isOld(firstGoodId, url):
 				print('not old anymore')
-				break # has since been rescraped
+				break  # has since been rescraped
 			ls = getLastScrapeTime(patt, scrape.__scrapeSource)
 			diff = (ls + s) - int(time.time())
 			print((patt, int(time.time()), (ls + s), diff))
@@ -113,15 +121,14 @@ while True:
 				time.sleep(diff + 1)
 		if not isOld(firstGoodId, url):
 			print('not old anymore')
-			continue # has since been rescraped
+			continue  # has since been rescraped
 		time.sleep(3 * random.random())
 		print('refetching {}: {}'.format(wid, url))
 		try:
 			if not isOld(firstGoodId, url):
 				print('not old anymore')
-				continue # has since been rescraped
+				continue  # has since been rescraped
 			res = scrape.scrape(url)
 			print(len(res['raw']))
 		except:
 			time.sleep(60)
-

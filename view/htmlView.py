@@ -10,18 +10,28 @@ from htypes import FicType
 from store import FicStatus, Fic, FicChapter
 from view.widget import Widget
 
+
 class HtmlView:
-	def __init__(self, html: str, markdown: bool = True,
-			extraTitles: List[str] = None) -> None:
+	def __init__(
+		self,
+		html: str,
+		markdown: bool = True,
+		extraTitles: List[str] = None
+	) -> None:
 		hrRes = [
-				'[!/\\\\&#~*_XxIiOoHhPpsVv80°¤ :.…=><12)(+\[\]-]{3,}',
-				'[~0-9]{3,}', '[ua-]{5,}',
-				'(.)\\1{10,}', '(.)(.)(\\1\\2){5,}\\1?\\2?',
-				'(.)(.)(.)(\\1\\2\\3){5,}\\1?\\2?\\3?',
-				'(.{2,}) ?(\\1 ?){3,}', '(.{5,}) ?(\\1 ?){2,}',
-				'[\'~`^,._=-]{4,}',
-			]
-		self.gamerRe = re.compile('^([HhMmXx][Pp]:? [0-9]+|[+-]?[0-9]+ [HhMmXx][Pp].?)')
+			'[!/\\\\&#~*_XxIiOoHhPpsVv80°¤ :.…=><12)(+\[\]-]{3,}',
+			'[~0-9]{3,}',
+			'[ua-]{5,}',
+			'(.)\\1{10,}',
+			'(.)(.)(\\1\\2){5,}\\1?\\2?',
+			'(.)(.)(.)(\\1\\2\\3){5,}\\1?\\2?\\3?',
+			'(.{2,}) ?(\\1 ?){3,}',
+			'(.{5,}) ?(\\1 ?){2,}',
+			'[\'~`^,._=-]{4,}',
+		]
+		self.gamerRe = re.compile(
+			'^([HhMmXx][Pp]:? [0-9]+|[+-]?[0-9]+ [HhMmXx][Pp].?)'
+		)
 		self.hrRes = [re.compile('^' + r + '$') for r in hrRes]
 		self.extraTitles: List[str] = [] if extraTitles is None else extraTitles
 		self.spaceRe = re.compile('\s+')
@@ -38,10 +48,12 @@ class HtmlView:
 			line = html.unescape(line)
 		line = util.filterUnicode(line)
 
-		line = line.replace('Sony', 'Sonny') # TODO: hack...
+		line = line.replace('Sony', 'Sonny')  # TODO: hack...
 		line = line.strip()
 
-		if line in {'Work Text:', 'Chapter Text', 'Next Chapter', 'Last Chapter Next Chapter'}:
+		if line in {
+			'Work Text:', 'Chapter Text', 'Next Chapter', 'Last Chapter Next Chapter'
+		}:
 			return
 
 		# filter out blank/all-space lines
@@ -51,27 +63,22 @@ class HtmlView:
 		if line.strip() in {'_‗_', '___', 'Prev Main Next'}:
 			return
 
-		hrTitles = ["~~bonds of blood~~", "~~bonds of bloods~~",
-				"- dp & sw: ribsr -", "- dp & sw: tfop -",
-				"hp & ha - safh",
-				"_‗_", "-==(oio)==-", '\\""/', 'ˇ',
-				'#', '##', '###', '* *', ' ', '.',
-				'-.-fh-.-', '-break-', 'oracle2phoenix', '/', '(break)',
-				'dghpdghpdghp', 'my', 'hp*the aftermath*hp',
-				'~~~core threads~~~',
-				'-saving her saving himself-',
-				'{1}', '{2}', '{3}',
-				'scene break', 'scenebreak', 'xxscenebreakxx',
-				'[-]', '{-}',
-				'x', '_x_', '%', '[{o}]', 'section break', '- break -',
-				'-- story --', '(line break)', '-()-', '<>', '~<>~', '~',
-				'(⊙_⊙) ', '(∞)', '!', "','", '!ditg!', '-{}-',
-				'┐(￣ヘ￣)┌┐(￣ヘ￣)┌┐(￣ヘ￣)┌',
-				"'OvO'", 'www', '-|-|-', '~•~', '::', 'scene break>', '-l-l-l-',
-				'-line break-', ':)', ';)', ':', '-= LP =-', 'f/klpt',
-				'~*~*~*~*~ harry&pansy ~*~*~*~*~', '....', '….', '%%%',
-				'˄', '˅', '-----===ͽ ˂ O ˃ ͼ===-----', '-----===ͽ Δ ͼ===-----',
-				'xxxxxxx story xxxxxxx', 'line break', 'titanfall'] + self.extraTitles
+		hrTitles = [
+			"~~bonds of blood~~", "~~bonds of bloods~~", "- dp & sw: ribsr -",
+			"- dp & sw: tfop -", "hp & ha - safh", "_‗_", "-==(oio)==-", '\\""/', 'ˇ',
+			'#', '##', '###', '* *', ' ', '.', '-.-fh-.-', '-break-',
+			'oracle2phoenix', '/', '(break)', 'dghpdghpdghp', 'my',
+			'hp*the aftermath*hp', '~~~core threads~~~',
+			'-saving her saving himself-', '{1}', '{2}', '{3}', 'scene break',
+			'scenebreak', 'xxscenebreakxx', '[-]', '{-}', 'x', '_x_', '%', '[{o}]',
+			'section break', '- break -', '-- story --', '(line break)', '-()-', '<>',
+			'~<>~', '~', '(⊙_⊙) ', '(∞)', '!', "','", '!ditg!', '-{}-',
+			'┐(￣ヘ￣)┌┐(￣ヘ￣)┌┐(￣ヘ￣)┌', "'OvO'", 'www', '-|-|-', '~•~', '::',
+			'scene break>', '-l-l-l-', '-line break-', ':)', ';)', ':', '-= LP =-',
+			'f/klpt', '~*~*~*~*~ harry&pansy ~*~*~*~*~', '....', '….', '%%%', '˄',
+			'˅', '-----===ͽ ˂ O ˃ ͼ===-----', '-----===ͽ Δ ͼ===-----',
+			'xxxxxxx story xxxxxxx', 'line break', 'titanfall'
+		] + self.extraTitles
 
 		squiggleBreaks = ['flashback', 'end flashback', 'time skip']
 
@@ -79,8 +86,10 @@ class HtmlView:
 		mhr = line.strip('*_').lower()
 
 		# strip non-markdown tags
-		while ((mhr.startswith('<strong>') and mhr.endswith('</strong>'))
-				or (mhr.startswith('<em>') and mhr.endswith('</em>'))):
+		while (
+			(mhr.startswith('<strong>') and mhr.endswith('</strong>'))
+			or (mhr.startswith('<em>') and mhr.endswith('</em>'))
+		):
 			if (mhr.startswith('<strong>') and mhr.endswith('</strong>')):
 				mhr = mhr[len('<strong>'):-len('</strong>')]
 			if (mhr.startswith('<em>') and mhr.endswith('</em>')):
@@ -96,8 +105,10 @@ class HtmlView:
 		if matchesHrRe and self.gamerRe.match(mhr):
 			matchesHrRe = False
 		# normalize weird h-rules
-		if (line == '***' or mhr == '<hr />' or mhr == '-' or mhr == '--'
-				or (len(line) > 0 and len(mhr) == 0) or matchesHrRe):
+		if (
+			line == '***' or mhr == '<hr />' or mhr == '-' or mhr == '--'
+			or (len(line) > 0 and len(mhr) == 0) or matchesHrRe
+		):
 			line = '<hr />'
 		else:
 			for hrTitle in hrTitles:
@@ -109,11 +120,13 @@ class HtmlView:
 				if sq == squiggleBreak:
 					line = '<hr />'
 					break
-		if ((len(line) - len(line.strip('=')) > 8)
-				and (line.strip('=') == 'HG/MM' or line.strip('=') == 'MM/HG')):
+		if (
+			(len(line) - len(line.strip('=')) > 8)
+			and (line.strip('=') == 'HG/MM' or line.strip('=') == 'MM/HG')
+		):
 			line = '<hr />'
 		if (mhr.strip('~') == 'avengers tower'):
-			line = '*Avengers Tower*' # TODO
+			line = '*Avengers Tower*'  # TODO
 		if (mhr.find('oo--oo--') >= 0 and mhr.find('FLASHBACK')):
 			line = '<hr />'
 		if mhr.find('hp - 260 g o 16 - hp - 260 g o 16 - hp - 260 g o 16') != -1:
@@ -127,9 +140,10 @@ class HtmlView:
 		line = util.filterEmptyTags(line)
 
 		# blow up on very long lines (TODO: graceful)
-		if len(line) > (80 * 60 * 1000000): # TODO
-			raise Exception('error: extremely long line: {}\n{}'.format(
-				len(line), line))
+		if len(line) > (80 * 60 * 1000000):  # TODO
+			raise Exception(
+				'error: extremely long line: {}\n{}'.format(len(line), line)
+			)
 
 		self.text += [line]
 
@@ -137,18 +151,23 @@ class HtmlView:
 		# strip simple scripts TODO needs to be much better...
 		try:
 			htmlText = re.sub('<script>.*?</script>', '', htmlText, flags=re.DOTALL)
-			htmlText = re.sub('<noscript>.*?</noscript>', '', htmlText, flags=re.DOTALL)
-			htmlText = re.sub('<!--\[if lt IE 8\]>.*?<!\[endif\]-->', '', htmlText, flags=re.DOTALL)
+			htmlText = re.sub(
+				'<noscript>.*?</noscript>', '', htmlText, flags=re.DOTALL
+			)
+			htmlText = re.sub(
+				'<!--\[if lt IE 8\]>.*?<!\[endif\]-->', '', htmlText, flags=re.DOTALL
+			)
 			htmlText = htmlText.replace(
-					'Buy our stuff, go here to find out more: <a href="https://forums.spacebattles.com/threads/spacebattles-merchandise.398032/">https://forums.spacebattles.com/threads/spacebattles-merchandise.398032/</A>',
-					'')
+				'Buy our stuff, go here to find out more: <a href="https://forums.spacebattles.com/threads/spacebattles-merchandise.398032/">https://forums.spacebattles.com/threads/spacebattles-merchandise.398032/</A>',
+				''
+			)
 		except:
 			pass
 
 		# bleh, remove badly encoded newlines and extra backslashes
-		htmlText = htmlText.replace('\\n', '\n') # bleh
-		htmlText = htmlText.replace('\\r', '\n') # bleh
-		htmlText = htmlText.replace('\\\\', '\\') # bleh
+		htmlText = htmlText.replace('\\n', '\n')  # bleh
+		htmlText = htmlText.replace('\\r', '\n')  # bleh
+		htmlText = htmlText.replace('\\\\', '\\')  # bleh
 
 		# remove redundant open/close tags; prevents extra space from next step
 		for t in ['strong', 'b', 'bold', 'em', 'i']:
@@ -159,9 +178,9 @@ class HtmlView:
 		htmlText = htmlText.replace('</em>', '</em> ')
 
 		# replace whitespace only divs with line breaks
-		htmlText = htmlText.replace('<div>&nbsp;</div>', '<br>') # FIXME
-		htmlText = htmlText.replace('<div> </div>', '<br>') # FIXME
-		htmlText = htmlText.replace(u'<div>\u200b</div>', '<br>') # FIXME
+		htmlText = htmlText.replace('<div>&nbsp;</div>', '<br>')  # FIXME
+		htmlText = htmlText.replace('<div> </div>', '<br>')  # FIXME
+		htmlText = htmlText.replace(u'<div>\u200b</div>', '<br>')  # FIXME
 
 		# decode nbsp into regular space
 		htmlText = htmlText.replace("&nbsp;", ' ').replace('&#8203;', ' ')
@@ -196,7 +215,9 @@ class HtmlView:
 		htmlText = htmlText.replace(' ', ' ').replace(u'\u200b', ' ')
 
 		# replace centered stars with scene break
-		htmlText = htmlText.replace('<div style="text-align: center">*** </div>', '<hr />')
+		htmlText = htmlText.replace(
+			'<div style="text-align: center">*** </div>', '<hr />'
+		)
 
 		# fix annoying <<< >>> scene breaks...
 		# looking at you stranger in an unholy land
@@ -209,7 +230,7 @@ class HtmlView:
 			self.__addLine(htmlText)
 			return
 
-		htmlText = htmlText.replace('<col/>', '') # FIXME
+		htmlText = htmlText.replace('<col/>', '')  # FIXME
 		# TODO something more generic?
 		# https://harrypotterfanfiction.com/viewstory.php?psid=126760
 		htmlText = htmlText.replace('<I/>', '</i>').replace('<i/>', '</i>')
@@ -222,24 +243,32 @@ class HtmlView:
 
 		# FIXME ch16 is broken
 		# https://www.fanfiction.net/s/6859461/16/I-Put-On-My-Robe-And-Wizard-Hat
-		htmlText = htmlText.replace(b''.join([
+		htmlText = htmlText.replace(
+			b''.join(
+				[
 					b'p\xe2\x89\xaf\xcc\xa2\xcc\xa9\xcc\xab\xcc\xa0\xcc\x89\xcc\x8a\xcd'
 					b'\xa6\xcd\xa4\xcd\xad\xcc\x8a..\xcc\xb7\xcd\x99\xcd\xaf\xcc\x8a\xcc',
 					b'\xbd\xcc\x93\xcd\x86\xcc\x89\xcd\xab.\xcd\x87\xcc\xaa\xcd\xa7\xcc',
 					b'\x85\xcc\x81</p',
-				]).decode('utf-8'), 'p>../.</p')
+				]
+			).decode('utf-8'), 'p>../.</p'
+		)
 
 		# FIXME https://www.fanfiction.net/s/26926/1/Destiny-s-Child
 		htmlText = htmlText.replace('<saran@first.com.my>', 'saran@first.com.my')
 		htmlText = htmlText.replace('<ranmas@kode.net>', 'ranmas@kode.net')
-		if (htmlText.find("<\"I'm sorry Miss") >= 0
-				or htmlText.find("<\"Great Grandmother,") >= 0):
-			from bs4 import BeautifulSoup # type: ignore
+		if (
+			htmlText.find("<\"I'm sorry Miss") >= 0
+			or htmlText.find("<\"Great Grandmother,") >= 0
+		):
+			from bs4 import BeautifulSoup  # type: ignore
 			soup = BeautifulSoup(htmlText, 'html5lib')
 			htmlText = str(soup)
 
 		# FIXME https://www.fanfiction.net/s/2644/1/The-Bodyguard
-		htmlText = htmlText.replace('<efrancis@earthlink.net>', 'efrancis@earthlink.net')
+		htmlText = htmlText.replace(
+			'<efrancis@earthlink.net>', 'efrancis@earthlink.net'
+		)
 
 		# skip all tags that start with... (case insensitive)
 		ignoreTags = [
@@ -371,7 +400,8 @@ class HtmlView:
 			fullInner = originalFullInner.lower()
 			inner = fullInner
 			if len(fullInner.split()) > 0:
-				inner = fullInner.split()[0] # only look at the initial piece of the tag
+				# only look at the initial piece of the tag
+				inner = fullInner.split()[0]
 
 			if inner.startswith('!--') or len(inner) < 1:
 				idx = nclose + 1
@@ -384,10 +414,11 @@ class HtmlView:
 					idx = nclose + 1
 					didIgnore = True
 					break
-			if (inner[:4] == 'st1:' or inner[:4] == 'st2:'
-					or inner[:5] == '/st1:' or inner[:5] == '/st2:'
-					or inner[:2] == 'o:' or inner[:3] == '/o:'
-					or inner[:2] == 'w:' or inner[:3] == '/w:'):
+			if (
+				inner[:4] == 'st1:' or inner[:4] == 'st2:' or inner[:5] == '/st1:'
+				or inner[:5] == '/st2:' or inner[:2] == 'o:' or inner[:3] == '/o:'
+				or inner[:2] == 'w:' or inner[:3] == '/w:'
+			):
 				idx = nclose + 1
 				didIgnore = True
 			if didIgnore:
@@ -428,7 +459,9 @@ class HtmlView:
 					if ltext is None:
 						ltext = src
 					if src.startswith('http://') or src.startswith('https://'):
-						self.__addLine(f'[img: <a href="{src}" rel="noopener noreferrer">{ltext}</a>]')
+						self.__addLine(
+							f'[img: <a href="{src}" rel="noopener noreferrer">{ltext}</a>]'
+						)
 				except:
 					util.logMessage(f"HtmlView: error: bad img: {fullInner}")
 					pass
@@ -465,7 +498,9 @@ class HtmlView:
 			# a few things advance to the next line
 			if inner == 'br' or inner == 'br/':
 				# if we've just got a start tag don't actually advance the line
-				if not (len(cline.strip()) == 1 and len(cline.strip().strip('*_')) == 0):
+				if not (
+					len(cline.strip()) == 1 and len(cline.strip().strip('*_')) == 0
+				):
 					self.__addLine(cline)
 					cline = ''
 				idx = nclose + 1
@@ -515,8 +550,10 @@ class HtmlView:
 					idx = nclose + 1
 				continue
 			if inner == '/strong' or inner == '/b' or inner == '/bold':
-				if (len(cline.strip()) == 0 and len(self.text) > 0
-						and self.text[-1] != '<hr />'):
+				if (
+					len(cline.strip()) == 0 and len(self.text) > 0
+					and self.text[-1] != '<hr />'
+				):
 					self.text[-1] += '*'
 				elif cline.endswith(' '):
 					cline = cline[:-1] + '* '
@@ -535,8 +572,10 @@ class HtmlView:
 					idx = nclose + 1
 				continue
 			if inner == '/em' or inner == '/i':
-				if (len(cline.strip()) == 0 and len(self.text) > 0
-						and self.text[-1] != '<hr />'):
+				if (
+					len(cline.strip()) == 0 and len(self.text) > 0
+					and self.text[-1] != '<hr />'
+				):
 					self.text[-1] += '_'
 				elif cline.endswith(' '):
 					cline = cline[:-1] + '_ '
@@ -554,8 +593,11 @@ class HtmlView:
 				continue
 
 			# unable to categorize tag, dump debugging info
-			raise Exception('unable to process tag "{}":\n{}\n{!r}'.format(
-				inner, htmlText[idx - 90:nclose + 90], inner.encode('utf-8')))
+			raise Exception(
+				'unable to process tag "{}":\n{}\n{!r}'.format(
+					inner, htmlText[idx - 90:nclose + 90], inner.encode('utf-8')
+				)
+			)
 
 		self.__addLine(cline)
 
@@ -564,8 +606,13 @@ class HtmlView:
 
 
 class ChapterView:
-	def __init__(self, chapter: FicChapter, header: bool = True,
-			markdown: bool = True, footer: bool = True):
+	def __init__(
+		self,
+		chapter: FicChapter,
+		header: bool = True,
+		markdown: bool = True,
+		footer: bool = True
+	):
 		self.chapter = chapter
 
 		fic = chapter.getFic()
@@ -576,8 +623,9 @@ class ChapterView:
 		content = self.chapter.cachedContent()
 		if content is None:
 			raise Exception('missing content? FIXME')
-		contentView = HtmlView(content, markdown=markdown,
-				extraTitles=[extraTitle, f"-{extraTitle}-"])
+		contentView = HtmlView(
+			content, markdown=markdown, extraTitles=[extraTitle, f"-{extraTitle}-"]
+		)
 		self.totalWords = sum([len(l.split()) for l in contentView.text])
 
 		self.text: List[Union[str, List[str]]] = []
@@ -585,35 +633,39 @@ class ChapterView:
 		if header == True:
 			descriptionView = HtmlView(fic.description or '{missing description}')
 			self.text += [
-					[ '', '"{}"'.format(fic.title), '' ],
-					[ '', 'by {}'.format(fic.getAuthorName()), '' ],
-					[
-						'chapter {}'.format(chapter.chapterId),
-						'words: {}'.format(util.formatNumber(self.totalWords))
-					]
+				['', '"{}"'.format(fic.title), ''],
+				['', 'by {}'.format(fic.getAuthorName()), ''],
+				[
+					'chapter {}'.format(chapter.chapterId),
+					'words: {}'.format(util.formatNumber(self.totalWords))
 				]
+			]
 			if chapter.chapterId >= 1:
 				self.text += descriptionView.text
 			if chapter.title is not None and len(chapter.title) > 0:
-				self.text += [['', 'Chapter {}: {}'.format(chapter.chapterId, chapter.title), '']]
+				self.text += [
+					['', 'Chapter {}: {}'.format(chapter.chapterId, chapter.title), '']
+				]
 			if len(contentView.text) > 0 and contentView.text[0] != '<hr />':
-				self.text += [ '<hr />' ]
+				self.text += ['<hr />']
 
 		self.headerLength = len(self.text)
 
 		self.text += contentView.text
 		if footer == True:
 			if len(contentView.text) > 0 and contentView.text[-1] != '<hr />':
-				self.text += [ '<hr />' ]
+				self.text += ['<hr />']
 			if chapter.title is not None and len(chapter.title) > 0:
-				self.text += [['', 'Chapter {}: {}'.format(chapter.chapterId, chapter.title), '']]
-			self.text += [
-					[
-						'chapter {}'.format(chapter.chapterId),
-						'words: {}'.format(util.formatNumber(self.totalWords))
-					],
-					[ '"{}"'.format(fic.title), 'by {}'.format(fic.getAuthorName()) ],
+				self.text += [
+					['', 'Chapter {}: {}'.format(chapter.chapterId, chapter.title), '']
 				]
+			self.text += [
+				[
+					'chapter {}'.format(chapter.chapterId),
+					'words: {}'.format(util.formatNumber(self.totalWords))
+				],
+				['"{}"'.format(fic.title), 'by {}'.format(fic.getAuthorName())],
+			]
 
 		self.cumulativeLength = [0] * len(self.text)
 		cumLen = 0
@@ -644,9 +696,8 @@ class ChapterView:
 		self.totalWrappedLines = sum([len(self.wtext[i]) for i in self.wtext])
 		self.cumulativeTotalWrappedLines = [0] * (len(self.text) + 1)
 		for i in range(len(self.text)):
-			self.cumulativeTotalWrappedLines[i + 1] = (
-				self.cumulativeTotalWrappedLines[i] + len(self.wtext[i])
-			)
+			subTotal = self.cumulativeTotalWrappedLines[i] + len(self.wtext[i])
+			self.cumulativeTotalWrappedLines[i + 1] = subTotal
 
 	def getLine(self, idx: int) -> List[str]:
 		# TODO: should we handle this here?
@@ -662,10 +713,12 @@ class ChapterView:
 		if isinstance(line, list):
 			# TODO: equiPad should probably handle this
 			self.wtext[idx] = util.wrapText(
-					util.equiPad(line, self.width), self.width)
+				util.equiPad(line, self.width), self.width
+			)
 			return
 		self.wtext[idx] = util.wrapText(
-				self.preWrap + line + self.postWrap, self.width)
+			self.preWrap + line + self.postWrap, self.width
+		)
 
 
 class Cursor:
@@ -788,7 +841,7 @@ class Story:
 		self.__ensureCursor(chapterId)
 		chap, curs = self.chapters[chapterId], self.cursors[chapterId]
 		if chapterId > 1:
-			curs.line = max(curs.line, chap.headerLength -1, 0)
+			curs.line = max(curs.line, chap.headerLength - 1, 0)
 
 		return self.chapters[chapterId], self.cursors[chapterId]
 
@@ -818,7 +871,9 @@ class StoryView(Widget):
 		self.highlightCurrentLine = True
 		self.currentLineColorOptions = [4, 1, 2, 3, 5, 6]
 		self.currentLineColorIdx = 0
-		self.currentLineColor = self.currentLineColorOptions[self.currentLineColorIdx]
+		self.currentLineColor = (
+			self.currentLineColorOptions[self.currentLineColorIdx]
+		)
 		self.currentLineAttr = 1
 
 		self.targetWidth = 80
@@ -829,7 +884,7 @@ class StoryView(Widget):
 		self.rightOverhang = 2
 
 		self.lineMag = util.getNumberLength(len(self.cview.text))
-		assert(self.fic.chapterCount is not None)
+		assert (self.fic.chapterCount is not None)
 		self.chapMag = util.getNumberLength(self.fic.chapterCount)
 
 		self.minWidth = 12
@@ -851,15 +906,18 @@ class StoryView(Widget):
 			self.fic.checkForUpdates()
 			return True
 
-		if key == ord('o') or key == 27: # escape
+		if key == ord('o') or key == 27:  # escape
 			self.__saveCursor()
 			self.__touchChapter()
 			self.parent.selectFic(None)
 			return True
 
 		if key == ord('c'):
-			self.currentLineColorIdx = (self.currentLineColorIdx + 1) % len(self.currentLineColorOptions)
-			self.currentLineColor = self.currentLineColorOptions[self.currentLineColorIdx]
+			self.currentLineColorIdx += 1
+			self.currentLineColorIdx %= len(self.currentLineColorOptions)
+			self.currentLineColor = (
+				self.currentLineColorOptions[self.currentLineColorIdx]
+			)
 			return True
 		if key == ord('i'):
 			self.invertCursor = not self.invertCursor
@@ -914,10 +972,10 @@ class StoryView(Widget):
 		if key == ord('s'):
 			userChapter = self.cview.chapter.getUserFicChapter()
 			userChapter.readStatus = {
-					FicStatus.ongoing: FicStatus.abandoned,
-					FicStatus.abandoned: FicStatus.complete,
-					FicStatus.complete: FicStatus.ongoing,
-				}[FicStatus(userChapter.readStatus)]
+				FicStatus.ongoing: FicStatus.abandoned,
+				FicStatus.abandoned: FicStatus.complete,
+				FicStatus.complete: FicStatus.ongoing,
+			}[FicStatus(userChapter.readStatus)]
 			userChapter.update()
 			return True
 
@@ -925,8 +983,10 @@ class StoryView(Widget):
 			self.cview.chapter.getUserFicChapter().markRead()
 			userFic = self.fic.getUserFic()
 			userFic.updateLastRead(self.chapterId)
-			if (userFic.lastChapterRead == self.fic.chapterCount
-					and userFic.readStatus == FicStatus.ongoing):
+			if (
+				userFic.lastChapterRead == self.fic.chapterCount
+				and userFic.readStatus == FicStatus.ongoing
+			):
 				userFic.readStatus = FicStatus.complete
 			userFic.upsert()
 
@@ -937,7 +997,7 @@ class StoryView(Widget):
 				return True
 
 		if (key == ord('l') or key == ord('m') or key == curses.KEY_RIGHT):
-			assert(self.fic.chapterCount is not None)
+			assert (self.fic.chapterCount is not None)
 			if self.chapterId < self.fic.chapterCount:
 				self.chapterId += 1
 				self.__flipToChapter()
@@ -994,7 +1054,7 @@ class StoryView(Widget):
 		if self.width < self.minWidth or self.height < self.minHeight:
 			return
 
-		rmid = 3 # int(self.height / 3)
+		rmid = 3  # int(self.height / 3)
 		if self.height > 40:
 			rmid = int(self.height / 3)
 		if self.height > 60:
@@ -1005,7 +1065,7 @@ class StoryView(Widget):
 		lop = (' ' * self.leftOverhang)
 		# current line prefix and suffix
 		clp = '>' + (' ' * (self.leftOverhang - 1))
-		cls = (' ' * (self.rightOverhang -1)) + '<'
+		cls = (' ' * (self.rightOverhang - 1)) + '<'
 
 		# draw down starting from mid
 		logicalLine = self.cursor.line
@@ -1062,8 +1122,9 @@ class StoryView(Widget):
 					pass
 				else:
 					attr |= curses.A_UNDERLINE
-			stdscr.addstr(rmid, self.leftMargin,
-					clp + lines[self.cursor.subLine] + cls, attr)
+			stdscr.addstr(
+				rmid, self.leftMargin, clp + lines[self.cursor.subLine] + cls, attr
+			)
 
 		# repaint ruler
 		ruler = self.getRuler()
@@ -1088,18 +1149,19 @@ class StoryView(Widget):
 			FicStatus.ongoing: ''
 		}
 
-		assert(self.fic.chapterCount is not None)
+		assert (self.fic.chapterCount is not None)
 		leftParts = [
-				# chapter index
-				'({: >{}d}/{:d})'.format(
-					self.chapterId, self.chapMag, self.fic.chapterCount),
-				# chapter status
-				status[FicStatus(self.chapter.getUserFicChapter().readStatus)],
-				# title
-				'"{}"'.format(self.fic.title),
-				# chapter title
-				self.cview.chapter.title or '',
-			]
+			# chapter index
+			'({: >{}d}/{:d})'.format(
+				self.chapterId, self.chapMag, self.fic.chapterCount
+			),
+			# chapter status
+			status[FicStatus(self.chapter.getUserFicChapter().readStatus)],
+			# title
+			'"{}"'.format(self.fic.title),
+			# chapter title
+			self.cview.chapter.title or '',
+		]
 		lRuler = ' '.join(leftParts)
 
 		cumLen = self.cview.cumulativeLength[self.cursor.line]
@@ -1108,15 +1170,18 @@ class StoryView(Widget):
 		perc = 100.0 * curLen / self.cview.totalLength
 
 		rightParts = [
-				'C' if self.fic.ficStatus == FicStatus.complete else 'I',
-				'~{}/{}'.format(1 + self.cursor.subLine +
-					self.cview.cumulativeTotalWrappedLines[self.cursor.line],
-					self.cview.totalWrappedLines),
-				# local paragraph and percentage
-				'{: >{}d}/{: >{}d}'.format(
-					self.cursor.line + 1, self.lineMag, totalLines, self.lineMag),
-				'{:>3d}%'.format(int(perc))
-			]
+			'C' if self.fic.ficStatus == FicStatus.complete else 'I',
+			'~{}/{}'.format(
+				1 + self.cursor.subLine
+				+ self.cview.cumulativeTotalWrappedLines[self.cursor.line],
+				self.cview.totalWrappedLines
+			),
+			# local paragraph and percentage
+			'{: >{}d}/{: >{}d}'.format(
+				self.cursor.line + 1, self.lineMag, totalLines, self.lineMag
+			),
+			'{:>3d}%'.format(int(perc))
+		]
 		if self.maxWidth is not None:
 			if self.width >= self.maxWidth:
 				rightParts = ['F({})'.format(self.maxWidth)] + rightParts
@@ -1137,4 +1202,3 @@ class StoryView(Widget):
 			rRuler = '{:>{}}'.format(rRuler, self.width - len(lRuler) - 1)
 
 		return lRuler + ' ' + rRuler
-

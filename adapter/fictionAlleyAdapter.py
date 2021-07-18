@@ -3,11 +3,13 @@ from htypes import FicType, FicId
 from store import Fic, FicChapter
 from adapter.adapter import Adapter, edumpContent
 
+
 class FictionAlleyAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(False,
-				'http://www.fictionalley.org/', 'fictionalley.org',
-				FicType.fictionalley)
+		super().__init__(
+			False, 'http://www.fictionalley.org/', 'fictionalley.org',
+			FicType.fictionalley
+		)
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
 		if not url.startswith(self.baseUrl):
@@ -16,7 +18,7 @@ class FictionAlleyAdapter(Adapter):
 		# by default, we simply try to look up the url in existing chapters or fics
 		chaps = FicChapter.select({'url': url})
 		if len(chaps) == 1:
-			fic = Fic.get((chaps[0].ficId,))
+			fic = Fic.get((chaps[0].ficId, ))
 			if fic is not None:
 				ftype = FicType(fic.sourceId)
 				return FicId(ftype, fic.localId, chaps[0].chapterId, False)
@@ -50,7 +52,7 @@ class FictionAlleyAdapter(Adapter):
 		raise NotImplementedError()
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(html, 'html.parser')
 		normalDiv = soup.find('div', {'name': 'Normal'})
 		if normalDiv is None:
@@ -60,4 +62,3 @@ class FictionAlleyAdapter(Adapter):
 		return str(normalDiv)
 
 	# TODO: may need to go to author page for some info?
-

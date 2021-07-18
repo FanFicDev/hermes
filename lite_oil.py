@@ -1,7 +1,9 @@
 from typing import Dict, Optional
 import os
 import psycopg2
+
 __conns: Dict[str, 'psycopg2.connection'] = {}
+
 
 def getConnection(subDB: str) -> 'psycopg2.connection':
 	global __conns
@@ -9,7 +11,7 @@ def getConnection(subDB: str) -> 'psycopg2.connection':
 		return __conns[subDB]
 
 	connParms: Dict[str, Optional[str]] = {
-		'dbname': 'hermes', # TODO
+		'dbname': 'hermes',  # TODO
 		'user': None,
 		'password': None,
 		'host': None,
@@ -22,18 +24,20 @@ def getConnection(subDB: str) -> 'psycopg2.connection':
 			continue
 		connParms[key] = os.environ[envKey]
 
-	connStr = ' '.join([
-		f'{k}={v}' for k, v in connParms.items() if v is not None
-	])
+	connStr = ' '.join(
+		[f'{k}={v}' for k, v in connParms.items() if v is not None]
+	)
 
 	conn = psycopg2.connect(connStr)
 	__conns[subDB] = conn
 	return conn
 
+
 def commit() -> None:
 	global __conns
 	for subDB in __conns:
 		__conns[subDB].commit()
+
 
 def shutdown() -> None:
 	global __conns
@@ -41,4 +45,3 @@ def shutdown() -> None:
 		__conns[subDB].commit()
 		__conns[subDB].close()
 		del __conns[subDB]
-

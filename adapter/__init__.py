@@ -26,6 +26,8 @@ from adapter.fanficParadiseAdapter import (
 )
 
 from htypes import adapters, FicType
+
+
 def registerAdapters() -> None:
 	adapters[FicType.manual] = ManualAdapter('')
 	adapters[FicType.ff_net] = FFNAdapter()
@@ -53,5 +55,5 @@ def registerAdapters() -> None:
 	adapters[FicType.fanficparadisesfw] = FanficParadiseSFWAdapter()
 	adapters[FicType.fanficparadisensfw] = FanficParadiseNSFWAdapter()
 
-#registerAdapters()
 
+#registerAdapters()

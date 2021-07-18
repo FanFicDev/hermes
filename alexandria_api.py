@@ -16,6 +16,7 @@ BasicFlaskResponse = Union[Response, werkzeug.wrappers.Response, str, JSONable]
 FlaskResponse = Union[BasicFlaskResponse, Tuple[BasicFlaskResponse, int]]
 
 import adapter
+
 adapter.registerAdapters()
 
 app = Flask(__name__)
@@ -47,21 +48,18 @@ class Err(IntEnum):
 
 	def msg(self) -> str:
 		return {
-				Err.success: 'ok',
-				Err.not_found: 'not found',
-
-				Err.no_query: 'no query',
-				Err.bad_query: 'unable to parse query',
-				Err.bad_ficId: 'unable to load fic',
-
-				Err.urlId_not_found: 'urlId not found',
-				Err.cid_not_found: 'cid not found',
-
-				Err.failed_to_cache_cid: 'unable to cache cid',
-			}[self]
+			Err.success: 'ok',
+			Err.not_found: 'not found',
+			Err.no_query: 'no query',
+			Err.bad_query: 'unable to parse query',
+			Err.bad_ficId: 'unable to load fic',
+			Err.urlId_not_found: 'urlId not found',
+			Err.cid_not_found: 'cid not found',
+			Err.failed_to_cache_cid: 'unable to cache cid',
+		}[self]
 
 	def get(self, extra: Optional[JSONable] = None) -> JSONable:
-		base = {'err':int(self),'msg':self.msg()}
+		base = {'err': int(self), 'msg': self.msg()}
 		if extra is not None:
 			base.update(extra)
 		return base
@@ -85,13 +83,17 @@ def page_not_found(e: Exception) -> FlaskResponse:
 @app.get('/v0/')
 @app.get('/v0/status')
 def index() -> FlaskResponse:
-	return Err.ok({'license':'agpl-3.0',
-		'source':'https://github.com/FanFicDev/hermes'})
+	return Err.ok(
+		{
+			'license': 'agpl-3.0',
+			'source': 'https://github.com/FanFicDev/hermes'
+		}
+	)
 
 
 @app.get('/v0/fic/<urlId>/')
 def v0_fic(urlId: str) -> Any:
-	fics = Fic.select({'urlId':urlId})
+	fics = Fic.select({'urlId': urlId})
 	if len(fics) != 1:
 		return Err.urlId_not_found.get()
 	return Err.ok(fics[0].toJSONable())
@@ -99,18 +101,21 @@ def v0_fic(urlId: str) -> Any:
 
 @app.get('/v0/fic/<urlId>/all')
 def v0_fic_all(urlId: str) -> Any:
-	fics = Fic.select({'urlId':urlId})
+	fics = Fic.select({'urlId': urlId})
 	if len(fics) != 1:
 		return Err.urlId_not_found.get()
 	fic = fics[0]
 	if fic.chapterCount is None:
 		print(f'err: fic has no chapter count: {fic.id}')
 		return Err.urlId_not_found.get()
-	ficChapters = {fc.chapterId: fc for fc in FicChapter.select({'ficId':fic.id})}
+	ficChapters = {
+		fc.chapterId: fc
+		for fc in FicChapter.select({'ficId': fic.id})
+	}
 	chapters = {}
 	for cid in range(1, fic.chapterCount + 1):
 		if cid not in ficChapters:
-			return Err.cid_not_found.get({'arg':f'{fic.id}/{cid}'})
+			return Err.cid_not_found.get({'arg': f'{fic.id}/{cid}'})
 		chapter = ficChapters[cid]
 		cres = chapter.toJSONable()
 		try:
@@ -120,26 +125,28 @@ def v0_fic_all(urlId: str) -> Any:
 				content = scrape.decodeRequest(content, f'{fic.id}/{cid}')
 				content = cleanHtml(content)
 				if content != cleanHtml(content):
-					print(f'v0_fic_all: {fic.id}/{cid} did not round-trip through cleanHtml')
+					print(
+						f'v0_fic_all: {fic.id}/{cid} did not round-trip through cleanHtml'
+					)
 			cres['content'] = content
 			chapters[cid] = cres
 		except:
 			pass
 
 	res = fic.toJSONable()
-	return Err.ok({'info':res, 'chapters':chapters})
+	return Err.ok({'info': res, 'chapters': chapters})
 
 
 @app.get('/v0/lookup')
 def v0_lookup() -> Any:
 	q = request.args.get('q', '').strip()
 	if len(q.strip()) < 1:
-		return Err.no_query.get({'arg':q})
+		return Err.no_query.get({'arg': q})
 
 	print(f'v0_lookup: query: {q}')
 	ficId = FicId.tryParse(q)
 	if ficId is None:
-		return Err.bad_query.get({'arg':q})
+		return Err.bad_query.get({'arg': q})
 
 	print(f'v0_lookup: ficId: {ficId.__dict__}')
 	try:
@@ -149,12 +156,12 @@ def v0_lookup() -> Any:
 		print('v0_lookup: something went wrong in load:')
 		traceback.print_exc()
 		pass
-	return Err.bad_ficId.get({'arg':ficId.__dict__})
+	return Err.bad_ficId.get({'arg': ficId.__dict__})
 
 
 @app.get('/v0/cache/<urlId>')
 def v0_cache(urlId: str) -> Any:
-	fics = Fic.select({'urlId':urlId})
+	fics = Fic.select({'urlId': urlId})
 	if len(fics) != 1:
 		return Err.urlId_not_found.get()
 	fic = fics[0]
@@ -166,7 +173,7 @@ def v0_cache(urlId: str) -> Any:
 			chapter = fic.chapter(cid)
 			chapter.cache()
 		except Exception as e:
-			return Err.failed_to_cache_cid.get({'arg':f'{fic.id}/{cid}'})
+			return Err.failed_to_cache_cid.get({'arg': f'{fic.id}/{cid}'})
 
 	return Err.ok(fic.toJSONable())
 
@@ -178,4 +185,3 @@ def v0_remote() -> FlaskResponse:
 
 if __name__ == '__main__':
 	app.run(debug=True)
-

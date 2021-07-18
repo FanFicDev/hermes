@@ -9,6 +9,7 @@ import util
 import lite
 import adapter
 
+
 # return dependency order of DAG represented by obj
 def walk(obj):
 	rev = {}
@@ -41,6 +42,7 @@ def walk(obj):
 
 	return levels
 
+
 # deflate and inflate take objects and renames fields.
 # for deflate, if defaults is set any member matching the default is deleted
 # for deflate, all None members are deleted
@@ -54,7 +56,8 @@ def renameFields(obj, rename):
 				obj[rename[f]] = v
 	return obj
 
-def deflateObject(obj, rename, defaults = None):
+
+def deflateObject(obj, rename, defaults=None):
 	obj = renameFields(obj, rename)
 	if defaults is not None:
 		for f in defaults:
@@ -65,7 +68,8 @@ def deflateObject(obj, rename, defaults = None):
 		obj.pop(f, None)
 	return obj
 
-def inflateObject(obj, rename, defaults = None):
+
+def inflateObject(obj, rename, defaults=None):
 	obj = renameFields(obj, rename)
 	if defaults is not None:
 		for f in defaults:
@@ -91,12 +95,13 @@ def importDB(data):
 
 
 ficImportRename = {
-		'chapters': None,
-		'genres': None,
-		'tags': None,
-		'fandoms': None,
-		'characters': None,
-	}
+	'chapters': None,
+	'genres': None,
+	'tags': None,
+	'fandoms': None,
+	'characters': None,
+}
+
 
 def importFic(fdata):
 	global ficImportRename
@@ -120,10 +125,14 @@ def importFic(fdata):
 		print('  adding fandom "{}"'.format(fandom))
 		fic.add(Fandom.define(fandom))
 	for character in fdata['characters']:
-		print('  adding character "{}" from fandom "{}"'.format(
-				character['name'], character['fandom']))
-		fic.add(Character.define(
-			Fandom.define(character['fandom']), character['name']))
+		print(
+			'  adding character "{}" from fandom "{}"'.format(
+				character['name'], character['fandom']
+			)
+		)
+		fic.add(
+			Character.define(Fandom.define(character['fandom']), character['name'])
+		)
 	for genre in fdata['genres']:
 		print('  adding genre "{}"'.format(genre))
 		fic.add(Genre.define(genre))
@@ -143,7 +152,8 @@ def importFic(fdata):
 		for field in ochap:
 			chapter.__dict__[field] = ochap[field]
 		contentPath = './content/{}/{}/{}/content.html'.format(
-				fic.type, fic.localId, cid)
+			fic.type, fic.localId, cid
+		)
 		if os.path.isfile(contentPath):
 			html = None
 			with open(contentPath, 'r') as f:
@@ -162,18 +172,34 @@ def dumpDB():
 	tagMap = {t.id: t for t in Tag.select()}
 
 	data['fandoms'] = [fandomMap[k].name for k in fandomMap]
-	data['characters'] = [{ 'name': characterMap[k].name,
-		'fandom': fandomMap[characterMap[k].fandom_id].name} for k in characterMap]
+	data['characters'] = [
+		{
+			'name': characterMap[k].name,
+			'fandom': fandomMap[characterMap[k].fandom_id].name
+		} for k in characterMap
+	]
 	data['genres'] = [genreMap[k].name for k in genreMap]
 	data['tags'] = [tagMap[k].name for k in tagMap]
 
 	data['fics'] = {}
 
 	frename = {'id': None, 'chapters': 'chapterCount'}
-	crename = {'id': None, 'ficId': None, 'cid': None, 'raw': None,
-			'fic': None, 'lastLine': None}
-	cdefaults = {'line': 0, 'subLine': 0, 'notes': None, 'status': Status.ongoing,
-			'fetched': None, 'url': None}
+	crename = {
+		'id': None,
+		'ficId': None,
+		'cid': None,
+		'raw': None,
+		'fic': None,
+		'lastLine': None
+	}
+	cdefaults = {
+		'line': 0,
+		'subLine': 0,
+		'notes': None,
+		'status': Status.ongoing,
+		'fetched': None,
+		'url': None
+	}
 
 	fics = Fic.select()
 	for fic in fics:
@@ -182,8 +208,12 @@ def dumpDB():
 		o = deflateObject(o, frename)
 
 		o['fandoms'] = [f.name for f in fic.fandoms()]
-		o['characters'] = [{ 'name': c.name,
-				'fandom': fandomMap[c.fandom_id].name} for c in fic.characters()]
+		o['characters'] = [
+			{
+				'name': c.name,
+				'fandom': fandomMap[c.fandom_id].name
+			} for c in fic.characters()
+		]
 		o['tags'] = [t.name for t in fic.tags()]
 		o['genres'] = [g.name for g in fic.genres()]
 
@@ -192,7 +222,8 @@ def dumpDB():
 		for chapter in ficChapters:
 			here = chapter.__dict__.copy()
 			ffNetUrl = 'https://www.fanfiction.net/s/{}/{}/{}'.format(
-					fic.localId, chapter.chapterId, util.urlTitle(fic.title))
+				fic.localId, chapter.chapterId, util.urlTitle(fic.title)
+			)
 			cdefaults['url'] = ffNetUrl
 			cdefaults['lastModified'] = here['fetched']
 			here = deflateObject(here, crename, cdefaults)
@@ -202,7 +233,8 @@ def dumpDB():
 				continue
 
 			contentPath = './content/{}/{}/{}/'.format(
-					fic.type, fic.localId, chapter.chapterId)
+				fic.type, fic.localId, chapter.chapterId
+			)
 			if not os.path.isdir(contentPath):
 				os.makedirs(contentPath)
 			with open(contentPath + 'content.html', 'w') as f:
@@ -216,20 +248,33 @@ def dumpDB():
 
 
 def populateKMTemplate(url, chapterUrls):
-	kmRename = { 'id': None }
+	kmRename = {'id': None}
 	kmDefaults = {
-			'fandoms': [], 'characters': [], 'tags': [], 'genres': [],
-			'authorUrl': 'dummy', 'author': 'dummy',
-			'authorId': 1, 'ageRating': 'M', 'language': 'English',
-			'favorites': 0, 'follows': 0, 'reviews': 0,
-			'url': url, 'lastUrl': url, 'type': FicType.dummy,
-			'lid': -1, 'ficStatus': Status.complete, 'wordCount': -1,
-			'description': 'FILL IN MY DESCRIPTION',
-			'title': 'FILL IN MY TITLE',
-			'published': 'FILL IN MY PUBLISHED DATE',
-			'updated': 'FILL IN MY UPDATED DATE',
-			'added': int(time.time()), 'fetched': int(time.time())
-		}
+		'fandoms': [],
+		'characters': [],
+		'tags': [],
+		'genres': [],
+		'authorUrl': 'dummy',
+		'author': 'dummy',
+		'authorId': 1,
+		'ageRating': 'M',
+		'language': 'English',
+		'favorites': 0,
+		'follows': 0,
+		'reviews': 0,
+		'url': url,
+		'lastUrl': url,
+		'type': FicType.dummy,
+		'lid': -1,
+		'ficStatus': Status.complete,
+		'wordCount': -1,
+		'description': 'FILL IN MY DESCRIPTION',
+		'title': 'FILL IN MY TITLE',
+		'published': 'FILL IN MY PUBLISHED DATE',
+		'updated': 'FILL IN MY UPDATED DATE',
+		'added': int(time.time()),
+		'fetched': int(time.time())
+	}
 
 	fic = Fic.new().__dict__
 	fic = inflateObject(fic, kmRename, kmDefaults)
@@ -239,37 +284,51 @@ def populateKMTemplate(url, chapterUrls):
 
 	for cid in range(1, len(chapterUrls) + 1):
 		fic['chapters'][cid] = {
-				'lastModified': int(time.time()),
-				'status': Status.ongoing,
-				'fetched': int(time.time()),
-				'url': chapterUrls[cid - 1],
-			}
+			'lastModified': int(time.time()),
+			'status': Status.ongoing,
+			'fetched': int(time.time()),
+			'url': chapterUrls[cid - 1],
+		}
 
 	return fic
 
 
 def populateFATemplate(author, storyAbbreviation, chapterCount):
 	url = 'http://www.fictionalley.org/authors/{}/{}.html'.format(
-			author, storyAbbreviation)
+		author, storyAbbreviation
+	)
 	lastUrl = url[:-5] + '01.html'
 	if chapterCount == 1:
 		lastUrl = url[:-5] + '01a.html'
 	lid = 1
 
-	faRename = { 'id': None }
+	faRename = {'id': None}
 	faDefaults = {
-			'fandoms': ['Harry Potter'], 'characters': [], 'tags': [], 'genres': [],
-			'authorUrl': 'http://www.fictionalley.org/authors/{}'.format(author),
-			'author': author, 'authorId': author, 'ageRating': 'PG',
-			'language': 'English', 'favorites': 0, 'follows': 0, 'reviews': 0,
-			'url': url, 'lastUrl': lastUrl, 'type': FicType.fictionalley,
-			'lid': lid, 'ficStatus': Status.complete, 'wordCount': -1,
-			'description': 'FILL IN MY DESCRIPTION',
-			'title': 'FILL IN MY TITLE',
-			'published': 'FILL IN MY PUBLISHED DATE',
-			'updated': 'FILL IN MY UPDATED DATE',
-			'added': int(time.time()), 'fetched': int(time.time())
-		}
+		'fandoms': ['Harry Potter'],
+		'characters': [],
+		'tags': [],
+		'genres': [],
+		'authorUrl': 'http://www.fictionalley.org/authors/{}'.format(author),
+		'author': author,
+		'authorId': author,
+		'ageRating': 'PG',
+		'language': 'English',
+		'favorites': 0,
+		'follows': 0,
+		'reviews': 0,
+		'url': url,
+		'lastUrl': lastUrl,
+		'type': FicType.fictionalley,
+		'lid': lid,
+		'ficStatus': Status.complete,
+		'wordCount': -1,
+		'description': 'FILL IN MY DESCRIPTION',
+		'title': 'FILL IN MY TITLE',
+		'published': 'FILL IN MY PUBLISHED DATE',
+		'updated': 'FILL IN MY UPDATED DATE',
+		'added': int(time.time()),
+		'fetched': int(time.time())
+	}
 
 	fic = Fic.new().__dict__
 	fic = inflateObject(fic, faRename, faDefaults)
@@ -282,11 +341,11 @@ def populateFATemplate(author, storyAbbreviation, chapterCount):
 		if chapterCount == 1:
 			chapterUrl = url[:-5] + '01a.html'
 		fic['chapters'][cid] = {
-				'lastModified': int(time.time()),
-				'status': Status.ongoing,
-				'fetched': int(time.time()),
-				'url': chapterUrl
-			}
+			'lastModified': int(time.time()),
+			'status': Status.ongoing,
+			'fetched': int(time.time()),
+			'url': chapterUrl
+		}
 		contentDir = './content/{}/{}/{}'.format(FicType.fictionalley, lid, cid)
 		if not os.path.isdir(contentDir):
 			os.makedirs(contentDir)
@@ -298,20 +357,33 @@ def populateManualTemplate(url, chapterUrls, author):
 	existingManual = Fic.select({'type': FicType.manual})
 	lid = len(existingManual) + 1
 
-	manRename = { 'id': None }
+	manRename = {'id': None}
 	manDefaults = {
-			'fandoms': [], 'characters': [], 'tags': [], 'genres': [],
-			'authorUrl': url, 'author': author,
-			'authorId': author, 'ageRating': 'M', 'language': 'English',
-			'favorites': 0, 'follows': 0, 'reviews': 0,
-			'url': url, 'lastUrl': url, 'type': FicType.manual,
-			'lid': lid, 'ficStatus': Status.complete, 'wordCount': -1,
-			'description': 'FILL IN MY DESCRIPTION',
-			'title': 'FILL IN MY TITLE',
-			'published': 'FILL IN MY PUBLISHED DATE',
-			'updated': 'FILL IN MY UPDATED DATE',
-			'added': int(time.time()), 'fetched': int(time.time())
-		}
+		'fandoms': [],
+		'characters': [],
+		'tags': [],
+		'genres': [],
+		'authorUrl': url,
+		'author': author,
+		'authorId': author,
+		'ageRating': 'M',
+		'language': 'English',
+		'favorites': 0,
+		'follows': 0,
+		'reviews': 0,
+		'url': url,
+		'lastUrl': url,
+		'type': FicType.manual,
+		'lid': lid,
+		'ficStatus': Status.complete,
+		'wordCount': -1,
+		'description': 'FILL IN MY DESCRIPTION',
+		'title': 'FILL IN MY TITLE',
+		'published': 'FILL IN MY PUBLISHED DATE',
+		'updated': 'FILL IN MY UPDATED DATE',
+		'added': int(time.time()),
+		'fetched': int(time.time())
+	}
 
 	fic = Fic.new().__dict__
 	fic = inflateObject(fic, manRename, manDefaults)
@@ -321,11 +393,11 @@ def populateManualTemplate(url, chapterUrls, author):
 
 	for cid in range(1, len(chapterUrls) + 1):
 		fic['chapters'][cid] = {
-				'lastModified': int(time.time()),
-				'status': Status.ongoing,
-				'fetched': int(time.time()),
-				'url': chapterUrls[cid - 1],
-			}
+			'lastModified': int(time.time()),
+			'status': Status.ongoing,
+			'fetched': int(time.time()),
+			'url': chapterUrls[cid - 1],
+		}
 
 	return fic
 
@@ -372,11 +444,11 @@ if __name__ == '__main__':
 		#chapterUrls = []
 		#chapterCount = 17
 		#for i in range(1, chapterCount + 1):
-			#chapterUrls += [url + str(i)]
+		#chapterUrls += [url + str(i)]
 		#with open('./worm/olinks', 'r') as f:
 		#	chapterUrls = f.read().split('\n')
 		#if len(chapterUrls[-1].strip()) == 0:
-			#chapterUrls = chapterUrls[:-1]
+		#chapterUrls = chapterUrls[:-1]
 		author = 'jaina'
 		fic = populateManualTemplate(url, chapterUrls, author)
 
@@ -388,4 +460,3 @@ if __name__ == '__main__':
 			data = json.load(f)
 			importFic(data)
 			lite.shutdown()
-

@@ -16,15 +16,17 @@ import sys
 from typing import List, Iterable, Sequence, Any
 
 firstGoodId = 68830
-batchSize = 100 # somewhere around an hours worth...
+batchSize = 100  # somewhere around an hours worth...
 globalPattern = '%'
 
-def getBatch(firstGoodId: int, batchSize: int, pattern: str
-		) -> List[Sequence[Any]]:
+
+def getBatch(firstGoodId: int, batchSize: int,
+							pattern: str) -> List[Sequence[Any]]:
 	conn = scrape.openMinerva()
 
 	curs = conn.cursor()
-	curs.execute('''
+	curs.execute(
+		'''
 with ffnIds as (
 	select split_part(w.url, '/', 5) as fid, min(w.id) as wid
 	from web w
@@ -42,24 +44,28 @@ left join web r
 		and r.status = 200 and r.id >= %s
 where r.id is null
 limit %s
-	''', (firstGoodId, firstGoodId, firstGoodId, batchSize))
+	''', (firstGoodId, firstGoodId, firstGoodId, batchSize)
+	)
 	res = curs.fetchall()
 
 	curs.close()
 	scrape.closeMinerva()
 	return list(res)
 
+
 def getLastScrapeTime(pattern: str) -> int:
 	conn = scrape.openMinerva()
 
 	curs = conn.cursor()
-	curs.execute('''
+	curs.execute(
+		'''
 	select w.status, w.created
 	from web w
 	where w.url like %s and w.created is not null
 	order by w.created desc
 	limit 1
-	''', (pattern,))
+	''', (pattern, )
+	)
 	res = curs.fetchone()
 
 	curs.close()
@@ -72,6 +78,7 @@ def getLastScrapeTime(pattern: str) -> int:
 		return int(res[1]) + 60
 	return int(res[1])
 
+
 def getDomain(url: str) -> str:
 	strip = ['http://', 'https://']
 	for s in strip:
@@ -81,6 +88,7 @@ def getDomain(url: str) -> str:
 	d = p[0].split('.')
 	base = '.'.join(d[-2:])
 	return base
+
 
 if len(sys.argv) > 1:
 	globalPattern = sys.argv[1]
@@ -109,4 +117,3 @@ while True:
 			scrape.scrape(url)
 		except:
 			time.sleep(60)
-

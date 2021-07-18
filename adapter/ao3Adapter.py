@@ -3,8 +3,7 @@ from typing import Optional
 
 from htypes import FicType, FicId
 from store import (
-	OilTimestamp, Language, FicStatus, Fic, FicChapter,
-	Fandom, Character
+	OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom, Character
 )
 import util
 import scrape
@@ -169,9 +168,10 @@ ao3FandomsMap = [
 
 class Ao3Adapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'https://archiveofourown.org/works/', 'archiveofourown.org',
-				FicType.ao3, 'ao3')
+		super().__init__(
+			True, 'https://archiveofourown.org/works/', 'archiveofourown.org',
+			FicType.ao3, 'ao3'
+		)
 		self.collectionUrl = 'https://archiveofourown.org/collections/'
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
@@ -185,11 +185,14 @@ class Ao3Adapter(Adapter):
 					url = 'https://' + url[len(pref):]
 
 		endsToStrip = [
-				'#main', '#work_endnotes', '#bookmark-form',
-				'?view_adult=true',
-				'?view_full_work=true', '?viewfullwork=true',
-				'?show_comments=true',
-			]
+			'#main',
+			'#work_endnotes',
+			'#bookmark-form',
+			'?view_adult=true',
+			'?view_full_work=true',
+			'?viewfullwork=true',
+			'?show_comments=true',
+		]
 		for send in endsToStrip:
 			if url.endswith(send):
 				url = url[:-len(send)]
@@ -204,7 +207,7 @@ class Ao3Adapter(Adapter):
 			meta = scrape.softScrapeWithMeta(url, delay=10)
 			if meta is None or meta['raw'] is None or meta['status'] != 200:
 				raise Exception('unable to lookup chapter: {}'.format(url))
-			from bs4 import BeautifulSoup # type: ignore
+			from bs4 import BeautifulSoup  # type: ignore
 			soup = BeautifulSoup(meta['raw'], 'html5lib')
 			for a in soup.find_all('a'):
 				if a.get_text() == 'Entire Work':
@@ -229,7 +232,12 @@ class Ao3Adapter(Adapter):
 
 		if len(pieces) >= 3 and pieces[1] == 'chapters' and pieces[2].isnumeric():
 			localChapterId = pieces[2]
-			mchaps = FicChapter.select({'ficId': fic.id, 'localChapterId': localChapterId})
+			mchaps = FicChapter.select(
+				{
+					'ficId': fic.id,
+					'localChapterId': localChapterId
+				}
+			)
 			if len(mchaps) == 1:
 				ficId.chapterId = mchaps[0].chapterId
 				ficId.ambiguous = False
@@ -252,7 +260,7 @@ class Ao3Adapter(Adapter):
 		chapter.setHtml(data['raw'])
 		chapter.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
 		from bs4 import BeautifulSoup
@@ -287,7 +295,7 @@ class Ao3Adapter(Adapter):
 		soup = BeautifulSoup(html, 'html.parser')
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		titleHeadings = soup.findAll('h2', {'class': 'title heading'})
 		if len(titleHeadings) != 1:
@@ -298,7 +306,9 @@ class Ao3Adapter(Adapter):
 		if len(summaryModules) != 1:
 			prefaceGroups = soup.findAll('div', {'class': 'preface group'})
 			if len(prefaceGroups) == 1:
-				summaryModules = prefaceGroups[0].findAll('div', {'class': 'summary module'})
+				summaryModules = prefaceGroups[0].findAll(
+					'div', {'class': 'summary module'}
+				)
 
 		if len(summaryModules) == 1:
 			summaryBq = summaryModules[0].find('blockquote')
@@ -363,7 +373,7 @@ class Ao3Adapter(Adapter):
 		authorLink = byline.find('a')
 		if authorLink is None:
 			if fic.authorId is not None and len(fic.getAuthorName()) > 0:
-				pass # updated author to anon, don't make changes
+				pass  # updated author to anon, don't make changes
 			else:
 				# first loaded after it was already set to anonymous
 				authorUrl = ''
@@ -373,7 +383,7 @@ class Ao3Adapter(Adapter):
 		else:
 			authorUrl = authorLink.get('href')
 			author = ' '.join(byline.find('a').contents)
-			authorId = author # map pseudo to real?
+			authorId = author  # map pseudo to real?
 			self.setAuthor(fic, author, authorUrl, authorId)
 
 		if fic.chapterCount > 1:
@@ -391,8 +401,9 @@ class Ao3Adapter(Adapter):
 
 			for cid in range(1, fic.chapterCount + 1):
 				chap = fic.chapter(cid)
-				chap.url = '{}{}/chapters/{}?view_adult=true'.format(self.baseUrl,
-						fic.localId, localChapterIdSelect[cid - 1].get('value'))
+				chap.url = '{}{}/chapters/{}?view_adult=true'.format(
+					self.baseUrl, fic.localId, localChapterIdSelect[cid - 1].get('value')
+				)
 				chap.localChapterId = localChapterIdSelect[cid - 1].get('value')
 				chap.title = localChapterIdSelect[cid - 1].getText().strip()
 				if chap.title is not None:
@@ -406,57 +417,68 @@ class Ao3Adapter(Adapter):
 				originalF = ft.contents[0].strip()
 				f = originalF.lower()
 				# TODO: this seriously needs reworked
-				if ((f.startswith("harry potter ") and f.endswith("rowling"))
-						or f == 'harry potter - fandom'
-						or f == 'fantastic beasts and where to find them (movies)'
-						or f == 'harry potter next generation - fandom'):
+				if (
+					(f.startswith("harry potter ") and f.endswith("rowling"))
+					or f == 'harry potter - fandom'
+					or f == 'fantastic beasts and where to find them (movies)'
+					or f == 'harry potter next generation - fandom'
+				):
 					fic.add(Fandom.define('Harry Potter'))
-				elif (f == 'sherlock - fandom' or f == 'sherlock (tv)'
-						or f == 'sherlock holmes & related fandoms'
-						or f == 'sherlock holmes - arthur conan doyle'
-						or f == 'sherlock holmes (downey films)'):
+				elif (
+					f == 'sherlock - fandom' or f == 'sherlock (tv)'
+					or f == 'sherlock holmes & related fandoms'
+					or f == 'sherlock holmes - arthur conan doyle'
+					or f == 'sherlock holmes (downey films)'
+				):
 					fic.add(Fandom.define('Sherlock Holmes'))
 				elif f == 'furry (fandom)' or f == 'harry - fandom':
-					continue # skip
+					continue  # skip
 				elif f == 'fleurmione - fandom':
-					continue # skip
+					continue  # skip
 				elif f == 'skyfall (2012) - fandom':
 					fic.add(Fandom.define('James Bond'))
 				elif f == 'orphan black (tv)':
 					fic.add(Fandom.define('Orphan Black'))
-				elif (f == 'naruto' or f == 'naruto shippuden'
-						or f == 'naruto shippuuden - fandom'):
+				elif (
+					f == 'naruto' or f == 'naruto shippuden'
+					or f == 'naruto shippuuden - fandom'
+				):
 					fic.add(Fandom.define('Naruto'))
 				elif f == 'naruto/harry potter':
 					fic.add(Fandom.define('Naruto'))
 					fic.add(Fandom.define('Harry Potter'))
 				elif f == 'bleach':
 					fic.add(Fandom.define('Bleach'))
-				elif (f == 'iron man (movies)' or f == 'iron man - all media types'
-						or f == 'iron man (comic)' or f == 'iron man - fandom'
-						or f == 'iron man (comics)'):
+				elif (
+					f == 'iron man (movies)' or f == 'iron man - all media types'
+					or f == 'iron man (comic)' or f == 'iron man - fandom'
+					or f == 'iron man (comics)'
+				):
 					fic.add(Fandom.define('Iron Man'))
-				elif (f == 'the avengers (marvel) - all media types'
-						or f == 'the avengers (marvel movies)'
-						or f == 'the avengers - ambiguous fandom'
-						or f == 'the avengers (2012)'
-						or f == 'the avengers'
-						or f == 'avengers (marvel) - all media types'
-						or f == 'marvel avengers movies universe'
-						or f == 'avengers'):
+				elif (
+					f == 'the avengers (marvel) - all media types'
+					or f == 'the avengers (marvel movies)'
+					or f == 'the avengers - ambiguous fandom'
+					or f == 'the avengers (2012)' or f == 'the avengers'
+					or f == 'avengers (marvel) - all media types'
+					or f == 'marvel avengers movies universe' or f == 'avengers'
+				):
 					fic.add(Fandom.define('Avengers'))
 				elif f == 'marvel 616':
 					fic.add(Fandom.define('Marvel'))
 					fic.add(Fandom.define('Marvel 616'))
 				elif f == 'thor (movies)' or f == 'thor - all media types':
 					fic.add(Fandom.define('Thor'))
-				elif (f == 'captain america (movies)'
-						or f == 'captain america - all media types'
-						or f == 'captain america (comics)'):
+				elif (
+					f == 'captain america (movies)'
+					or f == 'captain america - all media types'
+					or f == 'captain america (comics)'
+				):
 					fic.add(Fandom.define('Captain America'))
-				elif (f == 'avatar: the last airbender'
-						or f == 'avatar: legend of korra'
-						or f == 'avatar the last airbender - fandom'):
+				elif (
+					f == 'avatar: the last airbender' or f == 'avatar: legend of korra'
+					or f == 'avatar the last airbender - fandom'
+				):
 					fic.add(Fandom.define('Avatar'))
 				elif f == 'original work':
 					fic.add(Fandom.define('Original Work'))
@@ -475,19 +497,26 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Teen Wolf'))
 				elif f == 'grimm (tv)':
 					fic.add(Fandom.define('Grimm'))
-				elif (f == 'the amazing spider-man (movies - webb)'
-						or f == 'spider-man - all media types'
-						or f == 'spider-man: homecoming (2017)'):
+				elif (
+					f == 'the amazing spider-man (movies - webb)'
+					or f == 'spider-man - all media types'
+					or f == 'spider-man: homecoming (2017)'
+				):
 					fic.add(Fandom.define('Spiderman'))
-				elif (f == 'x-men - all media types' or f == 'x-men (movieverse)'
-						or f == 'x-men (comicverse)'):
+				elif (
+					f == 'x-men - all media types' or f == 'x-men (movieverse)'
+					or f == 'x-men (comicverse)'
+				):
 					fic.add(Fandom.define('X-Men'))
-				elif (f == 'lord of the rings - j. r. r. tolkien'
-						or f == 'the lord of the rings - j. r. r. tolkien'):
+				elif (
+					f == 'lord of the rings - j. r. r. tolkien'
+					or f == 'the lord of the rings - j. r. r. tolkien'
+				):
 					fic.add(Fandom.define('Lord of the Rings'))
-				elif (f == 'crisis core: final fantasy vii'
-						or f == 'compilation of final fantasy vii'
-						or f == 'final fantasy vii'):
+				elif (
+					f == 'crisis core: final fantasy vii'
+					or f == 'compilation of final fantasy vii' or f == 'final fantasy vii'
+				):
 					fic.add(Fandom.define('Final Fantasy VII'))
 					fic.add(Fandom.define('Final Fantasy'))
 				elif f == 'sen to chihiro no kamikakushi | spirited away':
@@ -496,9 +525,10 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Howl\'s Moving Castle'))
 				elif f == 'rise of the guardians (2012)':
 					fic.add(Fandom.define('Rise of the Guardians'))
-				elif (f == 'doctor who'
-						or f == 'doctor who (2005)'
-						or f == 'doctor who & related fandoms'):
+				elif (
+					f == 'doctor who' or f == 'doctor who (2005)'
+					or f == 'doctor who & related fandoms'
+				):
 					fic.add(Fandom.define('Doctor Who'))
 				elif f == 'daredevil (tv)' or f == 'daredevil (comics)':
 					fic.add(Fandom.define('DareDevil'))
@@ -514,9 +544,10 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('The Sentinel'))
 				elif f == 'teen titans (animated series)':
 					fic.add(Fandom.define('Teen Titans'))
-				elif (f == 'dcu' or f == 'dcu animated'
-						or f == 'dcu (comics)' or f == 'dc extended universe'
-						or f == 'dc animated universe'):
+				elif (
+					f == 'dcu' or f == 'dcu animated' or f == 'dcu (comics)'
+					or f == 'dc extended universe' or f == 'dc animated universe'
+				):
 					fic.add(Fandom.define('DC'))
 				elif f == 'vampire hunter d':
 					fic.add(Fandom.define('Vampire Hunter D'))
@@ -532,8 +563,10 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Discworld'))
 				elif f == 'gossip girl':
 					fic.add(Fandom.define('Gossip Girl'))
-				elif (f == 'a song of ice and fire - george r. r. martin'
-						or f == 'a song of ice and fire & related fandoms'):
+				elif (
+					f == 'a song of ice and fire - george r. r. martin'
+					or f == 'a song of ice and fire & related fandoms'
+				):
 					fic.add(Fandom.define('A Song of Ice and Fire'))
 				elif f == 'supergirl (tv 2015)':
 					fic.add(Fandom.define('Supergirl'))
@@ -569,16 +602,14 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Dungeons and Dragons'))
 				elif f == 'american horror story' or f == 'american horror story: cult':
 					fic.add(Fandom.define('American Horror Story'))
-				elif (f == 'worm (web serial novel)'
-						or f == 'worm - wildbow'
-						or f == 'parahumans series - wildbow'
-						or f == 'worm (web serial) | wildbow'
-						or f == 'worm - fandom'
-						or f == 'parahumans - fandom'
-						or f == 'worm (parahumans)'
-						or f == 'worm (web serial)'
-						or f == 'worm | parahumans'
-						or f == 'worm (web novel)'):
+				elif (
+					f == 'worm (web serial novel)' or f == 'worm - wildbow'
+					or f == 'parahumans series - wildbow'
+					or f == 'worm (web serial) | wildbow' or f == 'worm - fandom'
+					or f == 'parahumans - fandom' or f == 'worm (parahumans)'
+					or f == 'worm (web serial)' or f == 'worm | parahumans'
+					or f == 'worm (web novel)'
+				):
 					fic.add(Fandom.define('Worm'))
 				elif f == 'toaru kagaku no railgun | a certain scientific railgun':
 					fic.add(Fandom.define('A Certain Scientific Railgun'))
@@ -591,7 +622,7 @@ class Ao3Adapter(Adapter):
 				elif f == 'destiny (video game)':
 					fic.add(Fandom.define('Destiny'))
 				elif f == 'fandom - fandom' or f == 'meta - fandom':
-					pass # >_>
+					pass  # >_>
 				elif f == 'house m.d.':
 					fic.add(Fandom.define('House, M.D.'))
 				elif f == 'the hobbit (jackson movies)':
@@ -604,17 +635,23 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Flash'))
 				elif f == 'senki zesshou symphogear':
 					fic.add(Fandom.define('Symphogear'))
-				elif (f == 'fullmetal alchemist: brotherhood & manga'
-						or f == 'fullmetal alchemist - all media types'
-						or f == 'fullmetal alchemist (anime 2003)'):
+				elif (
+					f == 'fullmetal alchemist: brotherhood & manga'
+					or f == 'fullmetal alchemist - all media types'
+					or f == 'fullmetal alchemist (anime 2003)'
+				):
 					fic.add(Fandom.define('Fullmetal Alchemist'))
-				elif (f == 'star wars - all media types'
-						or f == 'star wars episode vii: the force awakens (2015)'
-						or f == 'star wars prequel trilogy'):
+				elif (
+					f == 'star wars - all media types'
+					or f == 'star wars episode vii: the force awakens (2015)'
+					or f == 'star wars prequel trilogy'
+				):
 					fic.add(Fandom.define('Star Wars'))
-				elif (f == 'guardians of the galaxy (2014)'
-						or f == 'guardians of the galaxy - all media types'
-						or f == 'guardians of the galaxy (movies)'):
+				elif (
+					f == 'guardians of the galaxy (2014)'
+					or f == 'guardians of the galaxy - all media types'
+					or f == 'guardians of the galaxy (movies)'
+				):
 					fic.add(Fandom.define('Guardians of the Galaxy'))
 				elif f == 'ant man (2015)' or f == 'ant-man (movies)':
 					fic.add(Fandom.define('Ant Man'))
@@ -665,7 +702,7 @@ class Ao3Adapter(Adapter):
 				elif f == 'girl genius':
 					fic.add(Fandom.define('Girl Genius'))
 				elif f == 'unspecified fandom':
-					pass # TODO?
+					pass  # TODO?
 				elif f == 'nightwing (comics)':
 					fic.add(Fandom.define('Nightwing'))
 				elif f == 'books of the raksura - martha wells':
@@ -674,8 +711,9 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Fall of Ile-Rien'))
 				elif f == 'vorkosigan saga - lois mcmaster bujold':
 					fic.add(Fandom.define('Vorkosigan Saga'))
-				elif (f == 'highlander: the series'
-						or f == 'highlander - all media types'):
+				elif (
+					f == 'highlander: the series' or f == 'highlander - all media types'
+				):
 					fic.add(Fandom.define('Highlander'))
 				elif f == 'yoroiden samurai troopers | ronin warriors':
 					fic.add(Fandom.define('Ronin Warriors'))
@@ -693,8 +731,9 @@ class Ao3Adapter(Adapter):
 					fic.add(Fandom.define('Leverage'))
 				elif f == 'valdemar series - mercedes lackey':
 					fic.add(Fandom.define('Valdemar Series'))
-				elif (f == 'b.p.r.d.'
-						or f == 'bureau for paranormal research and defense'):
+				elif (
+					f == 'b.p.r.d.' or f == 'bureau for paranormal research and defense'
+				):
 					fic.add(Fandom.define('B.P.R.D.'))
 				elif f == 'hellboy (comic)':
 					fic.add(Fandom.define('Hellboy'))
@@ -789,10 +828,9 @@ class Ao3Adapter(Adapter):
 				for rt in relationshipTags:
 					r = rt.contents[0]
 					chars = r.split('/')
-					if len(chars) > 8: # TODO: sometimes more?
+					if len(chars) > 8:  # TODO: sometimes more?
 						raise Exception('unable to parse relationship: {}'.format(r))
 					for char in chars:
 						fic.add(Character.defineInFandom(ourDoms[0], char, self.ftype))
 
 		return fic
-

@@ -12,6 +12,7 @@ import util
 
 T = TypeVar('T', int, str)
 
+
 class FicSelect(Widget):
 	def __init__(self, parent: Optional['Hermes'], target: Fic = None):
 		self.parent = parent
@@ -26,7 +27,7 @@ class FicSelect(Widget):
 		self._rebuildUserFicCache()
 
 	def handleKey(self, key: int) -> bool:
-		if key == 3: # ctrl c
+		if key == 3:  # ctrl c
 			if self.parent is not None:
 				self.parent.quit()
 			return True
@@ -65,16 +66,19 @@ class FicSelect(Widget):
 				self.parent.selectFic(self.list[self.idx])
 			return True
 
-		if key == 4: # ctrl d
+		if key == 4:  # ctrl d
 			self.filter = ''
 			self.list = self.fics
 			self.__refilter(fic)
 			return True
 
 		# TODO: this is out of hand
-		if ((key >= ord(' ') and key <= ord('~'))
-				and ((chr(key).isalnum()) or ':/ .<>?&()=~'.find(chr(key)) != -1
-				or (len(self.filter) > 0 and key == ord('-')))):
+		if (
+			(key >= ord(' ') and key <= ord('~')) and (
+				(chr(key).isalnum()) or ':/ .<>?&()=~'.find(chr(key)) != -1 or
+				(len(self.filter) > 0 and key == ord('-'))
+			)
+		):
 			self.appendToFilter(chr(key).lower())
 			return True
 		if key in {curses.KEY_BACKSPACE, 127} and len(self.filter) > 0:
@@ -91,12 +95,12 @@ class FicSelect(Widget):
 			return True
 		userFic = self.getUserFic(fic)
 
-		if key == 21: # ctrl u
+		if key == 21:  # ctrl u
 			userFic.lastChapterViewed = 0
 			userFic.update()
 			self.pushMessage('marked "{}" no last chapter'.format(fic.title))
 			return True
-		if key == 1 and fic.chapterCount is not None: # ctrl a
+		if key == 1 and fic.chapterCount is not None:  # ctrl a
 			userFic.readStatus = FicStatus.complete
 			userFic.updateLastViewed(fic.chapterCount)
 			userFic.updateLastRead(fic.chapterCount)
@@ -113,8 +117,7 @@ class FicSelect(Widget):
 			if userFic.rating < 9:
 				userFic.rating += 1
 				userFic.update()
-				self.pushMessage('changed rating of "{}" => {}'.format(
-					fic.title, userFic.rating))
+				self.pushMessage(f'changed rating of "{fic.title}" => {userFic.rating}')
 				return True
 			return False
 		if len(self.filter) == 0 and key == ord('-'):
@@ -122,26 +125,25 @@ class FicSelect(Widget):
 			if userFic.rating > 1:
 				userFic.rating -= 1
 				userFic.update()
-				self.pushMessage('changed rating of "{}" => {}'.format(
-					fic.title, userFic.rating))
+				self.pushMessage(f'changed rating of "{fic.title}" => {userFic.rating}')
 				return True
 			return False
 
-		if key == 6: # ctrl f
+		if key == 6:  # ctrl f
 			userFic.isFavorite = not userFic.isFavorite
 			userFic.update()
 			self.pushMessage('changed favorite status of "{}"'.format(fic.title))
 			return True
-		if key == 9: # ctrl i
+		if key == 9:  # ctrl i
 			fic.checkForUpdates()
 			self.pushMessage('checked "{}" for updates'.format(fic.title))
 			return True
-		if key == 23: # ctrl w
+		if key == 23:  # ctrl w
 			fic.ficStatus = {
-					FicStatus.ongoing: FicStatus.abandoned,
-					FicStatus.abandoned: FicStatus.complete,
-					FicStatus.complete: FicStatus.ongoing,
-				}[FicStatus(fic.ficStatus)]
+				FicStatus.ongoing: FicStatus.abandoned,
+				FicStatus.abandoned: FicStatus.complete,
+				FicStatus.complete: FicStatus.ongoing,
+			}[FicStatus(fic.ficStatus)]
 			fic.upsert()
 			return True
 		return False
@@ -152,9 +154,7 @@ class FicSelect(Widget):
 		return self._userFicCache[fic.id]
 
 	def _rebuildUserFicCache(self) -> None:
-		self._userFicCache = {
-				uf.ficId: uf for uf in UserFic.select({'userId': 1})
-			}
+		self._userFicCache = {uf.ficId: uf for uf in UserFic.select({'userId': 1})}
 
 	def refresh(self) -> None:
 		self.fics = Fic.list()
@@ -284,14 +284,18 @@ class FicSelect(Widget):
 				if rel is not None:
 					titleRel = (rel, arg)
 
-		self.pushMessage('f:{}, r:{}, n:{}, c:{}, a:{}, f2:{} p:{}'.format(
-			favRel, ratRel, isNew, isComplete, authorRel, fandomRel, plain))
+		self.pushMessage(
+			'f:{}, r:{}, n:{}, c:{}, a:{}, f2:{} p:{}'.format(
+				favRel, ratRel, isNew, isComplete, authorRel, fandomRel, plain
+			)
+		)
 
 		pfilter = ' '.join(plain).lower()
 
 		nfics: List[Fic] = []
-		completelyRefilter = (force or
-				(self.filter[-1] == ' ' or self.filter[-1] == ':'))
+		completelyRefilter = (
+			force or (self.filter[-1] == ' ' or self.filter[-1] == ':')
+		)
 
 		# TODO FIXME bleh
 		userFics = {uf.ficId: uf for uf in UserFic.select({'userId': 1})}
@@ -331,7 +335,9 @@ class FicSelect(Widget):
 				if not matchesFandom:
 					continue
 
-			ftext = '{} {} {} {}'.format(fic.localId, fic.title, fic.getAuthorName(), fic.id).lower()
+			ftext = (
+				f'{fic.localId} {fic.title} {fic.getAuthorName()} {fic.id}'.lower()
+			)
 			if util.subsequenceMatch(ftext, pfilter):
 				nfics += [fic]
 		self.list = nfics
@@ -352,9 +358,12 @@ class FicSelect(Widget):
 		fic = self.list[idx]
 		userFic = self.getUserFic(fic)
 		onC = ''
-		if ((userFic.lastChapterViewed or 0) > 0
-				and (userFic.readStatus == FicStatus.ongoing
-					or (userFic.lastChapterViewed or 0) < (fic.chapterCount or -1))):
+		if (
+			(userFic.lastChapterViewed or 0) > 0 and (
+				userFic.readStatus == FicStatus.ongoing or
+				(userFic.lastChapterViewed or 0) < (fic.chapterCount or -1)
+			)
+		):
 			onC = '({}/{})'.format(userFic.lastChapterViewed, fic.chapterCount)
 		if width - 5 - len(onC) <= 0:
 			onC = ''
@@ -367,12 +376,13 @@ class FicSelect(Widget):
 
 		title = fic.title or '[MISSING TITLE]'
 		return '{:<{}}{} {}{}{}{}'.format(
-				util.filterUnicode(title[:width - 6 - len(onC)]),
-				width - 5 - len(onC), onC,
-				str(userFic.rating) if userFic.rating and userFic.rating >= 0 else ' ',
-				'*' if userFic.isFavorite else ' ',
-				'R' if userFic.readStatus == FicStatus.complete else ' ',
-				ficStatusIndicator)
+			util.filterUnicode(title[:width - 6 - len(onC)]), width - 5 - len(onC),
+			onC,
+			str(userFic.rating) if userFic.rating and userFic.rating >= 0 else ' ',
+			'*' if userFic.isFavorite else ' ',
+			'R' if userFic.readStatus == FicStatus.complete else ' ',
+			ficStatusIndicator
+		)
 
 	def getAttr(self, idx: int) -> Any:
 		fic = self.list[idx]
@@ -412,14 +422,15 @@ class FicSelect(Widget):
 		for i in range(1, hmid + 1):
 			if (self.idx - i) < 0:
 				continue
-			self.draw(hmid - i - 1, lm, self.getHeader(self.idx - i, tWidth),
-					self.getAttr(self.idx - i))
+			self.draw(
+				hmid - i - 1, lm, self.getHeader(self.idx - i, tWidth),
+				self.getAttr(self.idx - i)
+			)
 
 		fic = self.list[self.idx]
 		lastUrl = fic.url or ''
 		self.draw(hmid - 1, lm, '=' * tWidth)
-		self.draw(hmid + 1, lm,
-				'{:>{}}'.format(lastUrl[:tWidth], tWidth))
+		self.draw(hmid + 1, lm, '{:>{}}'.format(lastUrl[:tWidth], tWidth))
 
 		desc = HtmlView(fic.description or '{missing description}').text
 		wdesc: List[str] = []
@@ -433,27 +444,36 @@ class FicSelect(Widget):
 				wdesc[i] = wdesc[i][:tWidth - 3] + '...'
 			self.draw(hmid + i + off + 1, lm, wdesc[i])
 
-		self.draw(hmid + 7, lm,
-				util.equiPad([
-						'chapters: {}'.format(fic.chapterCount),
-						'{}'.format(fic.getAuthorName()),
-						'words: {}'.format(util.formatNumber(fic.wordCount or -1)),
-					], tWidth))
-		updatedStr = fic.updated.toDateString() if fic.updated is not None else '{missing}'
-		publishedStr = fic.published.toDateString() if fic.published is not None else '{missing}'
-		self.draw(hmid + 8, lm,
-				util.equiPad([
-						'published: {}'.format(publishedStr),
-						str(fic.id),
-						'updated: {}'.format(updatedStr)
-					], tWidth))
+		self.draw(
+			hmid + 7, lm,
+			util.equiPad(
+				[
+					'chapters: {}'.format(fic.chapterCount),
+					'{}'.format(fic.getAuthorName()),
+					'words: {}'.format(util.formatNumber(fic.wordCount or -1)),
+				], tWidth
+			)
+		)
+		updatedStr = fic.getUpdatedDateString()
+		publishedStr = fic.getPublishedDateString()
+		self.draw(
+			hmid + 8, lm,
+			util.equiPad(
+				[
+					'published: {}'.format(publishedStr),
+					str(fic.id), 'updated: {}'.format(updatedStr)
+				], tWidth
+			)
+		)
 		fandoms = [f.name for f in fic.fandoms()]
 		if len(fandoms) == 0:
 			self.draw(hmid + 9, lm, util.equiPad(['', 'No Fandoms', ''], tWidth))
 		elif len(fandoms) == 1:
 			self.draw(hmid + 9, lm, util.equiPad(['', fandoms[0], ''], tWidth))
 		elif len(fandoms) == 2:
-			self.draw(hmid + 9, lm, util.equiPad(['', fandoms[0], fandoms[1], ''], tWidth))
+			self.draw(
+				hmid + 9, lm, util.equiPad(['', fandoms[0], fandoms[1], ''], tWidth)
+			)
 		else:
 			self.draw(hmid + 9, lm, util.equiPad(fandoms, tWidth))
 		self.draw(hmid + 10, lm, '=' * tWidth)
@@ -462,8 +482,10 @@ class FicSelect(Widget):
 		for i in range(1, self.height - hmid - off):
 			if (self.idx + i) >= len(self.list):
 				continue
-			self.draw(hmid + i + off, lm, self.getHeader(self.idx + i, tWidth),
-					self.getAttr(self.idx + i))
+			self.draw(
+				hmid + i + off, lm, self.getHeader(self.idx + i, tWidth),
+				self.getAttr(self.idx + i)
+			)
 
 		cursor = '>  {} <'.format(self.getHeader(self.idx, tWidth - 1))
 
@@ -489,13 +511,13 @@ class FicSelect(Widget):
 		stext = '({:>3}/{:>3})'.format(self.idx + 1, len(self.list))
 		ltext = '> ' + self.filter
 
-		self.draw(self.height -1, 0,
-				util.equiPad(['', stext], self.width - 1),
-				curses.color_pair(4))
+		self.draw(
+			self.height - 1, 0, util.equiPad(['', stext], self.width - 1),
+			curses.color_pair(4)
+		)
 
 		if len(stext + ltext) >= self.width - 2:
 			left = self.width - 2 - len(stext) - 3
 			ltext = '>~' + self.filter[len(self.filter) - left:]
 
 		self.draw(self.height - 1, 0, ltext, curses.color_pair(4))
-

@@ -609,24 +609,30 @@ ffNetFandomIdMap = {
 
 class FFNAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'https://www.fanfiction.net', 'fanfiction.net', FicType.ff_net, 'ffn')
+		super().__init__(
+			True, 'https://www.fanfiction.net', 'fanfiction.net', FicType.ff_net,
+			'ffn'
+		)
 
-	def constructUrl(self, storyId: str, chapterId: int = None, title: str = None) -> str:
+	def constructUrl(
+		self, storyId: str, chapterId: int = None, title: str = None
+	) -> str:
 		if chapterId is None:
 			return '{}/s/{}'.format(self.baseUrl, storyId)
 		if title is None:
 			return '{}/s/{}/{}'.format(self.baseUrl, storyId, chapterId)
-		return '{}/s/{}/{}/{}'.format(self.baseUrl,
-				storyId, chapterId, util.urlTitle(title))
+		return '{}/s/{}/{}/{}'.format(
+			self.baseUrl, storyId, chapterId, util.urlTitle(title)
+		)
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		# TODO: do we need these 2 lines or will they always be done by however
 		# FicChapter is created?
 		if chapter.fic is None:
-			chapter.fic = Fic.lookup((chapter.ficId,))
-		return self.constructUrl(chapter.fic.localId, chapter.chapterId, chapter.fic.title)
-
+			chapter.fic = Fic.lookup((chapter.ficId, ))
+		return self.constructUrl(
+			chapter.fic.localId, chapter.chapterId, chapter.fic.title
+		)
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
 		if url.find('?') >= 0:
@@ -639,21 +645,27 @@ class FFNAdapter(Adapter):
 			return None
 		if parts[3] != 's' and parts[3] != 'r':
 			return None
-		if (len(parts) < 5 or len(parts[4].strip()) < 1
-				or not parts[4].strip().isnumeric()):
+		if (
+			len(parts) < 5 or len(parts[4].strip()) < 1
+			or not parts[4].strip().isnumeric()
+		):
 			return None
 
 		storyId = int(parts[4])
 		chapterId = None
 		ambi = True
-		if (len(parts) >= 6 and parts[3] == 's'
-				and len(parts[5].strip()) > 0 and parts[5].strip().isnumeric()):
+		if (
+			len(parts) >= 6 and parts[3] == 's' and len(parts[5].strip()) > 0
+			and parts[5].strip().isnumeric()
+		):
 			chapterId = int(parts[5].strip())
 			ambi = False
 		# upstream supports a chapter id after the story slug too, but it does not
 		# normally generate such urls -- only use it as a fallback
-		if (ambi and len(parts) >= 7 and parts[3] == 's'
-				and len(parts[6].strip()) > 0 and parts[6].strip().isnumeric()):
+		if (
+			ambi and len(parts) >= 7 and parts[3] == 's' and len(parts[6].strip()) > 0
+			and parts[6].strip().isnumeric()
+		):
 			chapterId = int(parts[6].strip())
 			ambi = False
 		return FicId(self.ftype, str(storyId), chapterId, ambi)
@@ -673,7 +685,7 @@ class FFNAdapter(Adapter):
 		chapter.setHtml(data)
 		chapter.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def getFromZList(self, localId: int, ts: int, html: str) -> Fic:
 		fic = None
@@ -693,11 +705,13 @@ class FFNAdapter(Adapter):
 		fic = self.parseZListInfoInto(fic, ts, data)
 		fic.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		if (html.lower().find('chapter not found.') != -1
-				and html.lower().find("id='storytext'") == -1):
+		if (
+			html.lower().find('chapter not found.') != -1
+			and html.lower().find("id='storytext'") == -1
+		):
 			raise Exception('unable to find chapter content')
 		lines = html.replace('\r', '\n').replace('>', '>\n').split('\n')
 		parts: List[str] = []
@@ -706,13 +720,17 @@ class FFNAdapter(Adapter):
 			if line.find("id='storytext'") != -1 or line.find('id="storytext"') != -1:
 				inStory = True
 			if inStory:
-				if (line.find("SELECT id=chap_select") != -1
-						or line.lower().find('<script') != -1):
+				if (
+					line.find("SELECT id=chap_select") != -1
+					or line.lower().find('<script') != -1
+				):
 					inStory = False
 					break
 				parts += [line]
-		while len(parts) > 0 and (parts[-1].startswith('&lt; Prev</button')
-				or parts[-1].startswith('<button class=btn TYPE=BUTTON')):
+		while len(parts) > 0 and (
+			parts[-1].startswith('&lt; Prev</button')
+			or parts[-1].startswith('<button class=btn TYPE=BUTTON')
+		):
 			parts = parts[:-1]
 		return ' '.join(parts)
 
@@ -744,8 +762,9 @@ class FFNAdapter(Adapter):
 
 		return fandoms
 
-	def handleCrossoverFandom(self, fic: Fic, fandom: str, fIds: List[int],
-			href: str) -> List[Fandom]:
+	def handleCrossoverFandom(
+		self, fic: Fic, fandom: str, fIds: List[int], href: str
+	) -> List[Fandom]:
 		# save raw/messy fandom
 		fandoms = [Fandom.define(fandom, sourceId=self.ftype)]
 
@@ -754,8 +773,11 @@ class FFNAdapter(Adapter):
 		# check for missing id maps
 		missingIds = [fId for fId in fIds if fId not in ffNetFandomIdMap]
 		if len(missingIds) > 0:
-			util.logMessage('unknown fandom ids: {} from {} in {}'.format(
-					missingIds, href, fic.url))
+			util.logMessage(
+				'unknown fandom ids: {} from {} in {}'.format(
+					missingIds, href, fic.url
+				)
+			)
 			return fandoms
 
 		# translate to messy
@@ -763,15 +785,17 @@ class FFNAdapter(Adapter):
 		# check for missing messy
 		missingMessy = [m for m in messys if m not in ffNetFandomMap]
 		if len(missingMessy) > 0:
-			util.logMessage('unknown messy fandom: {} from {}'.format(
-					missingMessy, href))
+			util.logMessage(
+				'unknown messy fandom: {} from {}'.format(missingMessy, href)
+			)
 			return fandoms
 
 		# check crossover value
 		expected = '{}_and_{}_Crossovers'.format(messys[0], messys[1])
 		if expected != fandom:
-			util.logMessage('crossover got "{}" expected "{}"'.format(
-					fandom, expected))
+			util.logMessage(
+				'crossover got "{}" expected "{}"'.format(fandom, expected)
+			)
 			return fandoms
 
 		# map messy to clean
@@ -782,20 +806,20 @@ class FFNAdapter(Adapter):
 		return fandoms
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		deletedFicTexts = [
-				# probably deleted by user
-				'Story Not FoundUnable to locate story. Code 1.',
-				# probably deleted by admin
-				'Story Not FoundUnable to locate story. Code 2.',
-				# unknown
-				'Story Not FoundStory is unavailable for reading. (A)',
-			]
+			# probably deleted by user
+			'Story Not FoundUnable to locate story. Code 1.',
+			# probably deleted by admin
+			'Story Not FoundUnable to locate story. Code 2.',
+			# unknown
+			'Story Not FoundStory is unavailable for reading. (A)',
+		]
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 		profile_top = soup.find(id='profile_top')
 		# story might've been deleted
 		if profile_top is None:
-			gui_warnings = soup.find_all('span', { 'class': 'gui_warning' })
+			gui_warnings = soup.find_all('span', {'class': 'gui_warning'})
 			for gui_warning in gui_warnings:
 				for deletedFicText in deletedFicTexts:
 					if gui_warning.get_text() == deletedFicText:
@@ -808,7 +832,7 @@ class FFNAdapter(Adapter):
 		pt_str = str(profile_top)
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		for b in profile_top.find_all('b'):
 			b_class = b.get('class')
@@ -823,8 +847,10 @@ class FFNAdapter(Adapter):
 		descriptionFound = False
 		for div in profile_top.find_all('div'):
 			div_class = div.get('class')
-			if (div.get('style') == 'margin-top:2px'
-					and len(div_class) == 1 and div_class[0] == 'xcontrast_txt'):
+			if (
+				div.get('style') == 'margin-top:2px' and len(div_class) == 1
+				and div_class[0] == 'xcontrast_txt'
+			):
 				fic.description = div.get_text()
 				descriptionFound = True
 				break
@@ -837,16 +863,18 @@ class FFNAdapter(Adapter):
 		fic.followCount = 0
 
 		# TODO we should match this only on the section following the description
-		matcher = RegexMatcher(text, {
-			'ageRating': ('Rated:\s+Fiction\s*(\S+)', str),
-			'chapterCount?': ('Chapters:\s+(\d+)', int),
-			'wordCount': ('Words:\s+(\S+)', int),
-			'reviewCount?': ('Reviews:\s+(\S+)', int),
-			'favoriteCount?': ('Favs:\s+(\S+)', int),
-			'followCount?': ('Follows:\s+(\S+)', int),
-			'updated?': ('Rated:.*Updated:\s+(\S+)', str),
-			'published': ('Published:\s+([^-]+)', str),
-		})
+		matcher = RegexMatcher(
+			text, {
+				'ageRating': ('Rated:\s+Fiction\s*(\S+)', str),
+				'chapterCount?': ('Chapters:\s+(\d+)', int),
+				'wordCount': ('Words:\s+(\S+)', int),
+				'reviewCount?': ('Reviews:\s+(\S+)', int),
+				'favoriteCount?': ('Favs:\s+(\S+)', int),
+				'followCount?': ('Follows:\s+(\S+)', int),
+				'updated?': ('Rated:.*Updated:\s+(\S+)', str),
+				'published': ('Published:\s+([^-]+)', str),
+			}
+		)
 		matcher.matchAll(fic)
 
 		if fic.published is not None:
@@ -862,7 +890,9 @@ class FFNAdapter(Adapter):
 		if fic.chapterCount is None:
 			fic.chapterCount = 1
 
-		match = re.search('(Rated|Chapters|Words|Updated|Published):.*Status:\s+(\S+)', text)
+		match = re.search(
+			'(Rated|Chapters|Words|Updated|Published):.*Status:\s+(\S+)', text
+		)
 		if match is None:
 			fic.ficStatus = FicStatus.ongoing
 		else:
@@ -884,30 +914,40 @@ class FFNAdapter(Adapter):
 			raise Exception('unable to find author:\n{}'.format(text))
 
 		preStoryLinks = soup.find(id='pre_story_links')
-		preStoryLinksLinks = [] if preStoryLinks is None else preStoryLinks.find_all('a')
+		preStoryLinksLinks = []
+		if preStoryLinks is not None:
+			preStoryLinksLinks = preStoryLinks.find_all('a')
 		pendingFandoms: List[Fandom] = []
 		for a in preStoryLinksLinks:
 			href = a.get('href')
 			hrefParts = href.split('/')
 
 			# if it's a top level category
-			if (len(hrefParts) == 3
-					and len(hrefParts[0]) == 0 and len(hrefParts[2]) == 0):
+			if (
+				len(hrefParts) == 3 and len(hrefParts[0]) == 0
+				and len(hrefParts[2]) == 0
+			):
 				cat = hrefParts[1]
 				if cat in ffNetFandomCategories:
-					continue # skip categories
+					continue  # skip categories
 				raise Exception('unknown category: {}'.format(cat))
 
 			# if it's a crossover /Fandom1_and_Fandm2_Crossovers/f1id/f2id/
-			if (len(hrefParts) == 5 and hrefParts[1].endswith("_Crossovers")
-					and len(hrefParts[0]) == 0 and len(hrefParts[4]) == 0):
+			if (
+				len(hrefParts) == 5 and hrefParts[1].endswith("_Crossovers")
+				and len(hrefParts[0]) == 0 and len(hrefParts[4]) == 0
+			):
 				fIds = [int(hrefParts[2]), int(hrefParts[3])]
-				pendingFandoms += self.handleCrossoverFandom(fic, hrefParts[1], fIds, href)
+				pendingFandoms += self.handleCrossoverFandom(
+					fic, hrefParts[1], fIds, href
+				)
 				continue
 
 			# if it's a regular fandom in some category
-			if (len(hrefParts) == 4
-					and len(hrefParts[0]) == 0 and len(hrefParts[3]) == 0):
+			if (
+				len(hrefParts) == 4 and len(hrefParts[0]) == 0
+				and len(hrefParts[3]) == 0
+			):
 				# ensure category is in our map
 				if hrefParts[1] not in ffNetFandomCategories:
 					raise Exception('unknown category: {}'.format(hrefParts[1]))
@@ -931,7 +971,9 @@ class FFNAdapter(Adapter):
 		chapterTitles = []
 		if fic.chapterCount > 1:
 			chapterSelect = soup.find(id='chap_select')
-			chapterOptions = [] if chapterSelect is None else chapterSelect.findAll('option')
+			chapterOptions = []
+			if chapterSelect is not None:
+				chapterOptions = chapterSelect.findAll('option')
 			chapterTitles = [co.getText().strip() for co in chapterOptions]
 
 		for cid in range(1, fic.chapterCount + 1):
@@ -944,7 +986,7 @@ class FFNAdapter(Adapter):
 				ch.title = fic.title
 			ch.upsert()
 
-		metaSpan = profile_top.find('span', { 'class': 'xgray' })
+		metaSpan = profile_top.find('span', {'class': 'xgray'})
 		if metaSpan is not None:
 			try:
 				res = self.parseFicMetaSpan(metaSpan.decode_contents())
@@ -952,16 +994,17 @@ class FFNAdapter(Adapter):
 
 				# reconstruct
 				fields = [
-						('rated', 'Rated: Fiction ZZZ'),
-						('language', 'Language: ZZZ'),
-						('genres', 'Genre: ZZZ'),
-						('characters', 'Characters: ZZZ'),
-						('reviews', 'Reviews: ZZZ'),
-						('favorites', 'Favs: ZZZ'),
-						('follows', 'Follows: ZZZ'),
-					]
-				rmeta = ' - '.join([
-					f[1].replace('ZZZ', res[f[0]]) for f in fields if f[0] in res])
+					('rated', 'Rated: Fiction ZZZ'),
+					('language', 'Language: ZZZ'),
+					('genres', 'Genre: ZZZ'),
+					('characters', 'Characters: ZZZ'),
+					('reviews', 'Reviews: ZZZ'),
+					('favorites', 'Favs: ZZZ'),
+					('follows', 'Follows: ZZZ'),
+				]
+				rmeta = ' - '.join(
+					[f[1].replace('ZZZ', res[f[0]]) for f in fields if f[0] in res]
+				)
 
 				fic.extraMeta = rmeta
 				publishedUts = util.parseDateAsUnix(res['published'], fic.fetched)
@@ -973,8 +1016,12 @@ class FFNAdapter(Adapter):
 				fic.upsert()
 
 			except Exception as e:
-				util.logMessage(f'FFNAdapter.parseInfoInto: .parseFicMetaSpan:\n{e}\n{traceback.format_exc()}')
-				util.logMessage(f'FFNAdapter.parseFicMetaSpan: {metaSpan.decode_contents()}')
+				util.logMessage(
+					f'FFNAdapter.parseInfoInto: .parseFicMetaSpan:\n{e}\n{traceback.format_exc()}'
+				)
+				util.logMessage(
+					f'FFNAdapter.parseFicMetaSpan: {metaSpan.decode_contents()}'
+				)
 				pass
 
 		return fic
@@ -999,8 +1046,8 @@ class FFNAdapter(Adapter):
 		res = {}
 
 		keys = [
-				('rated', "Rated:\s+<[^>]*>Fiction\s*(K|K\+|T|M)<[^>]*>"),
-			]
+			('rated', "Rated:\s+<[^>]*>Fiction\s*(K|K\+|T|M)<[^>]*>"),
+		]
 
 		for n, kre in keys:
 			optional = n.endswith('?')
@@ -1020,16 +1067,19 @@ class FFNAdapter(Adapter):
 		res['language'] = language
 
 		rkeys = [
-				('id', "id:\s+(\d+)"),
-				('status?', "Status:\s+(\S+)"),
-				('published', "Published:\s+<span data-xutime=['\"](\d+)['\"]>(\S+)</span>"),
-				('updated?', "Updated:\s+<span data-xutime=['\"](\d+)['\"]>(\S+)</span>"),
-				('follows?', "Follows:\s+(\S+)"),
-				('favorites?', "Favs:\s+(\S+)"),
-				('reviews?', "Reviews:\s+<[^>]*>(\S+)<[^>]*>"),
-				('words', "Words:\s+(\S+)"),
-				('chapters?', "Chapters:\s+(\S+)"),
-			]
+			('id', "id:\s+(\d+)"),
+			('status?', "Status:\s+(\S+)"),
+			(
+				'published',
+				"Published:\s+<span data-xutime=['\"](\d+)['\"]>(\S+)</span>"
+			),
+			('updated?', "Updated:\s+<span data-xutime=['\"](\d+)['\"]>(\S+)</span>"),
+			('follows?', "Follows:\s+(\S+)"),
+			('favorites?', "Favs:\s+(\S+)"),
+			('reviews?', "Reviews:\s+<[^>]*>(\S+)<[^>]*>"),
+			('words', "Words:\s+(\S+)"),
+			('chapters?', "Chapters:\s+(\S+)"),
+		]
 
 		for n, kre in rkeys:
 			optional = n.endswith('?')
@@ -1071,7 +1121,7 @@ class FFNAdapter(Adapter):
 
 	def parseZListInfoInto(self, fic: Fic, ts: int, html: str) -> Fic:
 		# existing data is newer, do nothing
-		if fic.fetched is not None and int(fic.fetched) > ts: # type: ignore
+		if fic.fetched is not None and int(fic.fetched) > ts:  # type: ignore
 			return fic
 		from bs4 import BeautifulSoup
 
@@ -1081,7 +1131,7 @@ class FFNAdapter(Adapter):
 		pt_str = str(html)
 
 		fic.fetched = OilTimestamp(ts)
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		fic.url = self.constructUrl(fic.localId, 1, fic.title)
 
@@ -1090,28 +1140,30 @@ class FFNAdapter(Adapter):
 		fic.favoriteCount = 0
 		fic.followCount = 0
 
-		for a in soup.find_all('a', { 'class': 'stitle' }):
+		for a in soup.find_all('a', {'class': 'stitle'}):
 			fic.title = a.getText()
 			break
 		else:
 			raise Exception('error: unable to find title:\n{}\n'.format(pt_str))
 
-		for div in soup.find_all('div', { 'class': 'z-padtop' }):
+		for div in soup.find_all('div', {'class': 'z-padtop'}):
 			fic.description = div.contents[0]
 			break
 		else:
 			raise Exception('error: unable to find description:\n{}\n'.format(pt_str))
 
-		matcher = RegexMatcher(text, {
-			'ageRating': ('Rated:\s+(?:Fiction)?\s*(\S+)', str),
-			'chapterCount?': ('Chapters:\s+(\d+)', int),
-			'wordCount': ('Words:\s+(\S+)', int),
-			'reviewCount?': ('Reviews:\s+(\S+)', int),
-			'favoriteCount?': ('Favs:\s+(\S+)', int),
-			'followCount?': ('Follows:\s+(\S+)', int),
-			'updated?': ('Updated:\s+(\S+)', str),
-			'published': ('Published:\s+([^-]+)', str),
-		})
+		matcher = RegexMatcher(
+			text, {
+				'ageRating': ('Rated:\s+(?:Fiction)?\s*(\S+)', str),
+				'chapterCount?': ('Chapters:\s+(\d+)', int),
+				'wordCount': ('Words:\s+(\S+)', int),
+				'reviewCount?': ('Reviews:\s+(\S+)', int),
+				'favoriteCount?': ('Favs:\s+(\S+)', int),
+				'followCount?': ('Follows:\s+(\S+)', int),
+				'updated?': ('Updated:\s+(\S+)', str),
+				'published': ('Published:\s+([^-]+)', str),
+			}
+		)
 		matcher.matchAll(fic)
 
 		if fic.published is not None:
@@ -1127,7 +1179,9 @@ class FFNAdapter(Adapter):
 		if fic.chapterCount is None:
 			fic.chapterCount = 1
 
-		match = re.search('(Rated|Chapters|Words|Updated|Published):.*-\s+(Complete)', text)
+		match = re.search(
+			'(Rated|Chapters|Words|Updated|Published):.*-\s+(Complete)', text
+		)
 		if match is None:
 			fic.ficStatus = FicStatus.ongoing
 		else:
@@ -1148,13 +1202,12 @@ class FFNAdapter(Adapter):
 		else:
 			raise Exception('unable to find author:\n{}'.format(text))
 
-		zl = soup.find('div', { 'class': 'z-list' })
+		zl = soup.find('div', {'class': 'z-list'})
 		fan = None if zl is None else zl.get('data-category')
 		pendingFandoms: List[Fandom] = []
 		if fan is not None:
 			pendingFandoms += self.handleFandom(fic, fan)
 			# TODO: crossovers?
-
 
 		#print('---')
 		#print(fic.__dict__)
@@ -1171,7 +1224,7 @@ class FFNAdapter(Adapter):
 
 	def softScrape(self, chapter: FicChapter) -> str:
 		if chapter.url is None:
-			chapter.url = self.buildUrl(chapter) # type: ignore
+			chapter.url = self.buildUrl(chapter)  # type: ignore
 			chapter.upsert()
 		fic = chapter.getFic()
 
@@ -1189,8 +1242,10 @@ class FFNAdapter(Adapter):
 
 		if data is None:
 			raise Exception('unable to scrape? FIXME')
-		if (data.lower().find('chapter not found.') != -1
-				and data.lower().find("id='storytext'") == -1):
+		if (
+			data.lower().find('chapter not found.') != -1
+			and data.lower().find("id='storytext'") == -1
+		):
 			ts = scrape.getMostRecentScrapeTime(url)
 			if ts is None:
 				raise Exception('no most recent scrape time? FIXME')
@@ -1201,9 +1256,10 @@ class FFNAdapter(Adapter):
 		if data is None:
 			raise Exception('unable to scrape? FIXME')
 
-		if (data.lower().find('chapter not found.') != -1
-				and data.lower().find("id='storytext'") == -1):
+		if (
+			data.lower().find('chapter not found.') != -1
+			and data.lower().find("id='storytext'") == -1
+		):
 			raise Exception('unable to find chapter content {}'.format(url))
 
 		return data
-

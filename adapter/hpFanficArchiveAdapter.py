@@ -10,11 +10,13 @@ import scrape
 from adapter.adapter import Adapter, edumpContent
 from adapter.regex_matcher import RegexMatcher
 
+
 class HpFanficArchiveAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'http://www.hpfanficarchive.com/stories/', 'hpfanficarchive.com',
-				FicType.hpfanficarchive)
+		super().__init__(
+			True, 'http://www.hpfanficarchive.com/stories/', 'hpfanficarchive.com',
+			FicType.hpfanficarchive
+		)
 		self.baseStoryUrl = 'http://www.hpfanficarchive.com/stories/viewstory.php'
 		self.baseDelay = 5
 
@@ -26,7 +28,9 @@ class HpFanficArchiveAdapter(Adapter):
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
 		if url.startswith("https://"):
 			url = "http://" + url[len("https://"):]
-		url = url.replace('http://hpfanficarchive.com', 'http://www.hpfanficarchive.com')
+		url = url.replace(
+			'http://hpfanficarchive.com', 'http://www.hpfanficarchive.com'
+		)
 		if not url.startswith(self.baseStoryUrl):
 			return None
 		leftover = url[len(self.baseStoryUrl):]
@@ -57,10 +61,10 @@ class HpFanficArchiveAdapter(Adapter):
 		fic = self.parseInfoInto(fic, data['raw'])
 		fic.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(html, 'html.parser')
 		mainpage = soup.find(id='mainpage')
 		if mainpage is None:
@@ -97,7 +101,7 @@ class HpFanficArchiveAdapter(Adapter):
 		soup = BeautifulSoup(html, 'html.parser')
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		pagetitle = soup.find(id='pagetitle')
 		aTags = pagetitle.findAll('a')
@@ -149,10 +153,12 @@ class HpFanficArchiveAdapter(Adapter):
 		else:
 			raise Exception('unable to find info text')
 
-		matcher = RegexMatcher(infoText, {
+		matcher = RegexMatcher(
+			infoText, {
 				'chapterCount': ('Chapters:\s+(\d+)', int),
 				'wordCount': ('Word count:\s+(\S+)', int),
-			})
+			}
+		)
 		matcher.matchAll(fic)
 
 		sortDiv = soup.find(id='sort')
@@ -166,14 +172,16 @@ class HpFanficArchiveAdapter(Adapter):
 		fic.followCount = 0
 
 		infoBlockHtml = str(infoBlock)
-		match = re.search('<!-- PUBLISHED START -->([^<]*)<!-- PUBLISHED END -->',
-				infoBlockHtml)
+		match = re.search(
+			'<!-- PUBLISHED START -->([^<]*)<!-- PUBLISHED END -->', infoBlockHtml
+		)
 		if match is not None:
 			publishedUts = util.parseDateAsUnix(match.group(1), fic.fetched)
 			fic.published = OilTimestamp(publishedUts)
 
-		match = re.search('<!-- UPDATED START -->([^<]*)<!-- UPDATED END -->',
-				infoBlockHtml)
+		match = re.search(
+			'<!-- UPDATED START -->([^<]*)<!-- UPDATED END -->', infoBlockHtml
+		)
 		if match is not None:
 			updatedUts = util.parseDateAsUnix(match.group(1), fic.fetched)
 			fic.updated = OilTimestamp(updatedUts)
@@ -193,10 +201,9 @@ class HpFanficArchiveAdapter(Adapter):
 
 		match = re.search('Crossovers', infoText)
 		if match is not None:
-			pass # raise Exception('Found unknown crossover in {0}: {1}'.format(fic.id, fic.url))
+			pass  # raise Exception('Found unknown crossover in {0}: {1}'.format(fic.id, fic.url))
 		else:
 			# otherwise not a crossover and just harry potter
 			fic.add(Fandom.define('Harry Potter'))
 
 		return fic
-

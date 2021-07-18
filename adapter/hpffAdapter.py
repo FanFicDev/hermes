@@ -9,12 +9,14 @@ from adapter.regex_matcher import RegexMatcher
 from htypes import FicId, FicType
 from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom
 
+
 class HarryPotterFanfictionAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(False,
-				'https://harrypotterfanfiction.com',
-				[ 'harrypotterfanfiction.com', 'fanfictionworld.net' ],
-				FicType.harrypotterfanfiction, 'hpff')
+		super().__init__(
+			False, 'https://harrypotterfanfiction.com',
+			['harrypotterfanfiction.com', 'fanfictionworld.net'],
+			FicType.harrypotterfanfiction, 'hpff'
+		)
 		self.storyPrefix = '/viewstory.php?psid='
 		self.chapterPrefix = '/viewstory.php?chapterid='
 		self.archivePath = '/srv/{}'.format(self.urlFragments[0])
@@ -49,7 +51,9 @@ class HarryPotterFanfictionAdapter(Adapter):
 		if len(matching) < 1:
 			return None
 		if len(matching) > 1:
-			raise Exception('chapterId is in map multiple times: {}'.format(chapterId))
+			raise Exception(
+				'chapterId is in map multiple times: {}'.format(chapterId)
+			)
 		return matching[0]
 
 	def getChapterIds(self, storyId: int) -> Dict[int, str]:
@@ -61,7 +65,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 				if int(parts[0]) == storyId:
 					matching += [parts]
 		# TODO FIXME int, int?
-		localChapterIdMap: Dict[int, str] = { }
+		localChapterIdMap: Dict[int, str] = {}
 		for r in matching:
 			if int(r[3]) in localChapterIdMap:
 				raise Exception('chapterId is in map multiple times: {}'.format(r[3]))
@@ -73,12 +77,20 @@ class HarryPotterFanfictionAdapter(Adapter):
 		for suff in stripSuffixes:
 			if url.lower().endswith(suff.lower()):
 				url = url[:-len(suff)]
-		mapPrefix = [ ('http://', 'https://'), ('https://www.', 'https://'),
-				('https://fanfictionworld.net/hparchive', self.baseUrl),
-				(self.baseUrl + '/viewstory2.php', self.baseUrl + '/viewstory.php'),
-				(self.baseUrl + '/viewstory.php?sid=', self.baseUrl + '/viewstory.php?psid='),
-				(self.baseUrl + '/reviews.php?storyid=', self.baseUrl + '/viewstory.php?psid='),
-				]
+		mapPrefix = [
+			('http://', 'https://'),
+			('https://www.', 'https://'),
+			('https://fanfictionworld.net/hparchive', self.baseUrl),
+			(self.baseUrl + '/viewstory2.php', self.baseUrl + '/viewstory.php'),
+			(
+				self.baseUrl + '/viewstory.php?sid=',
+				self.baseUrl + '/viewstory.php?psid='
+			),
+			(
+				self.baseUrl + '/reviews.php?storyid=',
+				self.baseUrl + '/viewstory.php?psid='
+			),
+		]
 		for prefix in mapPrefix:
 			if url.startswith(prefix[0]):
 				url = prefix[1] + url[len(prefix[0]):]
@@ -113,7 +125,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 		# TODO: do we need these 2 lines or will they always be done by however
 		# FicChapter is created?
 		if chapter.fic is None:
-			chapter.fic = Fic.lookup((chapter.ficId,))
+			chapter.fic = Fic.lookup((chapter.ficId, ))
 		if chapter.localChapterId is None:
 			raise Exception('chapter missing localChapterId? FIXME')
 		return self.constructUrl(chapter.fic.localId, int(chapter.localChapterId))
@@ -147,12 +159,13 @@ class HarryPotterFanfictionAdapter(Adapter):
 			datab = f.read()
 			data = datab.decode(self.encoding)
 			return self.fixEncoding(data)
-	
+
 	def getCurrentInfo(self, fic: Fic) -> Fic:
 		# grab the content from disk
 		info = self.getArchiveStoryInfo(int(fic.localId))
 		spath = '{}/archive/{}/{}/summary.html.gz'.format(
-				self.archivePath, info[1], info[2])
+			self.archivePath, info[1], info[2]
+		)
 		data = self.slurp(spath)
 		fic = self.parseInfoInto(fic, data)
 		fic.upsert()
@@ -163,17 +176,18 @@ class HarryPotterFanfictionAdapter(Adapter):
 		for cid in range(1, chapterCount + 1):
 			pcid = str(cid).zfill(dCount)
 			fpath = '{}/archive/{}/{}/chapters/chapter_{}.html.gz'.format(
-					self.archivePath, info[1], info[2], pcid)
+				self.archivePath, info[1], info[2], pcid
+			)
 			data = self.slurp(fpath)
 			chapter = fic.chapter(cid)
 			chapter.localChapterId = localChapterIdMap[cid]
 			chapter.setHtml(data)
 			chapter.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(wwwHtml, 'html.parser')
 		storyMainInfo = soup.findAll('table', {'class': 'storymaininfo'})
 		if len(storyMainInfo) != 1:
@@ -181,13 +195,15 @@ class HarryPotterFanfictionAdapter(Adapter):
 		storyMainInfo = storyMainInfo[0]
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		disclaimerJs = "javascript:if (confirm('Please note. This story may contain adult themes. By clicking here you are stating that you are over 17. Click cancel if you do not meet this requirement.')) location = '?psid="
 		for a in soup.findAll('a'):
 			href = a.get('href')
-			if (not href.startswith(disclaimerJs)
-					and href != '?psid={}'.format(fic.localId)):
+			if (
+				not href.startswith(disclaimerJs)
+				and href != '?psid={}'.format(fic.localId)
+			):
 				continue
 			fic.title = a.getText()
 			break
@@ -210,15 +226,17 @@ class HarryPotterFanfictionAdapter(Adapter):
 		fic.followCount = 0
 
 		text = storyMainInfo.getText().replace('\xa0', ' ')
-		matcher = RegexMatcher(text, {
-			'ageRating': ('Rating:\s+(Mature|15\+|12\+)', str),
-			'chapterCount': ('Chapters:\s+(\d+)', int),
-			'wordCount': ('Words:\s+(\d+)', int),
-			'reviewCount': ('Story Reviews:\s*(\d+)', int),
-			'favoriteCount': ('Favorite Story Of:\s+(\d+) users', int),
-			'updated': ('Last Updated:\s+(\S+)', str),
-			'published': ('First Published:\s+(\S+)', str),
-		})
+		matcher = RegexMatcher(
+			text, {
+				'ageRating': ('Rating:\s+(Mature|15\+|12\+)', str),
+				'chapterCount': ('Chapters:\s+(\d+)', int),
+				'wordCount': ('Words:\s+(\d+)', int),
+				'reviewCount': ('Story Reviews:\s*(\d+)', int),
+				'favoriteCount': ('Favorite Story Of:\s+(\d+) users', int),
+				'updated': ('Last Updated:\s+(\S+)', str),
+				'published': ('First Published:\s+(\S+)', str),
+			}
+		)
 		matcher.matchAll(fic)
 
 		if fic.published is not None:
@@ -242,7 +260,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 		if status == 'Completed':
 			fic.ficStatus = FicStatus.complete
 		elif status == 'Work In Progress':
-			fic.ficStatus = FicStatus.ongoing # should these be abandoned?
+			fic.ficStatus = FicStatus.ongoing  # should these be abandoned?
 		elif status == 'Abandoned':
 			fic.ficStatus = FicStatus.abandoned
 		else:
@@ -262,4 +280,3 @@ class HarryPotterFanfictionAdapter(Adapter):
 		# TODO: chars/pairings?
 		fic.add(Fandom.define('Harry Potter'))
 		return fic
-

@@ -2,8 +2,10 @@ import scrape as sc
 import priv
 import util
 
-def scrape(url: str, staleOnly: bool = False, fallback: bool = False
-		) -> sc.ScrapeMeta:
+
+def scrape(
+	url: str, staleOnly: bool = False, fallback: bool = False
+) -> sc.ScrapeMeta:
 	if sc._staleOnly:
 		util.logMessage(f'skitter.scrape: HERMES_STALE only {url}')
 		return sc.scrape(url)
@@ -28,6 +30,7 @@ def scrape(url: str, staleOnly: bool = False, fallback: bool = False
 	if fallback:
 		return sc.scrape(url)
 	raise Exception(f'skitter.scrape: unable to scrape: {url}')
+
 
 def softScrape(url: str, fallback: bool = False) -> sc.ScrapeMeta:
 	# return old copy if any exists
@@ -87,4 +90,3 @@ if __name__ == '__main__':
 			except:
 				print('  FAILED')
 				raise
-

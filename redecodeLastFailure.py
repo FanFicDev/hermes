@@ -10,4 +10,3 @@ if r is None:
 	print('None')
 else:
 	print(len(r))
-

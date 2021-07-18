@@ -10,6 +10,7 @@ import scrape
 
 from adapter.adapter import Adapter, edumpContent
 
+
 class SiyeAdapter(Adapter):
 	def __init__(self) -> None:
 		super().__init__(True, 'https://www.siye.co.uk', 'siye.co.uk', FicType.siye)
@@ -57,10 +58,10 @@ class SiyeAdapter(Adapter):
 		fic = self.parseInfoInto(fic, data['raw'])
 		fic.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(html, 'html5lib')
 		notes = soup.find(id='notes')
 
@@ -93,7 +94,7 @@ class SiyeAdapter(Adapter):
 		soup = BeautifulSoup(html, 'html.parser')
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		w95tables = soup.findAll('table', {'width': '95%'})
 		if len(w95tables) != 3:
@@ -114,7 +115,9 @@ class SiyeAdapter(Adapter):
 		self.setAuthor(fic, author, authorUrl, authorId)
 
 		# TODO: this may miss multiline summaries :(
-		summaryMatch = re.search('<b>Summary:</b>((.|\r|\n)*)<b>Hitcount: </b>', html, re.MULTILINE)
+		summaryMatch = re.search(
+			'<b>Summary:</b>((.|\r|\n)*)<b>Hitcount: </b>', html, re.MULTILINE
+		)
 		if summaryMatch is None:
 			edumpContent(html, 'siye_summary')
 			raise Exception('could not locate summary')
@@ -193,4 +196,3 @@ class SiyeAdapter(Adapter):
 		# TODO: chars/relationship?
 
 		return fic
-
