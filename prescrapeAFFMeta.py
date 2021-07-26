@@ -4,7 +4,7 @@ import sys
 import time
 import urllib.parse
 from typing import Optional
-from bs4 import BeautifulSoup # type: ignore
+from bs4 import BeautifulSoup  # type: ignore
 
 archive = sys.argv[1]
 url = 'http://{}.adult-fanfiction.org/search.php'.format(archive)
@@ -12,8 +12,11 @@ url += '?auth=&title=&summary=&tags=%2BCOMPLETE+-MM&cats=0&search=Search'
 url += '&page={}'
 url = scrape.canonizeUrl(url)
 
-def fetch(url: str, pageNo: int, delay: int, force: bool = False
-		) -> Optional[str]:
+
+def fetch(url: str,
+					pageNo: int,
+					delay: int,
+					force: bool = False) -> Optional[str]:
 	url = url.format(pageNo)
 	print(url)
 
@@ -29,8 +32,9 @@ def fetch(url: str, pageNo: int, delay: int, force: bool = False
 	time.sleep(delay)
 	return str(res['raw'])
 
+
 def getPageFromUrl(url: str, defl: int = -1) -> int:
-	r = url[url.find('?')+1:]
+	r = url[url.find('?') + 1:]
 	qs = urllib.parse.parse_qs(r)
 	if 'page' not in qs or len(qs['page']) != 1:
 		return defl
@@ -40,6 +44,7 @@ def getPageFromUrl(url: str, defl: int = -1) -> int:
 	except:
 		pass
 	return defl
+
 
 prev = scrape.getAllUrlLike(url.format('%'))
 print(prev)
@@ -73,4 +78,3 @@ print(lastPage)
 for pageNo in range(firstPage + 1, lastPage + 1):
 	print(pageNo)
 	html = fetch(url, pageNo, 3, False)
-

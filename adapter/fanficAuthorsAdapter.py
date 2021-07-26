@@ -10,17 +10,20 @@ import scrape
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
 
+
 class ChapterInfo:
 	def __init__(self) -> None:
 		self.wordCount = 0
 		self.reviewCount = 0
 		self.updated: Optional[str] = None
 
+
 class FanficAuthorsAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'https://www.fanficauthors.net', 'fanficauthors.net',
-				FicType.fanficauthors)
+		super().__init__(
+			True, 'https://www.fanficauthors.net', 'fanficauthors.net',
+			FicType.fanficauthors
+		)
 		self.baseStoryUrl = 'https://{}.fanficauthors.net/{}'
 
 	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
@@ -35,7 +38,7 @@ class FanficAuthorsAdapter(Adapter):
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		if chapter.fic is None:
-			chapter.fic = Fic.lookup((chapter.ficId,))
+			chapter.fic = Fic.lookup((chapter.ficId, ))
 		return self.constructUrl(chapter.fic.localId, chapter.chapterId)
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
@@ -68,17 +71,20 @@ class FanficAuthorsAdapter(Adapter):
 		fic = self.parseInfoInto(fic, data)
 		fic.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(html, 'html5lib')
-		storyChapterDisplay = soup.find('div',
-				{'class': ['story', 'chapterDisplay']})
+		storyChapterDisplay = soup.find(
+			'div', {'class': ['story', 'chapterDisplay']}
+		)
 
 		# remove pager lists
 		while True:
-			pager = storyChapterDisplay.find('ul', {'class': ['pager', 'center-block']})
+			pager = storyChapterDisplay.find(
+				'ul', {'class': ['pager', 'center-block']}
+			)
 			if pager is None:
 				break
 			pager.extract()
@@ -87,7 +93,8 @@ class FanficAuthorsAdapter(Adapter):
 		return content
 
 	def getCurrentInfo(self, fic: Fic) -> Fic:
-		data = scrape.scrape(self.constructUrl(fic.localId))['raw'] # scrape fresh info
+		# scrape fresh info
+		data = scrape.scrape(self.constructUrl(fic.localId))['raw']
 
 		return self.parseInfoInto(fic, data)
 
@@ -97,7 +104,7 @@ class FanficAuthorsAdapter(Adapter):
 		storyLid = fic.localId.split('/')[1]
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		fic.url = self.constructUrl(fic.localId)
 
@@ -124,8 +131,9 @@ class FanficAuthorsAdapter(Adapter):
 
 		summaryQuote = divWell.find('blockquote')
 
-		fic.description = str(summaryQuote.getText()) \
-				.replace('\t', ' ').replace('\r', ' ').replace('\n', ' ')
+		fic.description = str(
+			summaryQuote.getText()
+		).replace('\t', ' ').replace('\r', ' ').replace('\n', ' ')
 		while fic.description.find('  ') != -1:
 			fic.description = fic.description.replace('  ', ' ')
 		fic.description = fic.description.strip()
@@ -138,12 +146,14 @@ class FanficAuthorsAdapter(Adapter):
 		else:
 			raise Exception('unable to find fic status')
 
-		RegexMatcher(divWellText, {
-			'ageRating': ('Rating\s*:\s+([^-]+) -', str),
-			'chapterCount': ('Chapters\s*:\s+(\d+) -', int),
-			'wordCount': ('Word count\s*:\s+([\d,]+) -', str),
-			}).matchAll(fic)
-		assert(fic.chapterCount is not None)
+		RegexMatcher(
+			divWellText, {
+				'ageRating': ('Rating\s*:\s+([^-]+) -', str),
+				'chapterCount': ('Chapters\s*:\s+(\d+) -', int),
+				'wordCount': ('Word count\s*:\s+([\d,]+) -', str),
+			}
+		).matchAll(fic)
+		assert (fic.chapterCount is not None)
 
 		if str(fic.wordCount).find(',') != -1:
 			fic.wordCount = int(str(fic.wordCount).replace(',', ''))
@@ -166,12 +176,14 @@ class FanficAuthorsAdapter(Adapter):
 
 			chInfo = ChapterInfo()
 
-			RegexMatcher(child.getText(), {
-				'wordCount': ('Word count\s*:\s+([\d,]+) -', str),
-				'reviewCount': ('Reviews\s*:\s+([^-]+) -', int),
-				'updated': ('Uploaded on\s*:\s+(.+)', str),
-				}).matchAll(chInfo)
-			assert(chInfo.updated is not None)
+			RegexMatcher(
+				child.getText(), {
+					'wordCount': ('Word count\s*:\s+([\d,]+) -', str),
+					'reviewCount': ('Reviews\s*:\s+([^-]+) -', int),
+					'updated': ('Uploaded on\s*:\s+(.+)', str),
+				}
+			).matchAll(chInfo)
+			assert (chInfo.updated is not None)
 
 			if str(chInfo.wordCount).find(',') != -1:
 				chInfo.wordCount = int(str(chInfo.wordCount).replace(',', ''))
@@ -196,5 +208,3 @@ class FanficAuthorsAdapter(Adapter):
 			ch.upsert()
 
 		return fic
-
-

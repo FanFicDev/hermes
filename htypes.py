@@ -5,6 +5,7 @@ if typing.TYPE_CHECKING:
 	from adapter.adapter import Adapter
 from psycopg2.extensions import AsIs, register_adapter
 
+
 class FicType(IntEnum):
 	broken = 0
 	manual = 1
@@ -34,15 +35,18 @@ class FicType(IntEnum):
 	fanficparadisensfw = 25
 	wanderinginn = 26
 
+
 def adaptFicType(ftype: FicType) -> AsIs:
 	return AsIs(int(ftype))
-register_adapter(FicType, adaptFicType)
 
+
+register_adapter(FicType, adaptFicType)
 
 # map FicType => Adapter
 adapters: Dict[FicType, Optional['Adapter']] = {
-		FicType.broken: None,
-	}
+	FicType.broken: None,
+}
+
 
 def getAdapter(ficType: FicType) -> 'Adapter':
 	adapter = adapters[ficType]
@@ -50,10 +54,12 @@ def getAdapter(ficType: FicType) -> 'Adapter':
 		return adapter
 	raise Exception(f'missing adapter for {ficType}')
 
+
 class FicId:
 	# TODO: is this cid or localChapterId?
-	def __init__(self, ftype: FicType, lid: str, cid: int = None,
-			ambiguous: bool = True):
+	def __init__(
+		self, ftype: FicType, lid: str, cid: int = None, ambiguous: bool = True
+	):
 		self.sourceId = ftype
 		self.localId = lid
 		self.chapterId = cid
@@ -63,8 +69,7 @@ class FicId:
 		return (self.sourceId, self.localId, self.chapterId, self.ambiguous)
 
 	def __eq__(self, other: Any) -> bool:
-		return isinstance(other, type(self)) \
-				and self.__key() == other.__key()
+		return (isinstance(other, type(self)) and self.__key() == other.__key())
 
 	def __hash__(self) -> int:
 		return hash(self.__key())
@@ -107,16 +112,20 @@ class FicId:
 			ident = '/'.join(ident.split('/')[5:])
 
 		# if this is a google redirect url, extract the target
-		if ident.find('//') >= 0 and ident.find('google') >= 0 \
-				and ident.find('/url?') >= 0 and ident.find('url=') >= 0:
+		if (
+			ident.find('//') >= 0 and ident.find('google') >= 0
+			and ident.find('/url?') >= 0 and ident.find('url=') >= 0
+		):
 			try:
 				o = urllib.parse.urlparse(ident)
 				q = urllib.parse.parse_qs(o.query)
 				ident = q['url'][0]
 			except:
 				pass
-		if ident.find('//') >= 0 and ident.find('google') >= 0 \
-				and ident.find('/url?') >= 0 and ident.find('q=') >= 0:
+		if (
+			ident.find('//') >= 0 and ident.find('google') >= 0
+			and ident.find('/url?') >= 0 and ident.find('q=') >= 0
+		):
 			try:
 				o = urllib.parse.urlparse(ident)
 				q = urllib.parse.parse_qs(o.query)
@@ -125,8 +134,10 @@ class FicId:
 				pass
 
 		# if this is a facebook redirect url, extract the target
-		if ident.find('//') >= 0 and ident.find('facebook.com/l.php') >= 0 \
-				and ident.find('?') >= 0 and ident.find('u=') >= 0:
+		if (
+			ident.find('//') >= 0 and ident.find('facebook.com/l.php') >= 0
+			and ident.find('?') >= 0 and ident.find('u=') >= 0
+		):
 			try:
 				o = urllib.parse.urlparse(ident)
 				q = urllib.parse.parse_qs(o.query)
@@ -178,7 +189,7 @@ class FicId:
 		from store import Fic
 		parts = ident.split('/')
 		if parts[0].isnumeric():
-			fic = Fic.get((int(parts[0]),))
+			fic = Fic.get((int(parts[0]), ))
 			if fic is not None:
 				fid = fic.fid()
 				if len(parts) == 2 and parts[1].isnumeric():
@@ -225,7 +236,7 @@ class FicId:
 	@staticmethod
 	def tryParseFallback(ident: str) -> Optional['FicId']:
 		manualAdapter = adapters[FicType.manual]
-		assert(manualAdapter is not None)
+		assert (manualAdapter is not None)
 		fid = None
 		try:
 			fid = manualAdapter.tryParseUrl(ident)
@@ -254,9 +265,10 @@ class FicId:
 
 	@staticmethod
 	def help() -> str:
-		return \
-			'FicId: #FFNetId\n' + \
-			'       #FFNetId/#ChapterId\n' + \
-			'       <story url>'
-
-
+		return '\n'.join(
+			[
+				'FicId: #FFNetId',
+				'       #FFNetId/#ChapterId',
+				'       <story url>',
+			]
+		)

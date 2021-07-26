@@ -11,9 +11,12 @@ import scrape
 
 from adapter.adapter import Adapter, edumpContent
 
+
 class SugarQuillAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True, 'http://www.sugarquill.net', 'sugarquill.net', FicType.sugarquill)
+		super().__init__(
+			True, 'http://www.sugarquill.net', 'sugarquill.net', FicType.sugarquill
+		)
 		self.baseStoryUrl = self.baseUrl + '/read.php'
 
 	def constructUrl(self, lid: str, cid: int = None) -> str:
@@ -34,7 +37,7 @@ class SugarQuillAdapter(Adapter):
 		if 'storyid' not in qs or len(qs['storyid']) != 1:
 			return None
 
-		assert(qs['storyid'][0].isnumeric())
+		assert (qs['storyid'][0].isnumeric())
 		ficId = FicId(self.ftype, qs['storyid'][0])
 
 		if 'chapno' in qs and len(qs['chapno']) == 1:
@@ -53,10 +56,10 @@ class SugarQuillAdapter(Adapter):
 		fic = self.parseInfoInto(fic, data['raw'])
 		fic.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		soup = BeautifulSoup(html, 'html5lib')
 		content = soup.findAll('div', {'class': 'Section1'})
 		if len(content) != 1:
@@ -87,7 +90,7 @@ class SugarQuillAdapter(Adapter):
 		soup = BeautifulSoup(html, 'html.parser')
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		infoPane = soup.findAll('td', {'class': 'info2_pane'})
 		if len(infoPane) != 1:
@@ -110,7 +113,9 @@ class SugarQuillAdapter(Adapter):
 		else:
 			raise Exception('unable to find author: {}'.format(fic.url))
 
-		titleMatch = re.search('<b>Story</b>:((.|\r|\n)*)<b>Chapter</b>:', str(infoPane), re.MULTILINE)
+		titleMatch = re.search(
+			'<b>Story</b>:((.|\r|\n)*)<b>Chapter</b>:', str(infoPane), re.MULTILINE
+		)
 		if titleMatch is None:
 			edumpContent(str(infoPane), 'sugarquill_title')
 			raise Exception('could not locate title')
@@ -120,18 +125,18 @@ class SugarQuillAdapter(Adapter):
 		chapterOptions = infoPane.findAll('option')
 		chapterTitles = {}
 		for chapterOption in chapterOptions:
-			chapterTitles[int(chapterOption.get('value'))] = chapterOption.getText().strip()
+			cid = int(chapterOption.get('value'))
+			chapterTitles[cid] = chapterOption.getText().strip()
 		fic.chapterCount = len(chapterOptions)
 
-		fic.ageRating = '<unkown>' # TODO
+		fic.ageRating = '<unkown>'  # TODO
 		fic.favoriteCount = 0
 		fic.followCount = 0
 
-		fic.ficStatus = FicStatus.ongoing # TODO: no uniform way to detect?
+		fic.ficStatus = FicStatus.ongoing  # TODO: no uniform way to detect?
 
 		authorProfileHtml = scrape.scrape(authorUrl)['raw']
-		authorProfileHtml = authorProfileHtml \
-				.replace('\r\n', '\n').replace('\r', '')
+		authorProfileHtml = authorProfileHtml.replace('\r', '')
 		authorSoup = BeautifulSoup(authorProfileHtml, 'html5lib')
 
 		storyTables = authorSoup.findAll('table', {'width': '90%'})
@@ -154,11 +159,15 @@ class SugarQuillAdapter(Adapter):
 
 		trs = ourStoryTable.findAll('tr')
 		if len(trs) != 3:
-			raise Exception(f'ourStoryTable does not have 3 trs: {fic.localId} {authorUrl}')
+			raise Exception(
+				f'ourStoryTable does not have 3 trs: {fic.localId} {authorUrl}'
+			)
 
 		fic.description = trs[1].find('td').getText().strip()
 
-		reviewsMatch = re.search('\( Reviews: <a[^>]*>(\\d+)</a> \)</td>', str(trs[0]), re.MULTILINE)
+		reviewsMatch = re.search(
+			'\( Reviews: <a[^>]*>(\\d+)</a> \)</td>', str(trs[0]), re.MULTILINE
+		)
 		if reviewsMatch is None:
 			edumpContent(str(trs[0]), 'sugarquill_reviews')
 			raise Exception('could not locate reviews')
@@ -171,7 +180,8 @@ class SugarQuillAdapter(Adapter):
 			raise Exception('could not locate last updated')
 
 		fic.updated = OilTimestamp(
-				util.parseDateAsUnix(updatedMatch.group(1), fic.fetched))
+			util.parseDateAsUnix(updatedMatch.group(1), fic.fetched)
+		)
 		if fic.published is None:
 			fic.published = fic.updated
 
@@ -192,4 +202,3 @@ class SugarQuillAdapter(Adapter):
 		# TODO: chars/relationship?
 
 		return fic
-

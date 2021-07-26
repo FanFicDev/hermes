@@ -6,6 +6,8 @@ from htypes import FicType, FicId
 from store import OilTimestamp, Author, AuthorSource, Fic, FicChapter
 
 edumpContentDir = './edump/'
+
+
 def edumpContent(html: str, which: str) -> None:
 	import util
 	util.unslurp(html, f'{which}_content.html', edumpContentDir)
@@ -13,15 +15,21 @@ def edumpContent(html: str, which: str) -> None:
 	# TODO this is a hacky workaround for shared log files
 	fname = os.path.join(edumpContentDir, f'{which}_content.html')
 	try:
-		os.chmod(fname, 0o666) # rw-rw-rw-
+		os.chmod(fname, 0o666)  # rw-rw-rw-
 	except:
 		pass
 
+
 # used to extract specific pieces from raw page content
 class Adapter(object):
-	def __init__(self, cacheable: bool, baseUrl: str,
-			urlFragments: Union[str, List[str]] = [],
-			ftype: FicType = FicType.broken, botLinkSuffix: str = None):
+	def __init__(
+		self,
+		cacheable: bool,
+		baseUrl: str,
+		urlFragments: Union[str, List[str]] = [],
+		ftype: FicType = FicType.broken,
+		botLinkSuffix: str = None
+	):
 		self.cacheable = cacheable
 		self.baseUrl = baseUrl
 		self.urlFragments = urlFragments
@@ -35,9 +43,11 @@ class Adapter(object):
 		# by default, we simply try to look up the url in existing chapters or fics
 		chaps = FicChapter.select({'url': url})
 		if len(chaps) == 1:
-			fic = Fic.get((chaps[0].ficId,))
+			fic = Fic.get((chaps[0].ficId, ))
 			if fic is not None:
-				return FicId(FicType(fic.sourceId), fic.localId, chaps[0].chapterId, False)
+				return FicId(
+					FicType(fic.sourceId), fic.localId, chaps[0].chapterId, False
+				)
 
 		fics = Fic.select({'url': url})
 		if len(fics) == 1:
@@ -95,16 +105,23 @@ class Adapter(object):
 		return scrape.softScrape(chapter.url)
 
 	# define the author and author source and attach it to the Fic
-	def setAuthor(self, fic: Fic, author: str, authorUrl: str, authorLocalId: str
-			) -> None:
+	def setAuthor(
+		self, fic: Fic, author: str, authorUrl: str, authorLocalId: str
+	) -> None:
 		fic.authorId = Author.getId(author, self.ftype)
-		AuthorSource.getId(fic.authorId, self.ftype, author, authorUrl, authorLocalId)
+		AuthorSource.getId(
+			fic.authorId, self.ftype, author, authorUrl, authorLocalId
+		)
+
 
 class ManualAdapter(Adapter):
-	def __init__(self, baseUrl: str, urlFragments: Union[str, List[str]] = [],
-			ftype: FicType = FicType.manual):
+	def __init__(
+		self,
+		baseUrl: str,
+		urlFragments: Union[str, List[str]] = [],
+		ftype: FicType = FicType.manual
+	):
 		super().__init__(False, baseUrl, urlFragments, ftype)
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		return html # assume it's already been done
-
+		return html  # assume it's already been done

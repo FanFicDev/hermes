@@ -39,25 +39,31 @@ fictionPressGenres = {
 	'Western',
 }
 
+
 class FictionPressAdapter(Adapter):
 	def __init__(self) -> None:
-		super().__init__(True,
-				'https://www.fictionpress.com', 'fictionpress.com',
-				FicType.fictionpress)
+		super().__init__(
+			True, 'https://www.fictionpress.com', 'fictionpress.com',
+			FicType.fictionpress
+		)
 
-	def constructUrl(self, storyId: str, chapterId: int = None, title: str = None
-			) -> str:
+	def constructUrl(
+		self, storyId: str, chapterId: int = None, title: str = None
+	) -> str:
 		if chapterId is None:
 			return '{}/s/{}'.format(self.baseUrl, storyId)
 		if title is None:
 			return '{}/s/{}/{}'.format(self.baseUrl, storyId, chapterId)
-		return '{}/s/{}/{}/{}'.format(self.baseUrl,
-				storyId, chapterId, util.urlTitle(title))
+		return '{}/s/{}/{}/{}'.format(
+			self.baseUrl, storyId, chapterId, util.urlTitle(title)
+		)
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		if chapter.fic is None:
-			chapter.fic = Fic.lookup((chapter.ficId,))
-		return self.constructUrl(chapter.fic.localId, chapter.chapterId, chapter.fic.title)
+			chapter.fic = Fic.lookup((chapter.ficId, ))
+		return self.constructUrl(
+			chapter.fic.localId, chapter.chapterId, chapter.fic.title
+		)
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
 		if url.find('?') >= 0:
@@ -70,21 +76,27 @@ class FictionPressAdapter(Adapter):
 			return None
 		if parts[3] != 's' and parts[3] != 'r':
 			return None
-		if len(parts) < 5 or len(parts[4].strip()) < 1  \
-				or not parts[4].strip().isnumeric():
+		if (
+			len(parts) < 5 or len(parts[4].strip()) < 1
+			or not parts[4].strip().isnumeric()
+		):
 			return None
 
 		storyId = int(parts[4])
 		chapterId = None
 		ambi = True
-		if len(parts) >= 6 and parts[3] == 's' \
-				and len(parts[5].strip()) > 0 and parts[5].strip().isnumeric():
+		if (
+			len(parts) >= 6 and parts[3] == 's' and len(parts[5].strip()) > 0
+			and parts[5].strip().isnumeric()
+		):
 			chapterId = int(parts[5].strip())
 			ambi = False
 		# upstream supports a chapter id after the story slug too, but it does not
 		# normally generate such urls -- only use it as a fallback
-		if ambi and len(parts) >= 7 and parts[3] == 's' \
-				and len(parts[6].strip()) > 0 and parts[6].strip().isnumeric():
+		if (
+			ambi and len(parts) >= 7 and parts[3] == 's' and len(parts[6].strip()) > 0
+			and parts[6].strip().isnumeric()
+		):
 			chapterId = int(parts[6].strip())
 			ambi = False
 		return FicId(self.ftype, str(storyId), chapterId, ambi)
@@ -102,7 +114,7 @@ class FictionPressAdapter(Adapter):
 		chapter.setHtml(data['raw'])
 		chapter.upsert()
 
-		return Fic.lookup((fic.id,))
+		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
 		lines = html.replace('\r', '\n').split('\n')
@@ -112,8 +124,10 @@ class FictionPressAdapter(Adapter):
 			if line.find("id='storytext'") != -1:
 				inStory = True
 			if inStory:
-				if line.find("SELECT id=chap_select") != -1 \
-						or line.lower().find('<script') != -1:
+				if (
+					line.find("SELECT id=chap_select") != -1
+					or line.lower().find('<script') != -1
+				):
 					inStory = False
 					break
 				parts += [line]
@@ -126,13 +140,13 @@ class FictionPressAdapter(Adapter):
 		return self.parseInfoInto(fic, data['raw'])
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup # type: ignore
+		from bs4 import BeautifulSoup  # type: ignore
 		deletedFicText = 'Story Not FoundUnable to locate story. Code 1.'
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 		profile_top = soup.find(id='profile_top')
 		# story might've been deleted
 		if profile_top is None:
-			gui_warnings = soup.find_all('span', { 'class': 'gui_warning' })
+			gui_warnings = soup.find_all('span', {'class': 'gui_warning'})
 			for gui_warning in gui_warnings:
 				if gui_warning.get_text() == deletedFicText:
 					fic.ficStatus = FicStatus.abandoned
@@ -143,7 +157,7 @@ class FictionPressAdapter(Adapter):
 		pt_str = str(profile_top)
 
 		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English") # TODO: don't hard code?
+		fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
 		for b in profile_top.find_all('b'):
 			b_class = b.get('class')
@@ -157,8 +171,10 @@ class FictionPressAdapter(Adapter):
 
 		for div in profile_top.find_all('div'):
 			div_class = div.get('class')
-			if div.get('style') == 'margin-top:2px' \
-					and len(div_class) == 1 and div_class[0] == 'xcontrast_txt':
+			if (
+				div.get('style') == 'margin-top:2px' and len(div_class) == 1
+				and div_class[0] == 'xcontrast_txt'
+			):
 				fic.description = div.get_text()
 				break
 		else:
@@ -169,16 +185,18 @@ class FictionPressAdapter(Adapter):
 		fic.favoriteCount = 0
 		fic.followCount = 0
 
-		matcher = RegexMatcher(text, {
-			'ageRating': ('Rated:\s+Fiction\s*(\S+)', str),
-			'chapterCount?': ('Chapters:\s+(\d+)', int),
-			'wordCount': ('Words:\s+(\S+)', int),
-			'reviewCount?': ('Reviews:\s+(\S+)', int),
-			'favoriteCount?': ('Favs:\s+(\S+)', int),
-			'followCount?': ('Follows:\s+(\S+)', int),
-			'updated?': ('Updated:\s+(\S+)', str),
-			'published': ('Published:\s+(\S+)', str),
-		})
+		matcher = RegexMatcher(
+			text, {
+				'ageRating': ('Rated:\s+Fiction\s*(\S+)', str),
+				'chapterCount?': ('Chapters:\s+(\d+)', int),
+				'wordCount': ('Words:\s+(\S+)', int),
+				'reviewCount?': ('Reviews:\s+(\S+)', int),
+				'favoriteCount?': ('Favs:\s+(\S+)', int),
+				'followCount?': ('Follows:\s+(\S+)', int),
+				'updated?': ('Updated:\s+(\S+)', str),
+				'published': ('Published:\s+(\S+)', str),
+			}
+		)
 		matcher.matchAll(fic)
 
 		if fic.published is not None:
@@ -222,16 +240,20 @@ class FictionPressAdapter(Adapter):
 			hrefParts = href.split('/')
 
 			# if it's a top level category
-			if len(hrefParts) == 3 \
-					and len(hrefParts[0]) == 0 and len(hrefParts[2]) == 0:
+			if (
+				len(hrefParts) == 3 and len(hrefParts[0]) == 0
+				and len(hrefParts[2]) == 0
+			):
 				cat = hrefParts[1]
 				if cat in fictionPressCategories:
-					continue # skip categories
+					continue  # skip categories
 				raise Exception('unknown category: {}'.format(cat))
 
 			# if it's a regular genre in some category
-			if len(hrefParts) == 4 \
-					and len(hrefParts[0]) == 0 and len(hrefParts[3]) == 0:
+			if (
+				len(hrefParts) == 4 and len(hrefParts[0]) == 0
+				and len(hrefParts[3]) == 0
+			):
 				# ensure category is in our map
 				if hrefParts[1] not in fictionPressCategories:
 					raise Exception('unknown category: {}'.format(hrefParts[1]))
@@ -252,7 +274,9 @@ class FictionPressAdapter(Adapter):
 		chapterTitles = []
 		if fic.chapterCount > 1:
 			chapterSelect = soup.find(id='chap_select')
-			chapterOptions = [] if chapterSelect is None else chapterSelect.findAll('option')
+			chapterOptions = []
+			if chapterSelect is not None:
+				chapterOptions = chapterSelect.findAll('option')
 			chapterTitles = [co.getText().strip() for co in chapterOptions]
 
 		for cid in range(fic.chapterCount):
@@ -283,8 +307,10 @@ class FictionPressAdapter(Adapter):
 
 		if data is None:
 			raise Exception('unable to scrape? FIXME')
-		if data.lower().find('chapter not found.') != -1 \
-				and data.lower().find("id='storytext'") == -1:
+		if (
+			data.lower().find('chapter not found.') != -1
+			and data.lower().find("id='storytext'") == -1
+		):
 			ts = scrape.getMostRecentScrapeTime(url)
 			if ts is None:
 				raise Exception('no most recent scrape time? FIXME')
@@ -295,9 +321,10 @@ class FictionPressAdapter(Adapter):
 		if data is None:
 			raise Exception('unable to scrape? FIXME')
 
-		if data.lower().find('chapter not found.') != -1 \
-				and data.lower().find("id='storytext'") == -1:
+		if (
+			data.lower().find('chapter not found.') != -1
+			and data.lower().find("id='storytext'") == -1
+		):
 			raise Exception('unable to find chapter content {}'.format(url))
 
 		return data
-

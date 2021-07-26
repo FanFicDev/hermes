@@ -10,16 +10,20 @@ from htypes import FicId, FicType, getAdapter
 import scrape
 import util
 
-defaultUserId = 1 # FIXME
+defaultUserId = 1  # FIXME
 
 T = TypeVar('T', bound='TagBase')
+
+
 class TagBase(store_bases.Tag):
 	ttype: Optional[TagType] = None
+
 	@classmethod
-	def define(cls: Type[T], name: str, parent: int = None, sourceId: int = None
-			) -> T:
-		assert(cls.ttype is not None)
-		whereData = { 'type': cls.ttype, 'name': name }
+	def define(
+		cls: Type[T], name: str, parent: int = None, sourceId: int = None
+	) -> T:
+		assert (cls.ttype is not None)
+		whereData = {'type': cls.ttype, 'name': name}
 		if parent is not None:
 			whereData['parent'] = parent
 		if sourceId is not None:
@@ -32,7 +36,9 @@ class TagBase(store_bases.Tag):
 		if len(es) == 1:
 			return es[0]
 		if len(es) > 0:
-			raise Exception(f'FIXME dup cls.ttype={cls.ttype} name={name} sourceId={sourceId}')
+			raise Exception(
+				f'FIXME dup cls.ttype={cls.ttype} name={name} sourceId={sourceId}'
+			)
 		e = cls.new()
 		e.type = cls.ttype
 		e.name = name
@@ -40,6 +46,7 @@ class TagBase(store_bases.Tag):
 		e.sourceId = sourceId
 		e.insert()
 		return cls.define(name, parent, sourceId)
+
 	def add(self, fic: 'Fic') -> StoreType:
 		e = FicTagBase.select({'ficId': fic.id, 'tagId': self.id})
 		if len(e) > 0:
@@ -50,17 +57,27 @@ class TagBase(store_bases.Tag):
 		n.priority = 1
 		n.insert()
 		return n
+
+
 class Genre(TagBase):
 	ttype = TagType.genre
+
+
 class Tag(TagBase):
 	ttype = TagType.tag
+
+
 class Fandom(TagBase):
 	ttype = TagType.fandom
+
+
 class Character(TagBase):
 	ttype = TagType.character
+
 	@staticmethod
-	def defineInFandom(fandom: Fandom, name: str, sourceId: int = None
-			) -> 'Character':
+	def defineInFandom(
+		fandom: Fandom, name: str, sourceId: int = None
+	) -> 'Character':
 		return Character.define(name, fandom.id, sourceId)
 
 	@staticmethod
@@ -70,34 +87,53 @@ class Character(TagBase):
 			return chars[0]
 		return None
 
+
 T2 = TypeVar('T2', bound='FicTagBase')
+
+
 class FicTagBase(store_bases.FicTag):
 	ttype: Optional[TagType] = None
+
 	@classmethod
 	def forFic(cls: Type[T2], ficId: int) -> List[T2]:
-		assert(cls.ttype is not None)
+		assert (cls.ttype is not None)
 		with cls.getConnection().cursor() as curs:
-			curs.execute('''
+			curs.execute(
+				'''
 			select ft.*
 			from fic_tag ft
 			join tag t on t.id = ft.tagId
 			where t.type = %s and ft.ficId = %s
-			''', (cls.ttype, ficId))
+			''', (cls.ttype, ficId)
+			)
 			return [cls.fromRow(r) for r in curs]
+
+
 class FicGenre(FicTagBase):
 	ttype = TagType.genre
+
+
 class FicTag(FicTagBase):
 	ttype = TagType.tag
+
+
 class FicFandom(FicTagBase):
 	ttype = TagType.fandom
+
+
 class FicCharacter(FicTagBase):
 	ttype = TagType.character
 
 
 class ReadEvent(store_bases.ReadEvent):
 	@classmethod
-	def record(cls, userId: int, ficId: int, localChapterId: str,
-			ficStatus: FicStatus = FicStatus.complete) -> 'ReadEvent':
+	def record(
+		cls,
+		userId: int,
+		ficId: int,
+		localChapterId: str,
+		ficStatus: FicStatus = FicStatus.complete
+	) -> 'ReadEvent':
 		re = cls()
 		re.userId = userId
 		re.ficId = ficId
@@ -111,6 +147,8 @@ class ReadEvent(store_bases.ReadEvent):
 _authorCache: Dict[int, 'Author'] = {}
 _authorSourceCache: Dict[int, Dict[int, 'AuthorSource']] = {}
 _ficTagCache: Dict[int, List[FicTag]] = {}
+
+
 def initFicTagCache() -> None:
 	global _ficTagCache
 	_ficTagCache = {}
@@ -122,6 +160,7 @@ def initFicTagCache() -> None:
 		if f.id not in _ficTagCache:
 			_ficTagCache[f.id] = []
 
+
 class Fic(store_bases.Fic):
 	def __init__(self) -> None:
 		super().__init__()
@@ -132,8 +171,8 @@ class Fic(store_bases.Fic):
 	def insert(self) -> None:
 		super().insert()
 		# FIXME parent insert should set the serials if present
-		fics = Fic.select({'urlId':self.urlId})
-		assert(len(fics) == 1)
+		fics = Fic.select({'urlId': self.urlId})
+		assert (len(fics) == 1)
 		nfic = fics[0]
 		self.id = nfic.id
 
@@ -149,21 +188,30 @@ class Fic(store_bases.Fic):
 		if self.authorId in _authorCache:
 			a = _authorCache[self.authorId]
 		else:
-			a = Author.lookup((self.authorId,))
+			a = Author.lookup((self.authorId, ))
 
 		if self.sourceId not in _authorSourceCache:
 			_authorSourceCache[self.sourceId] = {}
 		if len(_authorSourceCache[self.sourceId]) == 0:
-			_authorSourceCache[self.sourceId] = \
-				{s.authorId: s for s in AuthorSource.select({'sourceId': self.sourceId})}
+			_authorSourceCache[self.sourceId] = {
+				s.authorId: s
+				for s in AuthorSource.select({'sourceId': self.sourceId})
+			}
 
 		if self.authorId in _authorSourceCache[self.sourceId]:
 			return _authorSourceCache[self.sourceId][self.authorId].name
 
-		s = AuthorSource.select({'authorId': self.authorId, 'sourceId': self.sourceId})
+		s = AuthorSource.select(
+			{
+				'authorId': self.authorId,
+				'sourceId': self.sourceId
+			}
+		)
 		if len(s) == 1:
 			return s[0].name
-		raise Exception(f'unable to find self.authorId={self.authorId}, self.sourceId={self.sourceId}, len(s)={len(s)}')
+		raise Exception(
+			f'unable to find self.authorId={self.authorId}, self.sourceId={self.sourceId}, len(s)={len(s)}'
+		)
 
 	@staticmethod
 	def list(where: Dict[str, Any] = None) -> List['Fic']:
@@ -190,7 +238,8 @@ class Fic(store_bases.Fic):
 		#	, rating DESC
 		#	, favorite DESC
 		#	, lastViewed DESC'''
-		return Fic.select(where, '''
+		return Fic.select(
+			where, '''
 				case when exists (
 					select 1 from user_fic uf
 					where uf.userId = 1 and uf.ficId = id
@@ -198,7 +247,8 @@ class Fic(store_bases.Fic):
 				case when ficStatus = 'abandoned' then -1 else 1 end desc,
 				case when ficStatus = 'complete' then 1 else -1 end desc,
 				created desc
-				''')
+				'''
+		)
 
 	@staticmethod
 	def listAdded() -> List['Fic']:
@@ -213,7 +263,12 @@ class Fic(store_bases.Fic):
 
 	@staticmethod
 	def tryLoad(ficId: FicId) -> Optional['Fic']:
-		existing = Fic.select({'sourceId': ficId.sourceId, 'localId': ficId.localId})
+		existing = Fic.select(
+			{
+				'sourceId': ficId.sourceId,
+				'localId': ficId.localId
+			}
+		)
 		if len(existing) != 1:
 			return None
 		return existing[0]
@@ -231,20 +286,20 @@ class Fic(store_bases.Fic):
 		#	_ficTagCache[self.id] = [ft for ft in FicTag.select({'ficId': self.id})]
 		ours = FicFandom.forFic(self.id)
 		#ours = FicFandom.select({'ficId': self.id})
-		self._cachedFandoms = [Fandom.lookup((our.tagId,)) for our in ours]
+		self._cachedFandoms = [Fandom.lookup((our.tagId, )) for our in ours]
 		return self._cachedFandoms
 
 	def genres(self) -> List['Genre']:
 		ours = FicGenre.forFic(self.id)
-		return [Genre.lookup((our.tagId,)) for our in ours]
+		return [Genre.lookup((our.tagId, )) for our in ours]
 
 	def characters(self) -> List['Character']:
 		ours = FicCharacter.forFic(self.id)
-		return [Character.lookup((our.tagId,)) for our in ours]
+		return [Character.lookup((our.tagId, )) for our in ours]
 
 	def tags(self) -> List['Tag']:
 		ours = FicTag.forFic(self.id)
-		return [Tag.lookup((our.tagId,)) for our in ours]
+		return [Tag.lookup((our.tagId, )) for our in ours]
 
 	def cache(self, upto: int = None) -> None:
 		upto = upto or self.chapterCount or -1
@@ -272,6 +327,17 @@ class Fic(store_bases.Fic):
 
 	def getUserFic(self, userId: int = defaultUserId) -> 'UserFic':
 		return UserFic.getOrDefault((userId, self.id))
+
+	def getUpdatedDateString(self) -> str:
+		if self.updated is None:
+			return '{missing}'
+		return self.updated.toDateString()
+
+	def getPublishedDateString(self) -> str:
+		if self.published is None:
+			return '{missing}'
+		return self.published.toDateString()
+
 
 class UserFic(store_bases.UserFic):
 	@classmethod
@@ -335,8 +401,9 @@ class UserFicChapter(store_bases.UserFicChapter):
 		self.upsert()
 
 	def markRead(self) -> None:
-		e = ReadEvent.record(self.userId, self.ficId, self.localChapterId,
-				FicStatus.complete)
+		e = ReadEvent.record(
+			self.userId, self.ficId, self.localChapterId, FicStatus.complete
+		)
 
 		if self.readStatus == FicStatus.complete:
 			return
@@ -347,8 +414,9 @@ class UserFicChapter(store_bases.UserFicChapter):
 		self.upsert()
 
 	def markAbandoned(self) -> None:
-		e = ReadEvent.record(self.userId, self.ficId, self.localChapterId,
-				FicStatus.abandoned)
+		e = ReadEvent.record(
+			self.userId, self.ficId, self.localChapterId, FicStatus.abandoned
+		)
 
 		if self.readStatus == FicStatus.abandoned:
 			return
@@ -357,6 +425,7 @@ class UserFicChapter(store_bases.UserFicChapter):
 		if self.markedRead is None:
 			self.markedRead = OilTimestamp.now()
 		self.upsert()
+
 
 class FicChapter(store_bases.FicChapter):
 	def __init__(self) -> None:
@@ -373,11 +442,13 @@ class FicChapter(store_bases.FicChapter):
 		return self
 
 	def getUserFicChapter(self, userId: int = defaultUserId) -> UserFicChapter:
-		return UserFicChapter.getOrDefault((userId, self.ficId, self.localChapterId))
+		return UserFicChapter.getOrDefault(
+			(userId, self.ficId, self.localChapterId)
+		)
 
 	def getFic(self) -> Fic:
 		if self.fic is None:
-			self.fic = Fic.lookup((self.ficId,))
+			self.fic = Fic.lookup((self.ficId, ))
 		return self.fic
 
 	@staticmethod
@@ -399,9 +470,9 @@ class FicChapter(store_bases.FicChapter):
 			cacheInfo: Dict[int, Set[int]] = {}
 			for r in curs:
 				if r[0] not in cacheInfo:
-					cacheInfo[r[0]] = { r[1] }
+					cacheInfo[r[0]] = {r[1]}
 				else:
-					cacheInfo[r[0]] |= { r[1] }
+					cacheInfo[r[0]] |= {r[1]}
 
 		return cacheInfo
 
@@ -441,10 +512,11 @@ class FicChapter(store_bases.FicChapter):
 
 	def setHtml(self, html: str) -> None:
 		if self.fic is None:
-			self.fic = Fic.lookup((self.ficId,))
+			self.fic = Fic.lookup((self.ficId, ))
 		html = getAdapter(FicType(self.fic.sourceId)).extractContent(self.fic, html)
 		self.content = util.compress(bytes(html, 'utf-8'))
 		self.upsert()
+
 
 class Language(store_bases.Language):
 	@classmethod
@@ -459,15 +531,18 @@ class Language(store_bases.Language):
 		e.insert()
 		return Language.getId(language)
 
+
 class Author(store_bases.Author):
 	@classmethod
 	def getId(cls, name: str, sourceId: int) -> int:
-		assert(isinstance(sourceId, int))
-		es = Author.select({'name': name}, f'''
+		assert (isinstance(sourceId, int))
+		es = Author.select(
+			{'name': name}, f'''
 			case when exists (
 				select 1 from author_source s
 				where s.authorId = authorId and s.sourceId = {sourceId}
-			) then 1 else 0 end desc''')
+			) then 1 else 0 end desc'''
+		)
 		if len(es) > 1:
 			util.logMessage(f'many authors: name={name} sourceId={sourceId}')
 		if len(es) >= 1:
@@ -480,13 +555,17 @@ class Author(store_bases.Author):
 		e.insert()
 		return Author.getId(name, sourceId)
 
+
 class AuthorSource(store_bases.AuthorSource):
 	@classmethod
-	def getId(cls, authorId: int, sourceId: int,
-			name: str, url: str, localId: str) -> int:
+	def getId(
+		cls, authorId: int, sourceId: int, name: str, url: str, localId: str
+	) -> int:
 		es = AuthorSource.select({'authorId': authorId, 'sourceId': sourceId})
 		if len(es) > 1:
-			util.logMessage(f'many author source: authorId={authorId} sourceId={sourceId}')
+			util.logMessage(
+				f'many author source: authorId={authorId} sourceId={sourceId}'
+			)
 		if len(es) >= 1:
 			es[0].name = name
 			es[0].url = url
@@ -504,6 +583,7 @@ class AuthorSource(store_bases.AuthorSource):
 		e.localId = localId
 		e.insert()
 		return AuthorSource.getId(authorId, sourceId, name, url, localId)
+
 
 # TODO FIXME
 #class QueueStatus(IntEnum):
@@ -525,4 +605,3 @@ class AuthorSource(store_bases.AuthorSource):
 #		q.upsert()
 
 initFicTagCache()
-

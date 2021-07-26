@@ -1,6 +1,7 @@
 import inspect
 from typing import List, Set, Any, Callable, Optional, Tuple, Union, cast
 
+
 class Command:
 	def __init__(self, name: str, targets: List[Callable]):
 		self.name = name
@@ -17,7 +18,7 @@ class Command:
 		types: Set[type] = set()
 		for idx in range(len(self.tspecs)):
 			for arg in self.tspecs[idx].annotations:
-				types |= { self.tspecs[idx].annotations[arg] }
+				types |= {self.tspecs[idx].annotations[arg]}
 
 		print('')
 		for atype in types:
@@ -30,8 +31,7 @@ class Command:
 			return self.name
 		aspec: List[str] = []
 		for arg in self.tspecs[idx].args:
-			aspec += ['{}:{}'.format(
-				arg, self.tspecs[idx].annotations[arg])]
+			aspec += ['{}:{}'.format(arg, self.tspecs[idx].annotations[arg])]
 		return self.name + ' ' + ' '.join(aspec)
 
 	def __getTypeDescription(self, t: Any) -> Optional[str]:
@@ -50,6 +50,7 @@ class Command:
 				return True
 		self.printUsage()
 		return False
+
 	def __try(self, idx: int, argv: List[str]) -> bool:
 		# cannot accept more parameters
 		if len(self.tspecs[idx].args) < len(argv):
@@ -74,6 +75,7 @@ class Command:
 		# do execute
 		self.res = self.targets[idx](*targs)
 		return True
+
 	def __trailingOptionalCount(self, idx: int) -> int:
 		cnt = 0
 		for aidx in reversed(range(len(self.tspecs[idx].args))):
@@ -82,11 +84,13 @@ class Command:
 			else:
 				break
 		return cnt
+
 	def __optional(self, idx: int, aidx: int) -> bool:
 		ours = self.tspecs[idx].annotations[self.tspecs[idx].args[aidx]]
 		if ours == Union[int, None]:
 			return True
 		return False
+
 	def __match(self, idx: int, aidx: int, possible: str) -> Tuple[bool, Any]:
 		ours = self.tspecs[idx].annotations[self.tspecs[idx].args[aidx]]
 		if ours == str:
@@ -100,8 +104,7 @@ class Command:
 		if type(ours) == type(type):
 			v = ours.tryParse(possible)
 			if v is None:
-				return (False,None)
+				return (False, None)
 			else:
-				return (True,v)
-		return (False,None)
-
+				return (True, v)
+		return (False, None)

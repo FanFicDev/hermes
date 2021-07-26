@@ -34,6 +34,7 @@ _staleBefore = None
 utf8_to_cp1252: List[Tuple[bytes, bytes]] = []
 cp1252_munge: List[Tuple[bytes, bytes]] = []
 
+
 def importEnvironment() -> None:
 	global __oilConnectionParams
 	for key in __oilConnectionParams:
@@ -50,13 +51,18 @@ def importEnvironment() -> None:
 		_staleOnly = True
 
 	global __scrapeSource
-	__scrapeSource = __scrapeSource if 'OIL_SCRAPE_SOURCE' not in os.environ else os.environ['OIL_SCRAPE_SOURCE']
+	__scrapeSource = (
+		__scrapeSource if 'OIL_SCRAPE_SOURCE' not in os.environ else
+		os.environ['OIL_SCRAPE_SOURCE']
+	)
+
 
 def getMinervaConnectionString() -> str:
 	importEnvironment()
-	return ' '.join([
-		f'{k}={v}' for k, v in __oilConnectionParams.items() if v is not None
-	])
+	return ' '.join(
+		[f'{k}={v}' for k, v in __oilConnectionParams.items() if v is not None]
+	)
+
 
 def openMinerva() -> 'psycopg2.connection':
 	global __oilConn
@@ -67,6 +73,7 @@ def openMinerva() -> 'psycopg2.connection':
 			raise Exception('__oilConn')
 	return __oilConn
 
+
 def closeMinerva() -> None:
 	global __oilConn
 	if __oilConn is None:
@@ -75,8 +82,14 @@ def closeMinerva() -> None:
 	__oilConn.close()
 	__oilConn = None
 
-def saveWebRequest(created: int, url: str, status: int,
-		response: Optional[str], source: str = None) -> None:
+
+def saveWebRequest(
+	created: int,
+	url: str,
+	status: int,
+	response: Optional[str],
+	source: str = None
+) -> None:
 	#import psycopg2
 	responseBytes: Optional[bytes] = None
 	if response is not None:
@@ -89,35 +102,46 @@ def saveWebRequest(created: int, url: str, status: int,
 	conn = openMinerva()
 
 	curs = conn.cursor()
-	curs.execute('insert into web(created, url, status, response, source)' + \
-	             'values(%s, %s, %s, %s, %s)',
-		(created, url, status, responseBytes, source))
+	curs.execute(
+		(
+			'insert into web(created, url, status, response, source)'
+			+ 'values(%s, %s, %s, %s, %s)'
+		), (created, url, status, responseBytes, source)
+	)
 
 	curs.close()
 	closeMinerva()
 
+
 def getAllUrlLike(like: str) -> List[str]:
 	conn = openMinerva()
 	curs = conn.cursor()
-	stmt = 'select url from web where status = 200 ' \
-		+ ' and url like %s ' \
-		+ ' order by created desc '
+	stmt = '''
+		select url from web
+		where status = 200
+			and url like %s
+		order by created desc
+	'''
 
-	curs.execute(stmt, (like,))
+	curs.execute(stmt, (like, ))
 	res = curs.fetchall()
 
 	curs.close()
 	return [r[0] for r in res]
 
+
 def getLastUrlLike(like: str) -> Optional[str]:
 	conn = openMinerva()
 	curs = conn.cursor()
-	stmt = 'select url from web where status = 200 ' \
-		+ ' and url like %s ' \
-		+ ' order by created desc ' \
-		+ ' limit 1 '
+	stmt = '''
+		select url from web
+		where status = 200
+			and url like %s
+		order by created desc
+		limit 1
+	'''
 
-	curs.execute(stmt, (like,))
+	curs.execute(stmt, (like, ))
 	res = curs.fetchone()
 
 	curs.close()
@@ -125,15 +149,20 @@ def getLastUrlLike(like: str) -> Optional[str]:
 		return None
 	return str(res[0])
 
+
 # takes a tuple with the first being an actual url
 def getLastUrlLikeOrDefault(defaultAndLikes: Sequence[str]) -> str:
 	conn = openMinerva()
 	curs = conn.cursor()
-	stmt = 'select url from web where status = 200 ' \
-		+ ' and (url = %s ' \
-		+ ('or url like %s ' * len(defaultAndLikes[1:])) \
-		+ ') order by created desc ' \
-		+ ' limit 1 '
+	stmt = ''.join(
+		[
+			' select url from web where status = 200 ',
+			' and (url = %s ',
+			(' or url like %s ' * len(defaultAndLikes[1:])),
+			' ) order by created desc ',
+			' limit 1 ',
+		]
+	)
 
 	curs.execute(stmt, defaultAndLikes)
 	res = curs.fetchone()
@@ -143,10 +172,16 @@ def getLastUrlLikeOrDefault(defaultAndLikes: Sequence[str]) -> str:
 		return defaultAndLikes[0]
 	return str(res[0])
 
+
 ScrapeMeta = Dict[str, Any]
-def getMostRecentScrapeWithMeta(url: str, ulike: str = None,
-		status: Optional[int] = 200, beforeId: Optional[int] = None
-		) -> Optional[ScrapeMeta]:
+
+
+def getMostRecentScrapeWithMeta(
+	url: str,
+	ulike: str = None,
+	status: Optional[int] = 200,
+	beforeId: Optional[int] = None
+) -> Optional[ScrapeMeta]:
 	conn = openMinerva()
 	curs = conn.cursor()
 	stmt = 'select id, created, url, response, status from web where '
@@ -181,11 +216,13 @@ def getMostRecentScrapeWithMeta(url: str, ulike: str = None,
 		qb = PyQt5.QtCore.QByteArray(response.tobytes())
 		response = PyQt5.QtCore.qUncompress(qb).data().decode('utf-8')
 
-	return { 'url': res[2], 'fetched': res[1], 'raw': response, 'status': res[4] }
+	return {'url': res[2], 'fetched': res[1], 'raw': response, 'status': res[4]}
+
 
 def getMostRecentScrape(url: str, ulike: str = None) -> Optional[str]:
 	r = getMostRecentScrapeWithMeta(url, ulike)
 	return None if r is None else r['raw']
+
 
 def getMostRecentScrapeTime(url: str) -> Optional[int]:
 	conn = openMinerva()
@@ -194,13 +231,14 @@ def getMostRecentScrapeTime(url: str) -> Optional[int]:
 	stmt += ' and url = %s'
 	stmt += ' order by id desc'
 
-	curs.execute(stmt, (url,))
+	curs.execute(stmt, (url, ))
 	res = curs.fetchone()
 
 	curs.close()
 	if res is None:
 		return None
 	return int(res[0])
+
 
 def canonizeUrl(url: str) -> str:
 	protocol = url[:url.find('://')]
@@ -211,12 +249,20 @@ def canonizeUrl(url: str) -> str:
 		rest = rest[:-1]
 	return protocol + '://' + rest
 
-def softScrapeWithMeta(url: str, delay: float = 3, ulike: str = None,
-		mustyThreshold: int = None, timeout: int = 15) -> Optional[ScrapeMeta]:
+
+def softScrapeWithMeta(
+	url: str,
+	delay: float = 3,
+	ulike: str = None,
+	mustyThreshold: int = None,
+	timeout: int = 15
+) -> Optional[ScrapeMeta]:
 	url = canonizeUrl(url)
-	mostRecent = getMostRecentScrapeWithMeta(url, ulike, beforeId = _staleBefore)
-	if mostRecent is not None and mustyThreshold is not None \
-			and int(time.time()) - mustyThreshold > mostRecent['fetched']:
+	mostRecent = getMostRecentScrapeWithMeta(url, ulike, beforeId=_staleBefore)
+	if (
+		mostRecent is not None and mustyThreshold is not None
+		and int(time.time()) - mustyThreshold > mostRecent['fetched']
+	):
 		mostRecent = None
 		time.sleep(1)
 	if mostRecent is None:
@@ -225,45 +271,58 @@ def softScrapeWithMeta(url: str, delay: float = 3, ulike: str = None,
 		time.sleep(delay)
 	return mostRecent
 
-def softScrape(url: str, delay: float = 3, ulike: str = None,
-		mustyThreshold: int = None, timeout: int = 15) -> Optional[str]:
-	r = softScrapeWithMeta(url, delay=delay, ulike=ulike,
-			mustyThreshold=mustyThreshold, timeout=timeout)
+
+def softScrape(
+	url: str,
+	delay: float = 3,
+	ulike: str = None,
+	mustyThreshold: int = None,
+	timeout: int = 15
+) -> Optional[str]:
+	r = softScrapeWithMeta(
+		url,
+		delay=delay,
+		ulike=ulike,
+		mustyThreshold=mustyThreshold,
+		timeout=timeout
+	)
 	return None if r is None else r['raw']
+
 
 def setupCP1252() -> None:
 	global cp1252_munge, utf8_to_cp1252
 	if len(cp1252_munge) > 0 and len(utf8_to_cp1252) > 0:
 		return
 	utf8_to_cp1252 = [
-			(b'\xc2\xa9', b'\xa9'), # ©
-			(b'\xc2\xb0', b'\xb0'), # °
-			(b'\xc3\xa1', b'\xe1'), # á
-			(b'\xc3\xa7', b'\xe7'), # ç
-			(b'\xc3\xa8', b'\xe8'), # è
-			(b'\xc3\xa9', b'\xe9'), # é
-			(b'\xc3\xa0', b'\xe0'), # à
-			(b'\xe2\x80\xa6', b'\x85'), # …
-			(b'\xe2\x80\x93', b'\x96'), # –
-			(b'\xe2\x80\x99', b'\x92'), # ’
-			(b'\xe2\x80\x9c', b'\x93'), # “
-			(b'\xe2\x80\x9d', b'\x94'), # ”
-			(b'\xef\xbf\xbd', b'\x81'), # literal question mark block >_>
-		]
+		(b'\xc2\xa9', b'\xa9'),  # ©
+		(b'\xc2\xb0', b'\xb0'),  # °
+		(b'\xc3\xa1', b'\xe1'),  # á
+		(b'\xc3\xa7', b'\xe7'),  # ç
+		(b'\xc3\xa8', b'\xe8'),  # è
+		(b'\xc3\xa9', b'\xe9'),  # é
+		(b'\xc3\xa0', b'\xe0'),  # à
+		(b'\xe2\x80\xa6', b'\x85'),  # …
+		(b'\xe2\x80\x93', b'\x96'),  # –
+		(b'\xe2\x80\x99', b'\x92'),  # ’
+		(b'\xe2\x80\x9c', b'\x93'),  # “
+		(b'\xe2\x80\x9d', b'\x94'),  # ”
+		(b'\xef\xbf\xbd', b'\x81'),  # literal question mark block >_>
+	]
 	# FIXME these are weird:
 	#   \x98 ˜    \xa6 ¦
 	cp1252_munge = [
-			(b'\x81', b''), # invalid
-			(b'\x91', b"'"), # ‘
-			(b'\x92', b"'"), # ’
-			(b'\x93', b'"'), # “
-			(b'\x94', b'"'), # ”
-			(b'\x96', b'-'), # –
-			(b'\x97', b'-'), # —
-			(b'\x9d', b''), # undefined
-			(b'\xa0', b' '), # nbsp
-			(b'\xad', b''), # soft hyphen
-		]
+		(b'\x81', b''),  # invalid
+		(b'\x91', b"'"),  # ‘
+		(b'\x92', b"'"),  # ’
+		(b'\x93', b'"'),  # “
+		(b'\x94', b'"'),  # ”
+		(b'\x96', b'-'),  # –
+		(b'\x97', b'-'),  # —
+		(b'\x9d', b''),  # undefined
+		(b'\xa0', b' '),  # nbsp
+		(b'\xad', b''),  # soft hyphen
+	]
+
 
 def decodeRequest(data: Optional[bytes], url: str) -> Optional[str]:
 	global decodeFailureDumpFile
@@ -280,18 +339,21 @@ def decodeRequest(data: Optional[bytes], url: str) -> Optional[str]:
 	# handle Mórrigan and façade in
 	# http://www.fictionalley.org/authors/irina/galatea05.html
 	# looks aggressively misencoded
-	data = \
-		data.replace(b'M\xc3\x83\xc2\xb3rr\xc3\x83\xc2\xadgan',
-			b'M\xf3rrigan')
-	data = \
-		data.replace(b'fa\xc3\x83\xc2\xa7ade', b'fa\xe7ade')
+	data = data.replace(b'M\xc3\x83\xc2\xb3rr\xc3\x83\xc2\xadgan', b'M\xf3rrigan')
+	data = data.replace(b'fa\xc3\x83\xc2\xa7ade', b'fa\xe7ade')
 
-	data = data.replace(b'#8211;&#8212;&#8211;\xb5&#8211;\xbb&#8211;\xb8',
-			b'#8211;&#8212;&#8211;&#8211;&#8211;')
-	data = data.replace(b'#8211;&#8211;&#8211;\xb9 &#8211; &#8212;\x83',
-			b'#8211;&#8211;&#8211; &#8211; &#8212;')
-	data = data.replace(b'&#8211;\xb9 &#8211; &#8212;\x83',
-			b'#8211;&#8211;&#8211; &#8211; &#8212;&#8')
+	data = data.replace(
+		b'#8211;&#8212;&#8211;\xb5&#8211;\xbb&#8211;\xb8',
+		b'#8211;&#8212;&#8211;&#8211;&#8211;'
+	)
+	data = data.replace(
+		b'#8211;&#8211;&#8211;\xb9 &#8211; &#8212;\x83',
+		b'#8211;&#8211;&#8211; &#8211; &#8212;'
+	)
+	data = data.replace(
+		b'&#8211;\xb9 &#8211; &#8212;\x83',
+		b'#8211;&#8211;&#8211; &#8211; &#8212;&#8'
+	)
 
 	# replace misencoded utf-8 bits (likely from a header or footer) with their
 	# cp1252 counterparts
@@ -306,24 +368,27 @@ def decodeRequest(data: Optional[bytes], url: str) -> Optional[str]:
 	try:
 		return data.decode('cp1252')
 	except Exception as e:
-		util.logMessage('error decoding {}: {}\n{}'.format(url, e, traceback.format_exc()))
+		util.logMessage(
+			'error decoding {}: {}\n{}'.format(url, e, traceback.format_exc())
+		)
 		with open(decodeFailureDumpFile, 'wb') as f:
 			f.write(data)
 		raise
 
-def resolveRedirects(url: str,
-		cookies: 'requests.cookies.RequestsCookieJar' = None) -> str:
+
+def resolveRedirects(
+	url: str, cookies: 'requests.cookies.RequestsCookieJar' = None
+) -> str:
 	import requests
 	url = canonizeUrl(url)
-	headers = {
-			'User-Agent': __userAgent
-		}
+	headers = {'User-Agent': __userAgent}
 	if cookies is None:
 		import priv
 		cookies = priv.getDefaultCookies()
 	r = requests.get(url, headers=headers, cookies=cookies, timeout=15)
 	time.sleep(2 * random.random())
 	return r.url
+
 
 def delaySecs(secs: float) -> None:
 	if secs < 0.05:
@@ -334,21 +399,24 @@ def delaySecs(secs: float) -> None:
 		time.sleep(3.5 * random.random() + 1.0)
 	time.sleep(secs)
 
-def scrape(url: str, cookies: 'requests.cookies.RequestsCookieJar' = None,
-		delay: float = 3, timeout: int = 15) -> ScrapeMeta:
+
+def scrape(
+	url: str,
+	cookies: 'requests.cookies.RequestsCookieJar' = None,
+	delay: float = 3,
+	timeout: int = 15
+) -> ScrapeMeta:
 	url = canonizeUrl(url)
-	headers = {
-			'User-Agent': __userAgent
-		}
+	headers = {'User-Agent': __userAgent}
 	ts = int(time.time())
 
 	if _staleOnly:
-		pass # util.logMessage('staleScrape|{}'.format(url), 'scrape.log')
+		pass  # util.logMessage('staleScrape|{}'.format(url), 'scrape.log')
 
-		last = getMostRecentScrapeWithMeta(url, beforeId = _staleBefore)
+		last = getMostRecentScrapeWithMeta(url, beforeId=_staleBefore)
 		if last is None or 'raw' not in last:
 			raise Exception('failed to stale scrape url: {}'.format(url))
-		return { 'url': url, 'fetched': ts, 'raw': last['raw'] }
+		return {'url': url, 'fetched': ts, 'raw': last['raw']}
 
 	import requests
 	if cookies is None:
@@ -371,7 +439,8 @@ def scrape(url: str, cookies: 'requests.cookies.RequestsCookieJar' = None,
 
 	saveWebRequest(ts, url, r.status_code, text)
 	delaySecs(delay)
-	return { 'url': url, 'fetched': ts, 'raw': text }
+	return {'url': url, 'fetched': ts, 'raw': text}
+
 
 if __name__ == '__main__':
 	if len(sys.argv) != 4:
@@ -394,4 +463,3 @@ if __name__ == '__main__':
 		saveWebRequest(uts, url, 200, content)
 
 	sys.exit(0)
-

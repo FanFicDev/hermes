@@ -14,6 +14,7 @@ defaultLogDir = './'
 rippleCharset = 'rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz'
 urlIdCharset = 'abcdefghijklmnopqrstuvwxyz23456789'
 
+
 def unslurp(text: str, fname: str, path: str = defaultLogDir) -> None:
 	if not os.path.isdir(path):
 		os.makedirs(path)
@@ -21,16 +22,19 @@ def unslurp(text: str, fname: str, path: str = defaultLogDir) -> None:
 	with open(fname, 'w') as f:
 		f.write(text)
 
+
 def getNumberLength(num: int) -> int:
-	return int(math.ceil(math.log(num)/math.log(10)))
+	return int(math.ceil(math.log(num) / math.log(10)))
+
 
 def formatNumber(num: int) -> str:
 	b = '{}'.format(num)
 	b = '{:>{}}'.format(b, int((len(b) + 2) / 3) * 3)
 	n = ''
 	for i in range(int(len(b) / 3)):
-		n += b[i*3:(i+1)*3] + ','
+		n += b[i * 3:(i + 1) * 3] + ','
 	return n[:-1].lstrip()
+
 
 def urlTitle(title: str) -> str:
 	ut = ''
@@ -41,12 +45,14 @@ def urlTitle(title: str) -> str:
 			ut += '-'
 	return ut.rstrip('-')
 
+
 def randomString(length: int = 2, charset: str = None) -> str:
 	charset = rippleCharset if charset is None else charset
 	res = ''
 	for i in range(length):
 		res += random.choice(charset)
 	return res
+
 
 def subsequenceMatch(seq: str, needle: str) -> bool:
 	nl, sl = len(needle), len(seq)
@@ -63,16 +69,40 @@ def subsequenceMatch(seq: str, needle: str) -> bool:
 		return False
 	return subsequenceMatch(seq[nextStart + 1:], needle[1:])
 
+
 def dtToUnix(dt: datetime.datetime) -> int:
 	return int(dt.strftime('%s'))
 
+
 _writtenMonths = [
-		'January', 'February', 'March', 'April',
-		'May', 'June', 'July', 'August',
-		'September', 'October', 'November', 'December'
-		'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-		'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-	]
+	# full
+	'January',
+	'February',
+	'March',
+	'April',
+	'May',
+	'June',
+	'July',
+	'August',
+	'September',
+	'October',
+	'November',
+	'December',
+	# abbreviated
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec'
+]
+
 
 def isWrittenDate(val: str) -> bool:
 	for wm in _writtenMonths:
@@ -80,8 +110,12 @@ def isWrittenDate(val: str) -> bool:
 			return True
 	return False
 
-def parseDateAsUnix(updated: Union[OilTimestamp, str, int],
-		fetched: Union[OilTimestamp, int], defaultYear: int = None) -> int:
+
+def parseDateAsUnix(
+	updated: Union[OilTimestamp, str, int],
+	fetched: Union[OilTimestamp, int],
+	defaultYear: int = None
+) -> int:
 	if isinstance(updated, OilTimestamp):
 		return updated.toUTS()
 	if isinstance(fetched, OilTimestamp):
@@ -128,8 +162,10 @@ def parseDateAsUnix(updated: Union[OilTimestamp, str, int],
 		return uts
 
 	dottedParts = updated.split('.')
-	if len(dottedParts) == 3 and dottedParts[0].isnumeric() \
-			and dottedParts[1].isnumeric() and dottedParts[2].isnumeric():
+	if (
+		len(dottedParts) == 3 and dottedParts[0].isnumeric()
+		and dottedParts[1].isnumeric() and dottedParts[2].isnumeric()
+	):
 		dt = dateutil.parser.parse(updated)
 		uts = dtToUnix(dt)
 		return uts
@@ -141,6 +177,7 @@ def parseDateAsUnix(updated: Union[OilTimestamp, str, int],
 
 	logMessage('error parsing date: {}'.format(updated))
 	raise Exception('error parsing date: {}'.format(updated))
+
 
 def logMessage(msg: str, fname: str = None, logDir: str = None) -> None:
 	if fname is None:
@@ -154,9 +191,10 @@ def logMessage(msg: str, fname: str = None, logDir: str = None) -> None:
 		f.write(str(int(time.time())) + '|' + msg)
 	# TODO this is a hacky workaround for shared log files
 	try:
-		os.chmod(lname, 0o666) # rw-rw-rw-
+		os.chmod(lname, 0o666)  # rw-rw-rw-
 	except:
 		pass
+
 
 # generic word wrapping algorithm
 # TODO should we be using the textwrap module instead? >_>
@@ -169,7 +207,7 @@ def wrapText(text: str, width: int) -> List[str]:
 		# find nearest space to break on
 		if len(lines) > 0:
 			text = text.strip()
-		col = text.rfind(' ', 0, width - 1) # reserve space for hyphenated words
+		col = text.rfind(' ', 0, width - 1)  # reserve space for hyphenated words
 		col = max(col, text.rfind('-', 0, width - 1))
 
 		# if it's the first line and we find the indent, don't count it
@@ -186,9 +224,9 @@ def wrapText(text: str, width: int) -> List[str]:
 
 		# append up to word break into lines
 		if col < len(text) and text[col] == '-':
-			lines += [ '{line:{width}}'.format(line=text[0:col + 1], width=width) ]
+			lines += ['{line:{width}}'.format(line=text[0:col + 1], width=width)]
 		else:
-			lines += [ '{line:{width}}'.format(line=text[0:col], width=width) ]
+			lines += ['{line:{width}}'.format(line=text[0:col], width=width)]
 
 		# remove processed text sans space
 		text = text[col + 1:]
@@ -198,13 +236,15 @@ def wrapText(text: str, width: int) -> List[str]:
 
 	# if there's anything left, it's a line by itself
 	if len(text) > 0:
-		lines += [ '{line:{width}}'.format(line=text, width=width) ]
+		lines += ['{line:{width}}'.format(line=text, width=width)]
 
 	return lines
+
 
 spaceSqeeezeRe = None
 ellipseSqueezeRe = None
 ellipseSpaceRe = None
+
 
 # convert unicode to ascii for display
 def filterUnicode(line: str) -> str:
@@ -250,6 +290,7 @@ def filterUnicode(line: str) -> str:
 
 	return line
 
+
 def filterEmptyTags(line: str) -> str:
 	# remove empty open/close italics and bolds
 	line = line.replace('_ _', ' ')
@@ -260,6 +301,7 @@ def filterEmptyTags(line: str) -> str:
 
 	return line
 
+
 # layout a list of strings so each piece is equidistant from the others
 def equiPad(strs: List[str], width: int) -> str:
 	totalWidth = sum([len(s) for s in strs])
@@ -269,15 +311,20 @@ def equiPad(strs: List[str], width: int) -> str:
 		return '{:<{}}'.format(strs[0], width)
 	# TODO: when not divisible...
 	padded = (' ' * int((width - totalWidth) / (len(strs) - 1))).join(strs)
-	return '{:{}}'.format(padded, width) # ensure right length for non-divisble
+	return '{:{}}'.format(padded, width)  # ensure right length for non-divisble
+
 
 def cleanChapterTitle(title: str, cid: int) -> str:
 	title = title.strip()
-	prefixes = ['{}-'.format(cid), '{}.'.format(cid),
-			'chapter {}'.format(cid),
-			'chapter {}'.format(cid + 1),
-			'chapter {}'.format(cid - 1),
-			':', '-']
+	prefixes = [
+		'{}-'.format(cid),
+		'{}.'.format(cid),
+		'chapter {}'.format(cid),
+		'chapter {}'.format(cid + 1),
+		'chapter {}'.format(cid - 1),
+		':',
+		'-',
+	]
 	foundAny = True
 	while foundAny:
 		foundAny = False
@@ -287,18 +334,20 @@ def cleanChapterTitle(title: str, cid: int) -> str:
 				title = title[len(pref):].strip()
 	return title
 
+
 def compress(s: bytes) -> bytes:
-	qb = PyQt5.QtCore.QByteArray(s);
+	qb = PyQt5.QtCore.QByteArray(s)
 	res = PyQt5.QtCore.qCompress(qb, 9)
 	return res.data()
 
+
 def decompress(b: bytes) -> bytes:
-	qb = PyQt5.QtCore.QByteArray(b);
+	qb = PyQt5.QtCore.QByteArray(b)
 	res = PyQt5.QtCore.qUncompress(qb)
 	return res.data()
 
+
 def decodeCloudFlareEmail(email: str) -> str:
-	octets = [int(email[i:i+2], 16) for i in range(0, len(email), 2)]
+	octets = [int(email[i:i + 2], 16) for i in range(0, len(email), 2)]
 	key, ebytes = octets[0], octets[1:]
 	return ''.join([chr(o ^ key) for o in ebytes])
-

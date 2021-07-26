@@ -5,19 +5,33 @@ import urllib.parse
 
 import util
 from scrape import (
-		ScrapeMeta, canonizeUrl,
-		delaySecs, decodeRequest, saveWebRequest,
-		getLastUrlLike, getMostRecentScrapeWithMeta,
-	)
+	ScrapeMeta,
+	canonizeUrl,
+	delaySecs,
+	decodeRequest,
+	saveWebRequest,
+	getLastUrlLike,
+	getMostRecentScrapeWithMeta,
+)
 
-def buildScrapeMeta(url: str, fetched: int, raw: Optional[str],
-		status: int = 200) -> ScrapeMeta:
-	return { 'url': url, 'fetched': fetched, 'raw': raw, 'status': status }
+
+def buildScrapeMeta(
+	url: str, fetched: int, raw: Optional[str], status: int = 200
+) -> ScrapeMeta:
+	return {'url': url, 'fetched': fetched, 'raw': raw, 'status': status}
+
 
 class SkitterClient:
-	def __init__(self, baseUrl: str, apiKey: str, uname: str, upass: str,
-			delay: float = 0.02, timeout: int = 30, ident: Optional[str] = None
-			) -> None:
+	def __init__(
+		self,
+		baseUrl: str,
+		apiKey: str,
+		uname: str,
+		upass: str,
+		delay: float = 0.02,
+		timeout: int = 30,
+		ident: Optional[str] = None
+	) -> None:
 		#self.cookies = cookies if cookies is not None else cm.getDefaultCookies()
 		self.delay = delay
 		self.timeout = timeout
@@ -31,22 +45,34 @@ class SkitterClient:
 
 		self.ident = uname if ident is None else ident
 
-	def _makeRequest(self, apiUrl: str, params: Optional[Dict[str, str]]
-			) -> Optional[ScrapeMeta]:
+	def _makeRequest(self, apiUrl: str,
+										params: Optional[Dict[str, str]]) -> Optional[ScrapeMeta]:
 		import requests
 		r = None
 		try:
-			r = requests.get(apiUrl, headers=self.headers, params=params,
-					data=self.extraData, auth=self.auth, timeout=self.timeout)
+			r = requests.get(
+				apiUrl,
+				headers=self.headers,
+				params=params,
+				data=self.extraData,
+				auth=self.auth,
+				timeout=self.timeout
+			)
 		except:
-			util.logMessage('SkitterClient._makeRequest|exception|{}'.format(apiUrl), 'scrape.log')
+			util.logMessage(
+				'SkitterClient._makeRequest|exception|{}'.format(apiUrl), 'scrape.log'
+			)
 			raise
 
 		if r.status_code == 404:
 			return None
 
 		if r.status_code != 200:
-			raise Exception('SkitterClient._makeRequest: failed to download url {}: {}'.format(r.status_code, apiUrl))
+			raise Exception(
+				'SkitterClient._makeRequest: failed to download url {}: {}'.format(
+					r.status_code, apiUrl
+				)
+			)
 
 		ts = int(r.headers['X-Weaver-Created'])
 		url = str(r.headers['X-Weaver-Url'])
@@ -57,15 +83,19 @@ class SkitterClient:
 		delaySecs(self.delay)
 		return buildScrapeMeta(url, ts, text, r.status_code)
 
-	def cache(self, q: Optional[str] = None, u: Optional[str] = None,
-			rev: bool = False) -> Optional[ScrapeMeta]:
+	def cache(
+		self,
+		q: Optional[str] = None,
+		u: Optional[str] = None,
+		rev: bool = False
+	) -> Optional[ScrapeMeta]:
 		if (q is None and u is None) or (q is not None and u is not None):
 			raise Exception('SkitterClient.cache: q or u must not be None')
 
 		p = ('q', q)
 		if u is not None:
 			p = ('u', u)
-		assert(p[1] is not None)
+		assert (p[1] is not None)
 		#p = (p[0], urllib.parse.quote(p[1], safe=''))
 
 		apiUrl = urllib.parse.urljoin(self.baseUrl, 'v0/cache')
@@ -87,7 +117,7 @@ class SkitterClient:
 		tmpUrl = getLastUrlLike(url)
 		if tmpUrl is not None:
 			res = getMostRecentScrapeWithMeta(url)
-			assert(res is not None)
+			assert (res is not None)
 			return res
 
 		# check if it's in .cache
@@ -121,4 +151,3 @@ class SkitterClient:
 		res = self.crawl(url)
 		saveWebRequest(res['fetched'], res['url'], res['status'], res['raw'])
 		return res
-

@@ -17,8 +17,10 @@ from typing import List, Dict, Optional, Tuple, Set, Any, Union, cast, Callable
 import schema
 import htypes
 from htypes import FicType, getAdapter
-from store import TagBase, FicStatus, Fic, FicId, FicChapter, \
-		Fandom, Character, Genre, Tag, UserFicChapter, UserFic
+from store import (
+	TagBase, FicStatus, Fic, FicId, FicChapter, Fandom, Character, Genre, Tag,
+	UserFicChapter, UserFic
+)
 #, ImportQueue, QueueStatus
 import view
 from view import StoryView, ChapterView, HtmlView, FicSelect
@@ -58,9 +60,9 @@ class Hermes:
 			ficId.chapterId = None
 			cache(ficId)
 			return
-		assert self.scr is not None
+		assert (self.scr is not None)
 		hmid = int(self.lastHeight / 3)
-		assert(fic.chapterCount is not None)
+		assert (fic.chapterCount is not None)
 		cLen = util.getNumberLength(fic.chapterCount)
 		chapters = FicChapter.select({'ficId': fic.id})
 		chapterMap = {c.chapterId: c for c in chapters}
@@ -122,41 +124,41 @@ class Hermes:
 		self.hasInit = True
 
 	def mainLoop(self, stdscr: Any) -> None:
-			self.initScreen(stdscr)
+		self.initScreen(stdscr)
 
-			self.lastHeight, self.lastWidth = stdscr.getmaxyx()
-			assert(self.lastHeight is not None)
-			self.active.handleResize(self.lastWidth, self.lastHeight)
+		self.lastHeight, self.lastWidth = stdscr.getmaxyx()
+		assert (self.lastHeight is not None)
+		self.active.handleResize(self.lastWidth, self.lastHeight)
 
-			key = -1
-			self.isDirty = True
-			while not self.abort:
-				if key == 24:  # ctrl x
-					return
-				elif key == 18 or key == ord('|'):  # ctrl r
-					self.active.refresh()
-					self.isDirty = True
-				elif key == curses.KEY_RESIZE:
-					self.lastHeight, self.lastWidth = stdscr.getmaxyx()
-					assert(self.lastHeight is not None and self.lastWidth is not None)
-					self.active.handleResize(self.lastWidth, self.lastHeight)
-					self.isDirty = True
-					# TODO: do resize all widgets
-				else:
-					self.isDirty |= self.active.handleKey(key)
-				if self.abort:
-					return
+		key = -1
+		self.isDirty = True
+		while not self.abort:
+			if key == 24:  # ctrl x
+				return
+			elif key == 18 or key == ord('|'):  # ctrl r
+				self.active.refresh()
+				self.isDirty = True
+			elif key == curses.KEY_RESIZE:
+				self.lastHeight, self.lastWidth = stdscr.getmaxyx()
+				assert (self.lastHeight is not None and self.lastWidth is not None)
+				self.active.handleResize(self.lastWidth, self.lastHeight)
+				self.isDirty = True
+				# TODO: do resize all widgets
+			else:
+				self.isDirty |= self.active.handleKey(key)
+			if self.abort:
+				return
 
-				# if the screen has changed, repaint it
-				if self.isDirty:
-					self.repaint(stdscr)
-					self.isDirty = False
+			# if the screen has changed, repaint it
+			if self.isDirty:
+				self.repaint(stdscr)
+				self.isDirty = False
 
-				if self.isHardDirty:
-					self.hardRepaint(stdscr)
-					self.isHardDirty = False
+			if self.isHardDirty:
+				self.hardRepaint(stdscr)
+				self.isHardDirty = False
 
-				key = stdscr.getch()
+			key = stdscr.getch()
 
 	def repaint(self, stdscr: Any) -> None:
 		maxY, maxX = stdscr.getmaxyx()
@@ -191,7 +193,7 @@ def dumpPreRender(ficId: FicId) -> None:
 
 	fic = Fic.load(ficId)
 
-	targetDir = './prerender/{}/{}/'.format(ficId.sourceId, ficId.localId)
+	targetDir = f'./prerender/{ficId.sourceId}/{ficId.localId}'
 	os.makedirs(targetDir, exist_ok=True)
 
 	with gzip.open(targetDir + '/info.gz', mode='wt') as f:
@@ -203,7 +205,7 @@ def dumpPreRender(ficId: FicId) -> None:
 	content = chapter.cachedContent()
 	hv = HtmlView(content, markdown=True)
 
-	targetDir = './prerender/{}/{}/{}'.format(ficId.sourceId, ficId.localId, ficId.chapterId)
+	targetDir = f'{targetDir}/{ficId.chapterId}'
 	os.makedirs(targetDir, exist_ok=True)
 
 	with gzip.open(targetDir + '/content.gz', mode='wt') as f:
@@ -217,15 +219,16 @@ def dumpPreRenderAll(minRating: int = -1) -> None:
 	fics = Fic.list()
 	if minRating >= 0:
 		fuf = [(f, f.getUserFic()) for f in fics]
-		fics = [f[0] for f in fuf
-				if f[1].rating is not None and f[1].rating > minRating]
+		fics = [
+			f[0] for f in fuf if f[1].rating is not None and f[1].rating > minRating
+		]
 	for fic in fics:
-		assert(fic.chapterCount is not None)
+		assert (fic.chapterCount is not None)
 		for cid in range(1, fic.chapterCount + 1):
 			try:
 				dumpPreRender(FicId(FicType(fic.sourceId), fic.localId, cid))
 			except:
-				print(f'unable to dump pre render of {fic.sourceId}/{fic.localId}/{cid}')
+				print(f'unable to dump pre render: {fic.sourceId}/{fic.localId}/{cid}')
 
 
 def dumpMarkovCorpus() -> None:
@@ -235,7 +238,7 @@ def dumpMarkovCorpus() -> None:
 def dumpAll() -> None:
 	fics = Fic.list()
 	for fic in fics:
-		assert(fic.chapterCount is not None)
+		assert (fic.chapterCount is not None)
 		chapters = FicChapter.select({'ficId': fic.id})
 		chapterMap = {c.chapterId: c for c in chapters}
 		for cid in range(1, fic.chapterCount + 1):
@@ -263,7 +266,7 @@ def dumpAll() -> None:
 def dumpUrl(url: str, lpad: int) -> None:
 	html = scrape.softScrape(url)
 
-	from bs4 import BeautifulSoup # type: ignore
+	from bs4 import BeautifulSoup  # type: ignore
 	soup = BeautifulSoup(html, 'html5lib')
 	[s.extract() for s in soup('link')]
 	[s.extract() for s in soup('script')]
@@ -305,14 +308,14 @@ def dumpTest(ficId: FicId) -> None:
 
 	scid = ficId.chapterId if ficId.chapterId is not None else 1
 	ecid = ficId.chapterId if ficId.chapterId is not None else fic.chapterCount
-	assert(ecid is not None)
+	assert (ecid is not None)
 
 	missing = set()
 	for cid in range(scid, ecid + 1):
 		chapter = fic.chapter(cid)
 		if chapter.html() is None:
 			print(f'chapter {cid} is missing')
-			missing |= { cid }
+			missing |= {cid}
 			continue
 
 		cv = ChapterView(chapter)
@@ -329,7 +332,7 @@ def dumpTest(ficId: FicId) -> None:
 def dumpWithWidth(ficId: FicId, width: int) -> None:
 	infoWithWidth(ficId, width)
 	fic = Fic.load(ficId)
-	assert(fic.chapterCount is not None)
+	assert (fic.chapterCount is not None)
 	title = fic.title or '[MISSING TITLE]'
 	lpad = int((width - 2 - len(title)) / 2)
 	print('{}{}'.format(' ' * lpad, title))
@@ -343,7 +346,7 @@ def dumpWithWidth(ficId: FicId, width: int) -> None:
 			continue
 
 		cv = ChapterView(chapter)
-		cv.preWrap = '   '
+		cv.preWrap = '	 '
 		cv.wrap(width - 2)
 
 		for i in range(len(cv.text)):
@@ -352,8 +355,8 @@ def dumpWithWidth(ficId: FicId, width: int) -> None:
 				print(line)
 			print()
 
-	print('{}\n  fic {}\n  localId {}'.format(
-		fic.url, fic.id, fic.localId))
+	print(f'{fic.url}\n	fic {fic.id}\n  localId {fic.localId}')
+
 
 def dump(ficId: FicId) -> None:
 	dumpWithWidth(ficId, 80)
@@ -361,7 +364,7 @@ def dump(ficId: FicId) -> None:
 
 def rdump(ficId: FicId) -> None:
 	fic = Fic.load(ficId)
-	assert(fic.chapterCount is not None)
+	assert (fic.chapterCount is not None)
 	print('<h2>{}</h2>'.format(fic.title))
 
 	scid = ficId.chapterId if ficId.chapterId is not None else 1
@@ -376,20 +379,22 @@ def altSanitize(html: str) -> str:
 	soup = BeautifulSoup(html, 'html5lib')
 
 	# replace these tags with their linked value
-	tagTranforms = {
-			'bold': 'b',
-		}
+	tagTransforms = {
+		'bold': 'b',
+	}
 	# extracted entirely
 	blacklist = {'script', 'noscript', 'style', 'link'}
 	# attrs stripped
-	whitelist = {'em', 'i', 'strong', 'b', 'bold', 'hr', 'br', 's', 'a', 'img',
-			'blockquote', 'div',}
+	whitelist = {
+		'em', 'i', 'strong', 'b', 'bold', 'hr', 'br', 's', 'a', 'img', 'blockquote',
+		'div'
+	}
 	# leave these attrs on whitelisted tags alone
 	attrWhitelist = {
-			'a': {'href'},
-			'img': {'src', 'data-url', 'alt', 'title'},
-			'div': {'class'},
-		}
+		'a': {'href'},
+		'img': {'src', 'data-url', 'alt', 'title'},
+		'div': {'class'},
+	}
 	# turned into p
 	blockWhitelist = {'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}
 	# turned into span
@@ -401,11 +406,11 @@ def altSanitize(html: str) -> str:
 
 	for tag in soup.find_all():
 		tag_name = tag.name.lower()
-		if tag_name in tagTranforms:
-			tag.name = tagTranforms[tag_name]
+		if tag_name in tagTransforms:
+			tag.name = tagTransforms[tag_name]
 			tag_name = tag.name.lower()
 		if tag_name in blacklist:
-			tag.extract() # strip tag and children
+			tag.extract()  # strip tag and children
 			continue
 		if tag_name in attrWhitelist:
 			toRemove = set()
@@ -501,7 +506,7 @@ def altDump(ficId: FicId) -> None:
 
 	scid = ficId.chapterId if ficId.chapterId is not None else 1
 	ecid = ficId.chapterId if ficId.chapterId is not None else fic.chapterCount
-	assert(ecid is not None)
+	assert (ecid is not None)
 
 	for cid in range(scid, ecid + 1):
 		chapter = fic.chapter(cid)
@@ -518,7 +523,7 @@ def mdump(ficId: FicId) -> None:
 
 	scid = ficId.chapterId if ficId.chapterId is not None else 1
 	ecid = ficId.chapterId if ficId.chapterId is not None else fic.chapterCount
-	assert(ecid is not None)
+	assert (ecid is not None)
 
 	for cid in range(scid, ecid + 1):
 		chapter = fic.chapter(cid)
@@ -535,8 +540,8 @@ def mdump(ficId: FicId) -> None:
 				for line in wl:
 					print(line)
 
-		print('{} fic {} lid {} cid {}'.format(
-			chapter.url, fic.id, fic.localId, chapter.chapterId))
+		print(f'{chapter.url} cid {chapter.chapterId}')
+		print(f'fic {fic.id} lid {fic.localId}')
 
 
 def diversifyExpression(expr: str) -> str:
@@ -570,8 +575,9 @@ def dumpAFFMeta() -> None:
 	with open('./aff_meta.json', 'w') as f:
 		f.write(json.dumps([m.__dict__ for m in allMeta]))
 
-	print('{} total fics from {} search results pages'.format(
-			len(allMeta), len(uniqueUrls)))
+	totalFics = len(allMeta)
+	totalPages = len(uniqueUrls)
+	print(f'{totalFics} total fics from {totalPages} search results pages')
 
 
 def searchAll(expr: str) -> None:
@@ -586,7 +592,7 @@ def search(ficId: FicId, expr: str) -> None:
 	pattern = re.compile(expr)
 
 	fic = Fic.load(ficId)
-	assert(fic.chapterCount is not None)
+	assert (fic.chapterCount is not None)
 
 	totalMatches = 0
 	for chapterId in range(1, fic.chapterCount + 1):
@@ -653,7 +659,7 @@ def cacheList(fics: List[Fic]) -> None:
 		if fic.id not in cacheInfo:
 			continue
 		uncachedChapters = cacheInfo[fic.id]
-		assert(fic.chapterCount is not None)
+		assert (fic.chapterCount is not None)
 		for cid in range(1, fic.chapterCount + 1):
 			if cid in uncachedChapters:
 				break
@@ -674,15 +680,15 @@ def cacheImages(ficId: FicId) -> None:
 	cache(ficId)
 	fic = Fic.load(ficId)
 	a = getAdapter(FicType(fic.sourceId))
-	assert isinstance(a, XenForoAdapter)
+	assert (isinstance(a, XenForoAdapter))
 	a.cacheAuthorPostImages(fic)
 
 
 def cache(ficId: FicId) -> bool:
 	fic = Fic.load(ficId)
-	assert(fic.chapterCount is not None)
+	assert (fic.chapterCount is not None)
 	if ficId.chapterId is not None:
-		print('caching chapter {} of "{}" ({})'.format(ficId.chapterId, fic.title, fic.id))
+		print(f'caching chapter {ficId.chapterId} of "{fic.title}" ({fic.id})')
 		fic.chapter(ficId.chapterId).cache()
 		return True
 
@@ -717,7 +723,7 @@ def cache(ficId: FicId) -> bool:
 
 def deepCache(ficId: FicId) -> None:
 	fic = Fic.load(ficId)
-	print('deep caching {}: "{}" by {}'.format(fic.id, fic.title, fic.getAuthorName()))
+	print(f'deep caching {fic.id}: "{fic.title}" by {fic.getAuthorName()}')
 	a = getAdapter(FicType(fic.sourceId))
 	if not isinstance(a, XenForoAdapter):
 		raise Exception('fic does not support deep scraping')
@@ -740,7 +746,7 @@ def fixXenForo(ficId: FicId) -> None:
 	scrape._staleOnly = True
 	fic = Fic.load(ficId)
 	a = getAdapter(FicType(fic.sourceId))
-	assert isinstance(a, XenForoAdapter)
+	assert (isinstance(a, XenForoAdapter))
 	a.getCurrentInfo(fic)
 
 	origTitle = fic.title
@@ -757,11 +763,11 @@ def cleanXenForoTitles() -> None:
 	supported = [
 		FicType.spacebattles,
 		FicType.sufficientvelocity,
-		FicType.questionablequesting
+		FicType.questionablequesting,
 	]
 	for ftype in supported:
 		a = getAdapter(ftype)
-		assert isinstance(a, XenForoAdapter)
+		assert (isinstance(a, XenForoAdapter))
 		fics = Fic.select({'sourceId': ftype})
 		cnt = 0
 		for fic in fics:
@@ -799,8 +805,7 @@ def interestingREPL() -> None:
 def maybeForceUpdate(ficId: FicId) -> bool:
 	fic = Fic.load(ficId)
 	#if int(fic.fetched) >= int(time.time() - (14*24*60*60)):
-	if fic.updated is not None \
-			and fic.updated.toUTS() >= int(time.time() - (14*24*60*60)):
+	if fic.updated is not None and fic.updated.withinDelta(days=14):
 		return False
 	updatedStr = 'never' if fic.updated is None else fic.updated.toDateString()
 	print(f'{fic.id} {updatedStr}')
@@ -834,7 +839,7 @@ def parseId(ficId: FicId) -> None:
 
 def infoWithWidth(ficId: FicId, width: int) -> None:
 	fic = Fic.load(ficId)
-	assert(fic.chapterCount is not None)
+	assert (fic.chapterCount is not None)
 	userFic = fic.getUserFic()
 
 	remainingWordCount = 0
@@ -852,31 +857,39 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
 			except:
 				pass
 		chapterInfo = '[on chapter {:>2} of {:>2}]'.format(
-				userFic.lastChapterViewed, fic.chapterCount)
+			userFic.lastChapterViewed, fic.chapterCount
+		)
 
 	twidth = width
 	einfo = '({} {:>8})'.format(fic.id, fic.localId)
-	rhead = ''.join([
-		str(userFic.rating) if userFic.rating and userFic.rating >= 0 else ' ',
-		'*' if userFic.isFavorite else ' ',
-		'R' if userFic.readStatus == FicStatus.complete else ' ',
-		'C' if fic.ficStatus == FicStatus.complete else
-			'A' if fic.ficStatus == FicStatus.abandoned else 'I'
-	])
+	rhead = ''.join(
+		[
+			str(userFic.rating) if userFic.rating and userFic.rating >= 0 else ' ',
+			'*' if userFic.isFavorite else ' ',
+			'R' if userFic.readStatus == FicStatus.complete else ' ',
+			(
+				'C' if fic.ficStatus == FicStatus.complete else
+				'A' if fic.ficStatus == FicStatus.abandoned else 'I'
+			)
+		]
+	)
 
 	title = fic.title or '[MISSING TITLE]'
-	print('{:<{}} {}'.format(
-				'"' + title[:twidth - len(rhead) - 3] + '"',
-				twidth - len(rhead) - 1,
-				rhead))
+	title = title[:twidth - len(rhead) - 3]  # abbreviate
 
-	print(util.equiPad([
-						f'words: {util.formatNumber(fic.wordCount or -1)}',
-						'{}'.format(fic.getAuthorName()),
-						f'to read: {util.formatNumber(remainingWordCount)}' \
-							if remainingWordCount > 0 else '',
-						chapterInfo,
-					], twidth))
+	print('{:<{}} {}'.format('"' + title + '"', twidth - len(rhead) - 1, rhead))
+
+	headerParts = [
+		f'words: {util.formatNumber(fic.wordCount or -1)}',
+		'{}'.format(fic.getAuthorName()),
+		(
+			f'to read: {util.formatNumber(remainingWordCount)}'
+			if remainingWordCount > 0 else ''
+		),
+		chapterInfo,
+	]
+
+	print(util.equiPad(headerParts, twidth))
 
 	ourDoms = fic.fandoms()
 	if len(ourDoms) > 0:
@@ -904,19 +917,21 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
 				print('  {}'.format(line))
 			print('')
 
-	updatedStr = fic.updated.toDateString() if fic.updated is not None else '{missing}'
-	publishedStr = fic.published.toDateString() if fic.published is not None else '{missing}'
-	print(util.equiPad([
-					'published: {}'.format(publishedStr),
-					'updated: {}'.format(updatedStr)
-				], twidth))
+	updatedStr = fic.getUpdatedDateString()
+	publishedStr = fic.getPublishedDateString()
+	ficDates = util.equiPad(
+		[f'published: {publishedStr}', f'updated: {updatedStr}'], twidth
+	)
+	print(ficDates)
 
 	print('  {}'.format(fic.url))
 	print('{:>{}}'.format(einfo, twidth))
 	print('')
 
+
 def info(ficId: FicId) -> None:
 	infoWithWidth(ficId, 80)
+
 
 def favorite(ficId: FicId) -> None:
 	fic = Fic.load(ficId)
@@ -934,7 +949,7 @@ def listIds() -> None:
 
 def markRead(ficId: FicId) -> None:
 	fic = Fic.load(ficId)
-	assert(fic.chapterCount is not None)
+	assert (fic.chapterCount is not None)
 	userFic = fic.getUserFic()
 
 	lastViewed = ficId.chapterId
@@ -947,20 +962,21 @@ def markRead(ficId: FicId) -> None:
 		lastViewed = fic.chapterCount
 		lastRead = fic.chapterCount
 	else:
-		print('marking "{}" read up to chapter {}'.format(fic.title, ficId.chapterId))
+		print(f'marking "{fic.title}" read up to chapter {ficId.chapterId}')
 		lastRead = lastViewed - 1
 
 	for cid in range(1, lastRead + 1):
 		chap = fic.chapter(cid)
-		userChap = chap.getUserFicChapter() # TODO FIXME bleh
-		if userChap.readStatus != FicStatus.abandoned \
-				and userChap.readStatus != FicStatus.complete:
+		userChap = chap.getUserFicChapter()  # TODO FIXME bleh
+		if userChap.readStatus not in {FicStatus.abandoned, FicStatus.complete}:
 			userChap.markRead()
 
 	userFic.updateLastRead(lastRead)
 
-	if userFic.lastChapterViewed is not None \
-			and userFic.lastChapterViewed > lastViewed:
+	if (
+		userFic.lastChapterViewed is not None
+		and userFic.lastChapterViewed > lastViewed
+	):
 		print('already marked last as {}'.format(userFic.lastChapterViewed))
 	else:
 		userFic.updateLastViewed(lastViewed)
@@ -993,26 +1009,28 @@ def fsearch(text: str) -> None:
 def fixCompleteStatus() -> None:
 	fics = Fic.list()
 	for fic in fics:
-		assert(fic.chapterCount is not None)
-		userFic = fic.getUserFic() # TODO FIXME bleh
+		assert (fic.chapterCount is not None)
+		userFic = fic.getUserFic()  # TODO FIXME bleh
 		if userFic.readStatus != FicStatus.ongoing:
 			continue
 		if userFic.lastChapterRead != 0:
 			continue
 		allRead = True
-		lastReadTimestamp = 0
+		lastReadUTS = 0
 		for i in range(1, fic.chapterCount + 1):
 			chapter = fic.chapter(i)
-			userChapter = chapter.getUserFicChapter() # TODO FIXME bleh
+			userChapter = chapter.getUserFicChapter()  # TODO FIXME bleh
 			if userChapter.readStatus != FicStatus.complete:
 				allRead = False
 			elif userChapter.markedRead is None:
 				print('what: {}', fic.title)
 			else:
-				lastReadTimestamp = max(lastReadTimestamp, userChapter.markedRead.toUTS())
+				lastReadUTS = max(lastReadUTS, userChapter.markedRead.toUTS())
 		if not allRead:
 			continue
-		print('{fic.title}: {fic.lastChapterRead} / {fic.chapterCount}: {lastReadTimestamp}')
+		print(
+			f'{fic.title}: {userFic.lastChapterRead} / {fic.chapterCount}: {lastReadUTS}'
+		)
 		userFic.lastChapterRead = fic.chapterCount
 		userFic.readStatus = FicStatus.complete
 		userFic.upsert()
@@ -1028,7 +1046,7 @@ def fixMissingFandoms() -> None:
 			print('skipping "{}" ({}) (portkey)...'.format(fic.title, fic.id))
 			continue
 		if fic.sourceId != FicType.ff_net and fic.sourceId != FicType.hpfanficarchive:
-			print('skipping "{}" ({}) ({})...'.format(fic.title, fic.id, fic.sourceId))
+			print(f'skipping "{fic.title}" ({fic.id}) ({fic.sourceId})...')
 			continue
 
 		print('checking "{}" ({}) for fandoms...'.format(fic.title, fic.id))
@@ -1043,17 +1061,20 @@ def fixMissingFandoms() -> None:
 
 
 _offsets = (
-	list(range(0, 7, 3)) + list(range(1 * 7, 8 * 7, 7)) +
-	list(range( 1 *  2 * 30, 12 * 30 * 20, 30)) +
-	list(range(12 * 30 * 20, 12 * 30 * 40, 30 * 2))
+	list(range(0, 7, 3)) + list(range(1 * 7, 8 * 7, 7))
+	+ list(range(1 * 2 * 30, 12 * 30 * 20, 30))
+	+ list(range(12 * 30 * 20, 12 * 30 * 40, 30 * 2))
 )
+
 
 def wasCheckedRecently(fic: Fic) -> bool:
 	if fic.updated is None:
 		return False
 	if fic.fetched < fic.updated:
 		return False
-		raise Exception(f'fic.id={fic.id} fic.fetched={fic.fetched} fic.updated={fic.updated}')
+		raise Exception(
+			f'fic.id={fic.id} fic.fetched={fic.fetched} fic.updated={fic.updated}'
+		)
 	fetchedOffs = (fic.fetched.toUTS() - fic.updated.toUTS())
 	updatedOffs = int(time.time()) - (fic.updated.toUTS())
 	if updatedOffs < 0:
@@ -1075,7 +1096,7 @@ def wasCheckedRecently(fic: Fic) -> bool:
 	else:
 		raise Exception(f'uoffd runoff? foffd={foffd} uoffd={uoffd}')
 
-	assert uS is not None
+	assert (uS is not None)
 	if len(uS) < 1:
 		raise Exception(f'uoffd runoff? foffd={foffd} uoffd={uoffd}')
 	if foffd >= uS[0]:
@@ -1111,22 +1132,24 @@ def forceUpdate(ficId: FicId) -> bool:
 def updateList(ficIds: List[FicId]) -> List[Fic]:
 	needsChecking: List[FicId] = []
 	typesToSkip = {
-			FicType.manual,
-			FicType.dummy,
-			FicType.fictionhunt,
-			FicType.portkeyarchive,
-			FicType.fanficsme, # FIXME did this ever work?
-			FicType.fanficauthors, # FIXME did this ever work?
-			FicType.fanficparadisesfw, # FIXME url building broken
-			FicType.fanficparadisensfw, # FIXME url building broken
-		}
-			#FicType.hpfanficarchive, # upstream https issue
+		FicType.manual,
+		FicType.dummy,
+		FicType.fictionhunt,
+		FicType.portkeyarchive,
+		FicType.fanficsme,  # FIXME did this ever work?
+		FicType.fanficauthors,  # FIXME did this ever work?
+		FicType.fanficparadisesfw,  # FIXME url building broken
+		FicType.fanficparadisensfw,  # FIXME url building broken
+	}
+	# FicType.hpfanficarchive,  # often has issues
 	disableXenUpdates = False
 	for ficId in ficIds:
 		fic = Fic.load(ficId)
 		a = getAdapter(FicType(fic.sourceId))
 		if FicType(fic.sourceId) in typesToSkip:
-			print(f"skipping \"{fic.title}\" ({fic.id}), type doesn't support updating")
+			print(
+				f"skipping \"{fic.title}\" ({fic.id}), type doesn't support updating"
+			)
 			continue
 		if disableXenUpdates and isinstance(a, XenForoAdapter):
 			print(f'skipping "{fic.title}" ({fic.id}), XenForo temporarily disabled')
@@ -1174,17 +1197,22 @@ def updateList(ficIds: List[FicId]) -> List[Fic]:
 	return updated
 
 
-def buildIncompleteFicList(whitelist: Optional[Set[FicType]],
-		blacklist: Optional[Set[FicType]]) -> List[FicId]:
+def buildIncompleteFicList(
+	whitelist: Optional[Set[FicType]], blacklist: Optional[Set[FicType]]
+) -> List[FicId]:
 	ongoingFics = Fic.select({'ficStatus': FicStatus.ongoing}, 'fetched ASC')
 
 	# hope springs eternal...
-	manualOverrideIds = {'https://archiveofourown.org/works/2469131',}
+	manualOverrideIds = {'https://archiveofourown.org/works/2469131'}
 	ongoingFics += [Fic.load(FicId.parse(moi)) for moi in manualOverrideIds]
 
-	ongoingFics = [fic for fic in ongoingFics \
-			if (whitelist is None or FicType(fic.sourceId) in whitelist) \
-				and (blacklist is None or FicType(fic.sourceId) not in blacklist)]
+	if whitelist is not None:
+		ongoingFics = [f for f in ongoingFics if FicType(f.sourceId) in whitelist]
+
+	if blacklist is None:
+		blacklist = set()
+	ongoingFics = [f for f in ongoingFics if FicType(f.sourceId) not in blacklist]
+
 	ongoingFicFids = [fic.fid() for fic in ongoingFics]
 	ongoingFics = []
 
@@ -1312,9 +1340,7 @@ def buildIncompleteFicList(whitelist: Optional[Set[FicType]],
 	}
 
 	# map all blacklisted idents to their actual ids
-	manualBlacklistFids = {
-			FicId.parse(ident) for ident in manualBlackListIdents
-		}
+	manualBlacklistFids = {FicId.parse(ident) for ident in manualBlackListIdents}
 
 	# remove blacklisted ids
 	ongoingFicFids = [f for f in ongoingFicFids if f not in manualBlacklistFids]
@@ -1324,17 +1350,20 @@ def buildIncompleteFicList(whitelist: Optional[Set[FicType]],
 
 def ficIsInteresting(fic: Fic) -> bool:
 	uf = fic.getUserFic()
-	if (uf.lastChapterRead is not None and uf.lastChapterRead > 0) \
-			or (uf.lastChapterViewed is not None and uf.lastChapterViewed > 0) \
-			or (uf.rating is not None and uf.rating > 0) \
-			or uf.isFavorite:
+	if (
+		(uf.lastChapterRead is not None and uf.lastChapterRead > 0)
+		or (uf.lastChapterViewed is not None and uf.lastChapterViewed > 0)
+		or (uf.rating is not None and uf.rating > 0) or uf.isFavorite
+	):
 		return True
 	return False
 
 
-def checkFilteredIncompleteForUpdates(whitelist: Optional[Set[FicType]] = None,
-		blacklist: Optional[Set[FicType]] = None, limit: Optional[int] = None
-		) -> None:
+def checkFilteredIncompleteForUpdates(
+	whitelist: Optional[Set[FicType]] = None,
+	blacklist: Optional[Set[FicType]] = None,
+	limit: Optional[int] = None
+) -> None:
 	ongoingFics = buildIncompleteFicList(whitelist, blacklist)
 	print(f'built incomplete list: {len(ongoingFics)}')
 	ongoingFics = [f for f in ongoingFics if not wasCheckedRecently(Fic.load(f))]
@@ -1352,17 +1381,17 @@ def checkFilteredIncompleteForUpdates(whitelist: Optional[Set[FicType]] = None,
 			f = Fic.load(fic.fid())
 			cache(f.fid())
 		except:
-			tierTwoBroken |= { fic.id }
+			tierTwoBroken |= {fic.id}
 
 	print('=' * 72)
 	updatedIds = set()
 	for fic in updated:
-		updatedIds |= { fic.id }
+		updatedIds |= {fic.id}
 		try:
-			f = Fic.load(fic.fid()) # FIXME why are we reloading this
+			f = Fic.load(fic.fid())  # FIXME why are we reloading this
 			info(f.fid())
 		except:
-			tierTwoBroken |= { fic.id }
+			tierTwoBroken |= {fic.id}
 
 	print('=' * 72)
 	print('interesting:')
@@ -1382,8 +1411,9 @@ def checkFilteredIncompleteForUpdates(whitelist: Optional[Set[FicType]] = None,
 
 
 def checkIncompleteForUpdatesFFN(limit: Optional[int] = None) -> None:
-	checkFilteredIncompleteForUpdates({FicType.ff_net, FicType.fictionpress},
-			limit=limit)
+	checkFilteredIncompleteForUpdates(
+		{FicType.ff_net, FicType.fictionpress}, limit=limit
+	)
 
 
 def checkIncompleteForUpdatesAo3() -> None:
@@ -1391,31 +1421,37 @@ def checkIncompleteForUpdatesAo3() -> None:
 
 
 def checkIncompleteForUpdatesXen(limit: Optional[int] = None) -> None:
-	checkFilteredIncompleteForUpdates(whitelist={
-		FicType.spacebattles,
-		FicType.sufficientvelocity,
-		}, limit=limit)
-		#FicType.questionablequesting,
+	checkFilteredIncompleteForUpdates(
+		whitelist={
+			FicType.spacebattles,
+			FicType.sufficientvelocity,
+		}, limit=limit
+	)
+	#FicType.questionablequesting,
 
 
 def checkIncompleteForUpdatesSB(limit: Optional[int] = None) -> None:
-	checkFilteredIncompleteForUpdates(whitelist={
-		FicType.spacebattles,
-		}, limit=limit)
-		#FicType.questionablequesting,
+	checkFilteredIncompleteForUpdates(
+		whitelist={
+			FicType.spacebattles,
+		}, limit=limit
+	)
+	#FicType.questionablequesting,
 
 
 def checkIncompleteForUpdatesSV(limit: Optional[int] = None) -> None:
-	checkFilteredIncompleteForUpdates(whitelist={
-		FicType.sufficientvelocity,
-		}, limit=limit)
-		#FicType.questionablequesting,
+	checkFilteredIncompleteForUpdates(
+		whitelist={
+			FicType.sufficientvelocity,
+		}, limit=limit
+	)
+	#FicType.questionablequesting,
 
 
 def checkIncompleteForUpdatesQQ() -> None:
 	checkFilteredIncompleteForUpdates({
 		FicType.questionablequesting,
-		})
+	})
 
 
 def checkIncompleteForUpdatesRR() -> None:
@@ -1423,13 +1459,17 @@ def checkIncompleteForUpdatesRR() -> None:
 
 
 def checkIncompleteForUpdatesGen(limit: Optional[int] = None) -> None:
-	checkFilteredIncompleteForUpdates(None, {
-		FicType.ff_net, FicType.fictionpress,
-		FicType.spacebattles,
-		FicType.sufficientvelocity,
-		FicType.questionablequesting,
-		FicType.royalroadl,
-		}, limit=limit)
+	checkFilteredIncompleteForUpdates(
+		None, {
+			FicType.ff_net,
+			FicType.fictionpress,
+			FicType.spacebattles,
+			FicType.sufficientvelocity,
+			FicType.questionablequesting,
+			FicType.royalroadl,
+		},
+		limit=limit
+	)
 
 
 def checkIncompleteForUpdates() -> None:
@@ -1470,9 +1510,10 @@ def readInLastDay(maxDays: int = 30) -> None:
 	curDayStart = 86400 * int(curDay) + tzOffset
 
 	# FIXME needs to be done in terms of ReadEvents
-	ficChapters = FicChapter.select({
-			'markedRead': ('>=', curDayStart - (86400 * (maxDays + 1)))
-		}, 'markedRead DESC')
+	ficChapters = FicChapter.select(
+		{'markedRead': ('>=', curDayStart - (86400 * (maxDays + 1)))},
+		'markedRead DESC'
+	)
 	totalWordsPerDay = [0] * maxDays
 	lastDOff: Optional[int] = None
 	titleBreakdown: Dict[int, Dict[str, List[Any]]] = {}
@@ -1487,19 +1528,26 @@ def readInLastDay(maxDays: int = 30) -> None:
 			break
 		if dOff != lastDOff:
 			if lastDOff is not None:
-				print(f"day -{lastDOff}: "
-						+ f"{util.formatNumber(totalWordsPerDay[-1 - lastDOff])}")
-				idx = -1 -lastDOff
+				print(
+					f"day -{lastDOff}: "
+					+ f"{util.formatNumber(totalWordsPerDay[-1 - lastDOff])}"
+				)
+				idx = -1 - lastDOff
 				if idx in titleBreakdown:
 					ordWT = [
-							(-titleBreakdown[idx][t][3], titleBreakdown[idx][t][0],
-								titleBreakdown[idx][t][1], titleBreakdown[idx][t][2], t)
-									for t in titleBreakdown[idx]]
+						(
+							-titleBreakdown[idx][t][3], titleBreakdown[idx][t][0],
+							titleBreakdown[idx][t][1], titleBreakdown[idx][t][2], t
+						) for t in titleBreakdown[idx]
+					]
 					ordWT.sort()
 					ordWT.reverse()
 					for tid, wc, c, title, fid in ordWT:
-						print(f"  {title} {fid} : {{}} ({c} chapters)".format(
-							util.formatNumber(wc)))
+						print(
+							f"  {title} {fid} : {{}} ({c} chapters)".format(
+								util.formatNumber(wc)
+							)
+						)
 			lastDOff = dOff
 		content = ficChapter.html()
 		if content is not None:
@@ -1510,7 +1558,7 @@ def readInLastDay(maxDays: int = 30) -> None:
 		if idx not in titleBreakdown:
 			titleBreakdown[idx] = {}
 		f = ficChapter.getFic()
-		assert(f.title is not None)
+		assert (f.title is not None)
 		if f.title not in titleBreakdown[idx]:
 			totalTitles += 1
 			titleBreakdown[idx][f.title] = [0, 0, f.id, totalTitles]
@@ -1557,8 +1605,11 @@ def readAllTime() -> None:
 
 	print('total       days        average')
 	print('----------  ----------  ----------')
-	print('{:<10}  {:<10.2f}  {:<10.2f}'.format(
-		grandTotal, curDay - startDay, (grandTotal / (curDay - startDay))))
+	print(
+		'{:<10}  {:<10.2f}  {:<10.2f}'.format(
+			grandTotal, curDay - startDay, (grandTotal / (curDay - startDay))
+		)
+	)
 
 
 def readByFandomAllTime() -> None:
@@ -1602,8 +1653,11 @@ def readByFandomAllTime() -> None:
 
 	print('total       days        average')
 	print('----------  ----------  ----------')
-	print('{:<10}  {:<10.2f}  {:<10.2f}'.format(
-		grandTotal, curDay - startDay, (grandTotal / (curDay - startDay))))
+	print(
+		'{:<10}  {:<10.2f}  {:<10.2f}'.format(
+			grandTotal, curDay - startDay, (grandTotal / (curDay - startDay))
+		)
+	)
 
 	print(int(maxDays))
 	# 150 to 400, offset to match per Sunday (4)
@@ -1693,7 +1747,9 @@ def readByFandomAllTimeWhitelist() -> None:
 		totalWordsPerFandomPerDay['total'][-1 - dOff] += cwords
 
 		cfandoms = fics[ficChapter.ficId].fandoms()
-		cfnames = [f.name if f.name in fandomWhitelist else 'Other' for f in cfandoms]
+		cfnames = [
+			f.name if f.name in fandomWhitelist else 'Other' for f in cfandoms
+		]
 		cfnames = list(set(cfnames))
 		cfnames.sort()
 		fname = 'untagged'
@@ -1733,9 +1789,10 @@ def readByFandomAllTimeWhitelist() -> None:
 		if fandom in preCutoffTotals:
 			total = preCutoffTotals[fandom]
 		totalPerWeek = total / weeksPreCutoff
-		totalWordsPerFandomPerWeek[fandom] = \
-				([total // weeksPreCutoff] * weeksPreCutoff) + \
-				totalWordsPerFandomPerWeek[fandom]
+		totalWordsPerFandomPerWeek[fandom] = (
+			([total // weeksPreCutoff] * weeksPreCutoff)
+			+ totalWordsPerFandomPerWeek[fandom]
+		)
 
 	del totalWordsPerFandomPerWeek['total']
 
@@ -1773,7 +1830,7 @@ def readByFandomAllTimeWhitelist() -> None:
 def cacheFavorites() -> None:
 	favorites = Fic.list()
 	for fic in favorites:
-		userFic = fic.getUserFic() # TODO FIXME blah
+		userFic = fic.getUserFic()  # TODO FIXME blah
 		if not userFic.isFavorite:
 			continue
 		cache(fic.fid())
@@ -1784,8 +1841,10 @@ class LocalUserFicChapter:
 		self.readStatus = FicStatus.ongoing
 		self.line = 0
 		self.subLine = 0
+
 	def savePosition(self) -> None:
 		pass
+
 
 class LocalFicChapter:
 	def __init__(self, fic: 'LocalFic', txt: str) -> None:
@@ -1795,18 +1854,24 @@ class LocalFicChapter:
 		self.title = ''
 		self.status = FicStatus.ongoing
 		self.ufc = LocalUserFicChapter()
+
 	def getFic(self) -> 'LocalFic':
 		return self.fic
+
 	def getUserFicChapter(self) -> UserFicChapter:
 		return cast(UserFicChapter, self.ufc)
+
 	def cachedContent(self) -> str:
 		return self.txt
+
 
 class LocalUserFic:
 	def __init__(self) -> None:
 		self.lastChapterViewed = 1
+
 	def updateLastViewed(self, cid: int) -> None:
 		pass
+
 
 class LocalFic:
 	def __init__(self, txt: str) -> None:
@@ -1819,11 +1884,14 @@ class LocalFic:
 		self.chapterCount = len(self.chapters)
 		self.ficStatus = FicStatus.ongoing
 		self.uf = LocalUserFic()
+
 	def chapter(self, chapterId: int) -> FicChapter:
-		assert(chapterId == 1)
+		assert (chapterId == 1)
 		return cast(FicChapter, self.chapters[0])
+
 	def getAuthorName(self) -> str:
 		return self.author
+
 	def getUserFic(self) -> UserFic:
 		return cast(UserFic, self.uf)
 
@@ -1939,13 +2007,16 @@ def parseUserFavorites(uids: str) -> None:
 	print(uid)
 
 	# scrape._staleOnly = True
-	lurl = scrape.getLastUrlLikeOrDefault((
-		('https://www.fanfiction.net/u/' + str(uid)),
-		('https://www.fanfiction.net/u/' + str(uid) + '/%')))
+	lurl = scrape.getLastUrlLikeOrDefault(
+		(
+			('https://www.fanfiction.net/u/' + str(uid)),
+			('https://www.fanfiction.net/u/' + str(uid) + '/%')
+		)
+	)
 	print(lurl)
 
 	data = scrape.softScrapeWithMeta(lurl)
-	assert(data is not None)
+	assert (data is not None)
 	ts = int(data['fetched'])
 	hourLimit = 6
 	if ts < int(time.time()) - 60 * 60 * hourLimit:
@@ -2016,9 +2087,8 @@ def parseUserFavorites(uids: str) -> None:
 def scrapeRedditThread(url: str) -> None:
 	import subprocess
 	dname = os.path.dirname(os.path.realpath(__file__))
-	r = subprocess.run(
-			[dname + '/bin/scrapeRedditThread', url],
-			capture_output=True)
+	ename = dname + '/bin/scrapeRedditThread'
+	r = subprocess.run([ename, url], capture_output=True)
 	ids = r.stdout.decode('utf-8').split()
 	seenFids = set()
 	for uid in ids:
@@ -2029,7 +2099,7 @@ def scrapeRedditThread(url: str) -> None:
 			if fic.id in seenFids:
 				print('  seen')
 				continue
-			seenFids |= { fic.id }
+			seenFids |= {fic.id}
 			info(fid)
 			fid.chapterId = None
 			fid.ambiguous = True
@@ -2066,84 +2136,100 @@ def repl() -> None:
 
 
 cmds = [
-		Command('search', [search]),
-		Command('searchAll', [searchAll]),
-		Command('help', [printUsage, printCommandUsage]),
-		Command('dump', [dump, dumpWithWidth]),
-		Command('dumpTest', [dumpTest]),
-		Command('rdump', [rdump]),
-		Command('mdump', [mdump]),
-		Command('altDump', [altDump]),
-		Command('dumpUrl', [dumpUrl, dumpUrlMedium]),
-		Command('list', [listFics]),
-		Command('listIds', [listIds]),
-		Command('parseId', [parseId]),
-		Command('info', [info, infoWithWidth]),
-		Command('infoREPL', [infoREPL]),
-		Command('interestingREPL', [interestingREPL]),
-		Command('maybeForceUpdate', [maybeForceUpdate]),
-		Command('maybeForceUpdateREPL', [maybeForceUpdateREPL]),
-		Command('staleInfo', [staleInfo]),
-		Command('update', [checkIncompleteForUpdates, update]),
-		Command('updateFFN', [checkIncompleteForUpdatesFFN]),
-		Command('updateAO3', [checkIncompleteForUpdatesAo3]),
-		Command('updateXen', [checkIncompleteForUpdatesXen]),
-		Command('updateQQ', [checkIncompleteForUpdatesQQ]),
-		Command('updateSB', [checkIncompleteForUpdatesSB]),
-		Command('updateSV', [checkIncompleteForUpdatesSV]),
-		Command('updateRR', [checkIncompleteForUpdatesRR]),
-		Command('updateGen', [checkIncompleteForUpdatesGen]),
-		Command('forceUpdate', [forceUpdate]),
-		#Command('queue', [queue, queueAll]),
-		#Command('listQueue', [listQueue]),
-		#Command('importQueue', [importQueue]),
-		#Command('requeueBroken', [requeueBroken]),
-		Command('listCommands', [listCommands]),
+	# help
+	Command('listCommands', [listCommands]),
+	Command('help', [printUsage, printCommandUsage]),
 
-		Command('cache', [cache]),
-		Command('cacheFavorites', [cacheFavorites]),
-		Command('cacheAll', [cacheAll]),
-		Command('bulkCache', [bulkCache]),
-		Command('needsCached', [needsCached]),
-		Command('cacheImages', [cacheImages]),
-		Command('deepCache', [deepCache, deepCacheAll]),
-		Command('staleCache', [staleCache]),
+	# info
+	# default list view
+	Command('repl', [repl]),
+	Command('list', [listFics]),
+	Command('listIds', [listIds]),
+	Command('parseId', [parseId]),
+	Command('info', [info, infoWithWidth]),
+	Command('infoREPL', [infoREPL]),
+	Command('interestingREPL', [interestingREPL]),
+	Command('staleInfo', [staleInfo]),
 
-		Command('favorite', [favorite]),
-		Command('fsearch', [fsearch]),
-		Command('fidsearch', [fidsearch]),
-		Command('mread', [markRead]),
-		Command('readLocal', [readLocal]),
+	# read
+	# hardcoded read command
+	Command('readLocal', [readLocal]),
 
-		Command('tagFic', [tagFic]),
-		Command('fandomFic', [fandomFic]),
-		Command('characterFic', [characterFic]),
+	# update
+	Command('update', [checkIncompleteForUpdates, update]),
+	Command('updateFFN', [checkIncompleteForUpdatesFFN]),
+	Command('updateAO3', [checkIncompleteForUpdatesAo3]),
+	Command('updateXen', [checkIncompleteForUpdatesXen]),
+	Command('updateQQ', [checkIncompleteForUpdatesQQ]),
+	Command('updateSB', [checkIncompleteForUpdatesSB]),
+	Command('updateSV', [checkIncompleteForUpdatesSV]),
+	Command('updateRR', [checkIncompleteForUpdatesRR]),
+	Command('updateGen', [checkIncompleteForUpdatesGen]),
+	Command('checkIncompleteForUpdates', [checkIncompleteForUpdates]),
+	Command('forceUpdate', [forceUpdate]),
+	Command('maybeForceUpdate', [maybeForceUpdate]),
+	Command('maybeForceUpdateREPL', [maybeForceUpdateREPL]),
 
-		Command('checkIncompleteForUpdates', [checkIncompleteForUpdates]),
+	# queue
+	#Command('queue', [queue, queueAll]),
+	#Command('listQueue', [listQueue]),
+	#Command('importQueue', [importQueue]),
+	#Command('requeueBroken', [requeueBroken]),
 
-		Command('fixMissingFandoms', [fixMissingFandoms]),
-		Command('fixCompleteStatus', [fixCompleteStatus]),
+	# cache
+	Command('cache', [cache]),
+	Command('cacheFavorites', [cacheFavorites]),
+	Command('cacheAll', [cacheAll]),
+	Command('bulkCache', [bulkCache]),
+	Command('needsCached', [needsCached]),
+	Command('cacheImages', [cacheImages]),
+	Command('deepCache', [deepCache, deepCacheAll]),
+	Command('staleCache', [staleCache]),
 
-		Command('readInLastDay', [readInLastDay, readInLastMonth]),
-		Command('readAllTime', [readAllTime]),
-		Command('readByFandomAllTime', [readByFandomAllTime]),
-		Command('readByFandomAllTimeWhitelist', [readByFandomAllTimeWhitelist]),
-		Command('repl', [repl]),
+	# search
+	Command('search', [search]),
+	Command('searchAll', [searchAll]),
+	Command('fsearch', [fsearch]),
+	Command('fidsearch', [fidsearch]),
 
-		Command('dumpAll', [dumpAll]),
-		Command('dumpPreRender', [dumpPreRender]),
-		Command('dumpPreRenderAll', [dumpPreRenderAll]),
-		Command('dumpMarkovCorpus', [dumpMarkovCorpus]),
+	# crud
+	# hardcoded add command
+	# hardcoded def command
+	Command('favorite', [favorite]),
+	Command('mread', [markRead]),
+	Command('tagFic', [tagFic]),
+	Command('fandomFic', [fandomFic]),
+	Command('characterFic', [characterFic]),
 
-		Command('cleanXenForoTitles', [cleanXenForoTitles]),
-		Command('fixXenForo', [fixXenForo]),
+	# stats
+	Command('readInLastDay', [readInLastDay, readInLastMonth]),
+	Command('readAllTime', [readAllTime]),
+	Command('readByFandomAllTime', [readByFandomAllTime]),
+	Command('readByFandomAllTimeWhitelist', [readByFandomAllTimeWhitelist]),
 
-		Command('dumpAFFMeta', [dumpAFFMeta]),
+	# dump
+	Command('dump', [dump, dumpWithWidth]),
+	Command('dumpTest', [dumpTest]),
+	Command('rdump', [rdump]),
+	Command('mdump', [mdump]),
+	Command('altDump', [altDump]),
+	Command('dumpUrl', [dumpUrl, dumpUrlMedium]),
+	Command('dumpAll', [dumpAll]),
+	Command('dumpPreRender', [dumpPreRender]),
+	Command('dumpPreRenderAll', [dumpPreRenderAll]),
+	Command('dumpMarkovCorpus', [dumpMarkovCorpus]),
+	Command('dumpAFFMeta', [dumpAFFMeta]),
 
-		Command('parseUserFavorites', [parseUserFavorites]),
+	# (hopefully) one-off fixes
+	Command('fixMissingFandoms', [fixMissingFandoms]),
+	Command('fixCompleteStatus', [fixCompleteStatus]),
+	Command('cleanXenForoTitles', [cleanXenForoTitles]),
+	Command('fixXenForo', [fixXenForo]),
 
-		Command('scrapeRedditThread', [scrapeRedditThread]),
-	]
+	# foreign user metadata
+	Command('parseUserFavorites', [parseUserFavorites]),
+	Command('scrapeRedditThread', [scrapeRedditThread]),
+]
 
 
 def main() -> int:
@@ -2188,8 +2274,11 @@ def main() -> int:
 		which = sys.argv[4]
 		what = sys.argv[2]
 
-		print('trying to add "{}" to story "{}" ({})'.format(
-				which, fic.title, ficId.localId))
+		print(
+			'trying to add "{}" to story "{}" ({})'.format(
+				which, fic.title, ficId.localId
+			)
+		)
 
 		thing: Optional[TagBase] = None
 		if 'genre'.startswith(what):

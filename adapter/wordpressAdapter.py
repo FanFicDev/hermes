@@ -36,49 +36,49 @@ class WordpressAdapter(Adapter):
     def canonizeUrl(self, url: str) -> str:
         url = urllib.parse.urljoin(self.baseUrl, url)
         url = scrape.canonizeUrl(url)
-        prefixMap = [('http://', 'https://'),
-                     ('https://{}'.format(self.urlFragments[0]),
-                      'https://www.{}'.format(self.urlFragments[0]))]
-        for pm in prefixMap:
-            if url.startswith(pm[0]):
-                url = pm[1] + url[len(pm[0]):]
-        if not url.endswith('/'):
-            url += '/'
-        return url
+		prefixMap = [
+			('http://', 'https://'),
+			('https://', 'https://www.'),
+		]
+		for pm in prefixMap:
+			if url.startswith(pm[0]):
+				url = pm[1] + url[len(pm[0]):]
+		if not url.endswith('/'):
+			url += '/'
+		return url
 
     def getChapterPublishDate(self, url: str) -> OilTimestamp:
-        from bs4 import BeautifulSoup
-        url = self.canonizeUrl(url)
-        data = scrape.softScrape(url)
-        soup = BeautifulSoup(data, 'html5lib')
-        publishTimes = soup.findAll('time',
-                                    {'class': ['entry-date', 'published']})
-        if len(publishTimes) != 1:
-            raise Exception('cannot find publish time for {}'.format(url))
-        uts = util.dtToUnix(
-            dateutil.parser.parse(publishTimes[0].get('datetime')))
-        return OilTimestamp(uts)
+		from bs4 import BeautifulSoup
+		url = self.canonizeUrl(url)
+		data = scrape.softScrape(url)
+		soup = BeautifulSoup(data, 'html5lib')
+		publishTimes = soup.findAll('time', {'class': ['entry-date', 'published']})
+		if len(publishTimes) != 1:
+			raise Exception('cannot find publish time for {}'.format(url))
+		uts = util.dtToUnix(dateutil.parser.parse(publishTimes[0].get('datetime')))
+		return OilTimestamp(uts)
 
     def constructUrl(self, lid: str, cid: int = None) -> str:
-        if cid is None:
-            return self.baseUrl
-        chapterUrls = self.getChapterUrls()
-        return chapterUrls[cid - 1]
+		if cid is None:
+			return self.baseUrl
+		chapterUrls = self.getChapterUrls()
+		return chapterUrls[cid - 1]
 
-    def tryParseUrl(self, url: str) -> Optional[FicId]:
-        url = self.canonizeUrl(url)
+	def tryParseUrl(self, url: str) -> Optional[FicId]:
+		url = self.canonizeUrl(url)
 
-        # if the url matches a chapter url, return it
-        chapterUrls = self.getChapterUrls()
-        if url in chapterUrls:
-            return FicId(self.ftype, str(1), chapterUrls.index(url), False)
+		# if the url matches a chapter url, return it
+		chapterUrls = self.getChapterUrls()
+		if url in chapterUrls:
+			return FicId(self.ftype, str(1), chapterUrls.index(url), False)
 
-        # parahumans is id 1
-        # TODO: change FicType.parahumans to wordpress?
-        return FicId(self.ftype, str(1), ambiguous=False)
+		# parahumans is id 1
+		# TODO: change FicType.parahumans to wordpress?
+		return FicId(self.ftype, str(1), ambiguous=False)
 
-    def create(self, fic: Fic) -> Fic:
-        return self.getCurrentInfo(fic)
+	def create(self, fic: Fic) -> Fic:
+		return self.getCurrentInfo(fic)
+
 
     def extractContent(self, fic: Fic, html: str) -> str:
         from bs4 import BeautifulSoup
@@ -99,20 +99,21 @@ class WordpressAdapter(Adapter):
         return re.sub(self.sub_patt, '', content)
 
     def buildUrl(self, chapter: FicChapter) -> str:
-        if len(chapter.url.strip()) > 0:
-            return chapter.url
-        return self.constructUrl(chapter.getFic().localId, chapter.chapterId)
+		if len(chapter.url.strip()) > 0:
+			return chapter.url
+		return self.constructUrl(chapter.getFic().localId, chapter.chapterId)
 
     def getCurrentInfo(self, fic: Fic) -> Fic:
-        fic.url = self.constructUrl(fic.localId)
-        url = self.tocUrl
-        data = scrape.scrape(url)
+		fic.url = self.constructUrl(fic.localId)
+		url = self.tocUrl
+		data = scrape.scrape(url)
 
-        fic = self.parseInfoInto(fic, data['raw'])
-        fic.upsert()
-        return Fic.lookup((fic.id, ))
+		fic = self.parseInfoInto(fic, data['raw'])
+		fic.upsert()
+		return Fic.lookup((fic.id, ))
 
     def parseInfoInto(self, fic: Fic, html: str) -> Fic:
+        from bs4 import BeautifulSoup
         html = html.replace('\r\n', '\n')
 
         # wooh hardcoding
