@@ -25,7 +25,9 @@ class ParahumansAdapter(Adapter):
 		url = scrape.canonizeUrl(url)
 		prefixMap = [
 			('http://', 'https://'),
-			('https://', 'https://www.'),
+			(
+				f'https://{self.urlFragments[0]}', f'https://www.{self.urlFragments[0]}'
+			),
 		]
 		for pm in prefixMap:
 			if url.startswith(pm[0]):
