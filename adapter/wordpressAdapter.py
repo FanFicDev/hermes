@@ -12,30 +12,32 @@ from adapter.adapter import Adapter
 
 
 class WordpressAdapter(Adapter):
-    def __init__(self,
-                 baseUrl: str,
-                 sub_patt: str,
-                 title: str,
-                 fandom: str,
-                 ageRating: str,
-                 author: str,
-                 authorUrl: str,
-                 description: str,
-                 urlFragments: Union[str, List[str]] = [],
-                 ftype: FicType = FicType.broken) -> None:
-        super().__init__(True, baseUrl, urlFragments, ftype)
-        self.sub_patt = sub_patt
-        self.title = title
-        self.fandom = fandom
-        self.ageRating = ageRating
-        self.author = author
-        self.authorUrl = authorUrl
-        self.description = description
-        self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
+	def __init__(
+		self,
+		baseUrl: str,
+		sub_patt: str,
+		title: str,
+		fandom: str,
+		ageRating: str,
+		author: str,
+		authorUrl: str,
+		description: str,
+		urlFragments: Union[str, List[str]] = [],
+		ftype: FicType = FicType.broken
+	) -> None:
+		super().__init__(True, baseUrl, urlFragments, ftype)
+		self.sub_patt = sub_patt
+		self.title = title
+		self.fandom = fandom
+		self.ageRating = ageRating
+		self.author = author
+		self.authorUrl = authorUrl
+		self.description = description
+		self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
 
-    def canonizeUrl(self, url: str) -> str:
-        url = urllib.parse.urljoin(self.baseUrl, url)
-        url = scrape.canonizeUrl(url)
+	def canonizeUrl(self, url: str) -> str:
+		url = urllib.parse.urljoin(self.baseUrl, url)
+		url = scrape.canonizeUrl(url)
 		prefixMap = [
 			('http://', 'https://'),
 			('https://', 'https://www.'),
@@ -47,7 +49,7 @@ class WordpressAdapter(Adapter):
 			url += '/'
 		return url
 
-    def getChapterPublishDate(self, url: str) -> OilTimestamp:
+	def getChapterPublishDate(self, url: str) -> OilTimestamp:
 		from bs4 import BeautifulSoup
 		url = self.canonizeUrl(url)
 		data = scrape.softScrape(url)
@@ -58,7 +60,7 @@ class WordpressAdapter(Adapter):
 		uts = util.dtToUnix(dateutil.parser.parse(publishTimes[0].get('datetime')))
 		return OilTimestamp(uts)
 
-    def constructUrl(self, lid: str, cid: int = None) -> str:
+	def constructUrl(self, lid: str, cid: int = None) -> str:
 		if cid is None:
 			return self.baseUrl
 		chapterUrls = self.getChapterUrls()
@@ -79,31 +81,30 @@ class WordpressAdapter(Adapter):
 	def create(self, fic: Fic) -> Fic:
 		return self.getCurrentInfo(fic)
 
+	def extractContent(self, fic: Fic, html: str) -> str:
+		from bs4 import BeautifulSoup
+		soup = BeautifulSoup(html, 'html5lib')
+		entryContents = soup.findAll('div', {'class': 'entry-content'})
+		if len(entryContents) != 1:
+			raise Exception('cannot find entry-content')
+		entryContent = entryContents[0]
 
-    def extractContent(self, fic: Fic, html: str) -> str:
-        from bs4 import BeautifulSoup
-        soup = BeautifulSoup(html, 'html5lib')
-        entryContents = soup.findAll('div', {'class': 'entry-content'})
-        if len(entryContents) != 1:
-            raise Exception('cannot find entry-content')
-        entryContent = entryContents[0]
+		shareDivs = entryContent.find_all('div', {'class', 'sharedaddy'})
+		for shareDiv in shareDivs:
+			shareDiv.extract()
 
-        shareDivs = entryContent.find_all('div', {'class', 'sharedaddy'})
-        for shareDiv in shareDivs:
-            shareDiv.extract()
+		for audio in entryContent.find_all('audio'):
+			audio.extract()
 
-        for audio in entryContent.find_all('audio'):
-            audio.extract()
+		content = str(entryContent)
+		return re.sub(self.sub_patt, '', content)
 
-        content = str(entryContent)
-        return re.sub(self.sub_patt, '', content)
-
-    def buildUrl(self, chapter: FicChapter) -> str:
+	def buildUrl(self, chapter: FicChapter) -> str:
 		if len(chapter.url.strip()) > 0:
 			return chapter.url
 		return self.constructUrl(chapter.getFic().localId, chapter.chapterId)
 
-    def getCurrentInfo(self, fic: Fic) -> Fic:
+	def getCurrentInfo(self, fic: Fic) -> Fic:
 		fic.url = self.constructUrl(fic.localId)
 		url = self.tocUrl
 		data = scrape.scrape(url)
@@ -112,64 +113,64 @@ class WordpressAdapter(Adapter):
 		fic.upsert()
 		return Fic.lookup((fic.id, ))
 
-    def parseInfoInto(self, fic: Fic, html: str) -> Fic:
-        from bs4 import BeautifulSoup
-        html = html.replace('\r\n', '\n')
+	def parseInfoInto(self, fic: Fic, html: str) -> Fic:
+		from bs4 import BeautifulSoup
+		html = html.replace('\r\n', '\n')
 
-        # wooh hardcoding
-        fic.fetched = OilTimestamp.now()
-        fic.languageId = Language.getId("English")
+		# wooh hardcoding
+		fic.fetched = OilTimestamp.now()
+		fic.languageId = Language.getId("English")
 
-        fic.title = self.title
-        fic.ageRating = self.ageRating
+		fic.title = self.title
+		fic.ageRating = self.ageRating
 
-        self.setAuthor(fic, self.author, self.authorUrl, str(1))
+		self.setAuthor(fic, self.author, self.authorUrl, str(1))
 
-        # taken from https://www.parahumans.net/about/
-        fic.description = self.description
+		# taken from https://www.parahumans.net/about/
+		fic.description = self.description
 
-        chapterUrls = self.getChapterUrls(html)
-        oldChapterCount = fic.chapterCount
-        fic.chapterCount = len(chapterUrls)
+		chapterUrls = self.getChapterUrls(html)
+		oldChapterCount = fic.chapterCount
+		fic.chapterCount = len(chapterUrls)
 
-        # TODO?
-        fic.reviewCount = 0
-        fic.favoriteCount = 0
-        fic.followCount = 0
+		# TODO?
+		fic.reviewCount = 0
+		fic.favoriteCount = 0
+		fic.followCount = 0
 
-        if fic.ficStatus is None or fic.ficStatus == FicStatus.broken:
-            fic.ficStatus = FicStatus.ongoing
+		if fic.ficStatus is None or fic.ficStatus == FicStatus.broken:
+			fic.ficStatus = FicStatus.ongoing
 
-        fic.published = self.getChapterPublishDate(chapterUrls[0])
-        fic.updated = self.getChapterPublishDate(chapterUrls[-1])
+		fic.published = self.getChapterPublishDate(chapterUrls[0])
+		fic.updated = self.getChapterPublishDate(chapterUrls[-1])
 
-        titles = self.getChapterTitles()
+		titles = self.getChapterTitles()
 
-        if oldChapterCount is None or fic.chapterCount > oldChapterCount:
-            fic.wordCount = 0
-        fic.wordCount = 0
-        if fic.wordCount == 0:
-            fic.upsert()
-            # save urls first...
-            for cid in range(1, fic.chapterCount + 1):
-                c = fic.chapter(cid)
-                c.localChapterId = str(cid)
-                c.url = chapterUrls[cid - 1]
-                c.upsert()
+		if oldChapterCount is None or fic.chapterCount > oldChapterCount:
+			fic.wordCount = 0
+		fic.wordCount = 0
+		if fic.wordCount == 0:
+			fic.upsert()
+			# save urls first...
+			for cid in range(1, fic.chapterCount + 1):
+				c = fic.chapter(cid)
+				c.localChapterId = str(cid)
+				c.url = chapterUrls[cid - 1]
+				c.upsert()
 
-            # then attempt to set title and content
-            for cid in range(1, fic.chapterCount + 1):
-                if cid <= len(titles):
-                    c.title = titles[cid - 1]
-                elif c.title is None:
-                    c.title = ''
-                c.cache()
-                chtml = c.html()
-                c.upsert()
-                if chtml is not None:
-                    fic.wordCount += len(chtml.split())
+			# then attempt to set title and content
+			for cid in range(1, fic.chapterCount + 1):
+				if cid <= len(titles):
+					c.title = titles[cid - 1]
+				elif c.title is None:
+					c.title = ''
+				c.cache()
+				chtml = c.html()
+				c.upsert()
+				if chtml is not None:
+					fic.wordCount += len(chtml.split())
 
-        fic.add(Fandom.define(self.fandom))
-        # TODO: chars/relationship?
+		fic.add(Fandom.define(self.fandom))
+		# TODO: chars/relationship?
 
-        return fic
+		return fic
