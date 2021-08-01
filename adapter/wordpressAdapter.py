@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
 import dateutil.parser
 import urllib
 
@@ -15,25 +15,34 @@ class WordpressAdapter(Adapter):
 	def __init__(
 		self,
 		baseUrl: str,
-		sub_patt: str,
+		urlFragments: Union[str, List[str]],
+		ftype: FicType,
 		title: str,
 		fandom: str,
 		ageRating: str,
 		author: str,
 		authorUrl: str,
 		description: str,
-		urlFragments: Union[str, List[str]] = [],
-		ftype: FicType = FicType.broken
+		contentRe: Tuple[str, str],
 	) -> None:
 		super().__init__(True, baseUrl, urlFragments, ftype)
-		self.sub_patt = sub_patt
+
 		self.title = title
 		self.fandom = fandom
 		self.ageRating = ageRating
 		self.author = author
 		self.authorUrl = authorUrl
 		self.description = description
+
+		self.contentRe = contentRe
+
 		self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
+
+		# map from source url to real url, or none if it should be skipped
+		self.urlFixups: Dict[str, Optional[str]] = {}
+		# map from source title to what appears just before it and what it should
+		# be replaced with, combining the key and val.0 into val.1
+		self.titleFixups: Dict[str, Tuple[str, str]] = {}
 
 	def canonizeUrl(self, url: str) -> str:
 		url = urllib.parse.urljoin(self.baseUrl, url)
@@ -50,6 +59,51 @@ class WordpressAdapter(Adapter):
 		if not url.endswith('/'):
 			url += '/'
 		return url
+
+	def getChapterUrls(self, data: str = None) -> List[str]:
+		from bs4 import BeautifulSoup  # type: ignore
+		if data is None:
+			data = scrape.softScrape(self.tocUrl)
+		soup = BeautifulSoup(data, 'html5lib')
+		entryContents = soup.findAll('div', {'class': 'entry-content'})
+		chapterUrls: List[str] = []
+
+		for entryContent in entryContents:
+			aTags = entryContent.findAll('a')
+			for aTag in aTags:
+				href = self.canonizeUrl(aTag.get('href'))
+				if (
+					href in self.urlFixups and len(chapterUrls) > 0
+					and chapterUrls[-1] == href
+				):
+					if self.urlFixups[href] is None:
+						continue
+					href = cast(str, self.urlFixups[href])
+				if href in chapterUrls:
+					raise Exception(f'duplicate chapter url: {href} {len(chapterUrls)}')
+				chapterUrls += [href]
+		return chapterUrls
+
+	def getChapterTitles(self, data: str = None) -> List[str]:
+		from bs4 import BeautifulSoup
+		if data is None:
+			data = scrape.softScrape(self.tocUrl)
+		soup = BeautifulSoup(data, 'html5lib')
+		entryContents = soup.findAll('div', {'class': 'entry-content'})
+		chapterTitles: List[str] = []
+
+		for entryContent in entryContents:
+			aTags = entryContent.findAll('a')
+			for aTag in aTags:
+				content = aTag.get_text().strip()
+				if (
+					content in self.titleFixups and len(chapterTitles) > 0
+					and chapterTitles[-1] == self.titleFixups[content][0]
+				):
+					chapterTitles[-1] = self.titleFixups[content][1]
+					continue
+				chapterTitles += [content]
+		return chapterTitles
 
 	def getChapterPublishDate(self, url: str) -> OilTimestamp:
 		from bs4 import BeautifulSoup
@@ -76,8 +130,7 @@ class WordpressAdapter(Adapter):
 		if url in chapterUrls:
 			return FicId(self.ftype, str(1), chapterUrls.index(url), False)
 
-		# parahumans is id 1
-		# TODO: change FicType.parahumans to wordpress?
+		# TODO: we should not rely on a single ftype with localId per story
 		return FicId(self.ftype, str(1), ambiguous=False)
 
 	def create(self, fic: Fic) -> Fic:
@@ -99,7 +152,8 @@ class WordpressAdapter(Adapter):
 			audio.extract()
 
 		content = str(entryContent)
-		return re.sub(self.sub_patt, '', content)
+		# TODO: generalize contentRe
+		return re.sub(self.contentRe[0], self.contentRe[1], content)
 
 	def buildUrl(self, chapter: FicChapter) -> str:
 		if len(chapter.url.strip()) > 0:
