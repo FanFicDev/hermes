@@ -1,4 +1,21 @@
-Any modern postgres should work. To create the db from scratch execute:
+This project currently uses postgres, of which any modern version _should_
+work. There are a number of environment variables that control which database
+is connected to:
+	OIL_DB_DBNAME (defaults to hermes)
+	OIL_DB_USER
+	OIL_DB_PASSWORD
+	OIL_DB_HOST
+	OIL_DB_PORT
+
+If your postgres is setup to accept unix domain socket connections from your
+user for the `hermes` database then no environment variables need to be set.
+The defaults reside in lite_oil.py.
+
+To create the db from scratch execute (this also creates store_bases.py):
+	./schema.py --init
+
+This runs the following scripts in order:
+
 sql/
 	oil/
 		url.sql
@@ -50,8 +67,6 @@ sql/
 ==
 
 The sql/fresh/ folder contains numbered links to these files generated based
-on this file by schema.py. schema.py can also execute the scripts if passed
-the --init command, which _should_ be idempotent.
-
-Ensure you generate store_bases.py by running schema.py.
+on this file by schema.py. To recreate the sql/fresh/ folder, run:
+	./schema.py --symlink
 
