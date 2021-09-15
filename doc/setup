@@ -1,0 +1,29 @@
+There are a few steps required when first getting started with this project.
+
+Depending on whether you plan to run hermes or alexandria (or both) several
+python dependencies are required. These can be installed using standard
+virtual enviornment management utilities, through pip, or your distributions
+package manager. For example:
+	python -m virtualenv ./venv_alexandria
+	./venv_alexandria/bin/python -m pip install --upgrade pip
+	./venv_alexandria/bin/python -m pip install -r alexandria_api_requirements.txt
+
+A postgres db is required. More information about this and how to create the
+initial schema can be found in doc/db_setup. There may be environment
+variables you need to set so that hermes/alexandria can connect to the correct
+db.
+
+As part of the db setup ./schema.py should be run, but in case changes are
+made or you lose the store_bases.py file, run it again to generate
+store_bases.py.
+
+Copy the priv.ex.py file to priv.py in the root project folder. This contains
+secrets that should not generally be committed to the repository. The
+`getDefaultCookies` function should not need changed. However, the
+`skitterClients` should be set to either an empty list, which will mean any
+adapter which uses it will not work, or be filled based on the example given
+with credentials to a skitter instance.
+
+Once these steps have been completed, the doc/README_hermes and
+doc/README_alexandria files provide more information about usage.
+
