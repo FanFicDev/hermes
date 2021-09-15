@@ -26,32 +26,3 @@ This is the story of the Wandering Inn.''', (
 				''
 			)
 		)
-
-	def getChapterUrls(self, data: str = None) -> List[str]:
-		from bs4 import BeautifulSoup  # type: ignore
-		if data is None:
-			data = scrape.softScrape(self.tocUrl)
-		soup = BeautifulSoup(data, 'html5lib')
-		entryContents = soup.findAll('div', {'class': 'entry-content'})
-		chapterUrls: List[str] = []
-
-		for entryContent in entryContents:
-			aTags = entryContent.findAll('a')
-			for aTag in aTags:
-				href = self.canonizeUrl(aTag.get('href'))
-				chapterUrls += [href]
-		return chapterUrls
-
-	def getChapterTitles(self, data: str = None) -> List[str]:
-		from bs4 import BeautifulSoup
-		if data is None:
-			data = scrape.softScrape(self.tocUrl)
-		soup = BeautifulSoup(data, 'html5lib')
-		entryContents = soup.findAll('div', {'class': 'entry-content'})
-		chapterTitles: List[str] = []
-		for entryContent in entryContents:
-			aTags = entryContent.findAll('a')
-			for aTag in aTags:
-				content = aTag.get_text().strip()
-				chapterTitles += [content]
-		return chapterTitles
