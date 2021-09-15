@@ -207,19 +207,20 @@ class WordpressAdapter(Adapter):
 		fic.wordCount = 0
 		if fic.wordCount == 0:
 			fic.upsert()
-			# save urls first...
+			# save urls and title first...
 			for cid in range(1, fic.chapterCount + 1):
 				c = fic.chapter(cid)
 				c.localChapterId = str(cid)
 				c.url = chapterUrls[cid - 1]
-				c.upsert()
-
-			# then attempt to set title and content
-			for cid in range(1, fic.chapterCount + 1):
 				if cid <= len(titles):
 					c.title = titles[cid - 1]
 				elif c.title is None:
 					c.title = ''
+				c.upsert()
+
+			# then attempt to set content
+			for cid in range(1, fic.chapterCount + 1):
+				c = fic.chapter(cid)
 				c.cache()
 				chtml = c.html()
 				c.upsert()
