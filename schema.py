@@ -9,7 +9,8 @@ import psycopg2
 from psycopg2.extensions import AsIs, register_adapter, new_type, register_type
 
 
-def initDB(symlink_only: bool) -> None:
+# return an ordered list of raw sql path, target, and link names
+def walkSql() -> List[Tuple[str, str, str]]:
 	indexes: List[int] = []
 	path = ['./sql/']
 	scripts = []
@@ -49,26 +50,33 @@ def initDB(symlink_only: bool) -> None:
 
 	maxDepth = len(indexes)
 
-	shutil.rmtree('./sql/fresh/')
-	os.mkdir('./sql/fresh/')
-	spaths = []
+	res = []
 	for path, fname, idxs in scripts:
 		idxs += [0] * (maxDepth - len(idxs))
 		nstub = '-'.join(map(lambda i: f'{i:02}', idxs))
 		fstub = ''.join(path[1:]).replace('/', '-')
 		lname = './sql/fresh/' + nstub + '-' + fstub + fname
 		spath = ''.join(path) + fname
-		spaths += [spath]
 		tname = '../../' + spath
+		res.append((spath, tname, lname))
+
+	return res
+
+
+# recreate the sql/fresh folder by symlinking to raw sql files
+def symlinkSql() -> None:
+	shutil.rmtree('./sql/fresh/')
+	os.mkdir('./sql/fresh/')
+	for _, tname, lname in walkSql():
 		os.symlink(tname, lname)
 
-	if symlink_only:
-		return
 
+# run all sql scripts
+def initDB() -> None:
 	from lite_oil import getConnection
 	with getConnection('hermes') as conn:
 		with conn.cursor() as curs:
-			for spath in spaths:
+			for spath, _, _ in walkSql():
 				print(f'executing {spath}')
 				with open(spath, 'r') as f:
 					sql = f.read()
@@ -76,11 +84,11 @@ def initDB(symlink_only: bool) -> None:
 
 
 if __name__ == '__main__':
-	symlink_only = True
 	if len(sys.argv) > 1 and sys.argv[1] == '--init':
-		symlink_only = False
+		initDB()
 
-	initDB(symlink_only)
+	if len(sys.argv) > 1 and sys.argv[1] == '--symlink':
+		symlinkSql()
 
 tables = [
 	(
