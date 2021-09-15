@@ -7,19 +7,13 @@ import typing
 from typing import List, Tuple, Dict, Optional, Any, Sequence
 import PyQt5.QtCore
 import util
+import lite_oil
 
 if typing.TYPE_CHECKING:
 	import psycopg2
 	import requests
 
 __scrapeSource: Optional[str] = None
-__oilConnectionParams: Dict[str, Optional[str]] = {
-	'dbname': 'hermes',
-	'user': None,
-	'password': None,
-	'host': None,
-	'port': None,
-}
 
 __oilConn = None
 __oilCurs = None
@@ -36,13 +30,6 @@ cp1252_munge: List[Tuple[bytes, bytes]] = []
 
 
 def importEnvironment() -> None:
-	global __oilConnectionParams
-	for key in __oilConnectionParams:
-		envKey = f'OIL_DB_{key.upper()}'
-		if envKey not in os.environ:
-			continue
-		__oilConnectionParams[key] = os.environ[envKey]
-
 	global _staleOnly, _staleBefore
 	if 'HERMES_STALE' in os.environ:
 		_staleOnly = True
@@ -57,18 +44,11 @@ def importEnvironment() -> None:
 	)
 
 
-def getMinervaConnectionString() -> str:
-	importEnvironment()
-	return ' '.join(
-		[f'{k}={v}' for k, v in __oilConnectionParams.items() if v is not None]
-	)
-
-
 def openMinerva() -> 'psycopg2.connection':
 	global __oilConn
 	if __oilConn is None:
 		import psycopg2
-		__oilConn = psycopg2.connect(getMinervaConnectionString())
+		__oilConn = psycopg2.connect(lite_oil.getConnectionString())
 		if __oilConn is None:
 			raise Exception('__oilConn')
 	return __oilConn
