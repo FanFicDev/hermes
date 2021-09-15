@@ -5,11 +5,7 @@ import psycopg2
 __conns: Dict[str, 'psycopg2.connection'] = {}
 
 
-def getConnection(subDB: str) -> 'psycopg2.connection':
-	global __conns
-	if subDB in __conns:
-		return __conns[subDB]
-
+def getConnectionString() -> str:
 	connParms: Dict[str, Optional[str]] = {
 		'dbname': 'hermes',  # TODO
 		'user': None,
@@ -28,7 +24,15 @@ def getConnection(subDB: str) -> 'psycopg2.connection':
 		[f'{k}={v}' for k, v in connParms.items() if v is not None]
 	)
 
-	conn = psycopg2.connect(connStr)
+	return connStr
+
+
+def getConnection(subDB: str) -> 'psycopg2.connection':
+	global __conns
+	if subDB in __conns:
+		return __conns[subDB]
+
+	conn = psycopg2.connect(getConnectionString())
 	__conns[subDB] = conn
 	return conn
 
