@@ -24,6 +24,9 @@ secrets that should not generally be committed to the repository. The
 adapter which uses it will not work, or be filled based on the example given
 with credentials to a skitter instance.
 
+Use of skitter is currently required for FFN, FictionPress, and Royal Road.
+None of these will work if you do not have a configured skitter instance.
+
 Once these steps have been completed, the doc/README_hermes and
 doc/README_alexandria files provide more information about usage.
 
