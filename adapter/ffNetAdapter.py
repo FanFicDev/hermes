@@ -689,7 +689,7 @@ class FFNAdapter(Adapter):
 
 	def getFromZList(self, localId: int, ts: int, html: str) -> Fic:
 		fic = None
-		existing = Fic.select({'sourceId': self.ftype, 'localId': localId})
+		existing = Fic.select({'sourceId': self.ftype, 'localId': str(localId)})
 		if len(existing) != 1:
 			fic = Fic.new()
 			fic.sourceId = self.ftype
@@ -1121,7 +1121,7 @@ class FFNAdapter(Adapter):
 
 	def parseZListInfoInto(self, fic: Fic, ts: int, html: str) -> Fic:
 		# existing data is newer, do nothing
-		if fic.fetched is not None and int(fic.fetched) > ts:  # type: ignore
+		if fic.fetched is not None and fic.fetched.toUTS() > ts:
 			return fic
 		from bs4 import BeautifulSoup
 
