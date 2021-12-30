@@ -34,7 +34,7 @@ class SkitterClient:
 	) -> None:
 		#self.cookies = cookies if cookies is not None else cm.getDefaultCookies()
 		self.delay = delay
-		self.timeout = timeout
+		self.timeout = max(1, timeout)
 		self.staleOnly = False
 		self.headers = {'User-Agent': 'skitter_client/0.1.0'}
 
@@ -49,20 +49,43 @@ class SkitterClient:
 										params: Optional[Dict[str, str]]) -> Optional[ScrapeMeta]:
 		import requests
 		r = None
-		try:
-			r = requests.get(
-				apiUrl,
-				headers=self.headers,
-				params=params,
-				data=self.extraData,
-				auth=self.auth,
-				timeout=self.timeout
+		ts0 = time.time()
+		# while we have time to retry
+		while (time.time() - ts0) < self.timeout:
+			try:
+				# attempt a request
+				timePassed = time.time() - ts0
+				timeLeft = self.timeout - timePassed
+				r = requests.get(
+					apiUrl,
+					headers=self.headers,
+					params=params,
+					data=self.extraData,
+					auth=self.auth,
+					timeout=max(1, timeLeft),
+				)
+			except:
+				util.logMessage(
+					'SkitterClient._makeRequest|exception|{}'.format(apiUrl), 'scrape.log'
+				)
+				raise
+			# if we got rate limited
+			if r.status_code == 429:
+				retryAfter = int(r.headers['Retry-After'])
+				# and there's enough left in our timeout to retry, then retry
+				if (time.time() + retryAfter - ts0) >= self.timeout:
+					# otherwise break with the 429 response
+					break
+				time.sleep(retryAfter)
+			else:
+				# otherwise break with the non-429 response
+				break
+
+		if r is None:
+			# this _should_ be unreachable
+			raise Exception(
+				f'SkitterClient._makeRequest: failed to make request: {apiUrl}'
 			)
-		except:
-			util.logMessage(
-				'SkitterClient._makeRequest|exception|{}'.format(apiUrl), 'scrape.log'
-			)
-			raise
 
 		if r.status_code == 404:
 			return None
