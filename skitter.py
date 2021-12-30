@@ -1,6 +1,7 @@
 import scrape as sc
 import priv
 import util
+from weaver_client import WeaverClient
 
 
 def scrape(
@@ -35,6 +36,8 @@ def scrape(
 def softScrape(url: str, fallback: bool = False) -> sc.ScrapeMeta:
 	# return old copy if any exists
 	for c in reversed(priv.skitterClients):
+		if isinstance(c, WeaverClient):
+			continue
 		try:
 			#util.logMessage(f'skitter.softScrape: {c.ident}.staleScrape({url})')
 			r = c.staleScrape(url)

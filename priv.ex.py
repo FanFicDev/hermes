@@ -1,13 +1,14 @@
 from typing import TYPE_CHECKING, List
 from skitter_client import SkitterClient
+from weaver_client import WeaverClient
 if TYPE_CHECKING:
 	import requests
 
 skitterClients: List[SkitterClient] = [
-	SkitterClient(
-		baseUrl='https://primary/skitter/',
+	WeaverClient(
+		baseUrl='https://primary/weaver/',
 		apiKey='primaryApiKey',
-		uname='skitter_api',
+		uname='weaver_api',
 		upass='primaryPass'
 	),
 	SkitterClient(

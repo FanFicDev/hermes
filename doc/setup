@@ -22,10 +22,11 @@ secrets that should not generally be committed to the repository. The
 `getDefaultCookies` function should not need changed. However, the
 `skitterClients` should be set to either an empty list, which will mean any
 adapter which uses it will not work, or be filled based on the example given
-with credentials to a skitter instance.
+with credentials to a weaver or skitter instance.
 
-Use of skitter is currently required for FFN, FictionPress, and Royal Road.
-None of these will work if you do not have a configured skitter instance.
+Use of weaver/skitter is currently required for FFN, FictionPress, and Royal
+Road. None of these will work if you do not have a configured skitter or
+weaver instance.
 
 Once these steps have been completed, the doc/README_hermes and
 doc/README_alexandria files provide more information about usage.
