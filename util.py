@@ -5,7 +5,8 @@ import random
 import datetime
 import dateutil.parser
 import time
-import PyQt5.QtCore
+import struct
+import zlib
 from typing import List, Union
 from schema import OilTimestamp
 
@@ -336,15 +337,15 @@ def cleanChapterTitle(title: str, cid: int) -> str:
 
 
 def compress(s: bytes) -> bytes:
-	qb = PyQt5.QtCore.QByteArray(s)
-	res = PyQt5.QtCore.qCompress(qb, 9)
-	return res.data()
+	return len(s).to_bytes(4, byteorder='big') + zlib.compress(s, level=9)
 
 
 def decompress(b: bytes) -> bytes:
-	qb = PyQt5.QtCore.QByteArray(b)
-	res = PyQt5.QtCore.qUncompress(qb)
-	return res.data()
+	elen = int.from_bytes(b[:4], byteorder='big')
+	res = zlib.decompress(b[4:])
+	if len(res) != elen:
+		raise Exception(f'expected {elen} but got {len(res)} bytes')
+	return res
 
 
 def decodeCloudFlareEmail(email: str) -> str:
