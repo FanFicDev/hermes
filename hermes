@@ -1994,6 +1994,7 @@ def characterFic(ficId: FicId, char: str) -> None:
 
 
 def parseUserFavorites(uids: str) -> None:
+	import skitter
 	import subprocess
 	from bs4 import BeautifulSoup
 	ts = None
@@ -2006,22 +2007,16 @@ def parseUserFavorites(uids: str) -> None:
 
 	print(uid)
 
-	# scrape._staleOnly = True
-	lurl = scrape.getLastUrlLikeOrDefault(
-		(
-			('https://www.fanfiction.net/u/' + str(uid)),
-			('https://www.fanfiction.net/u/' + str(uid) + '/%')
-		)
-	)
+	lurl = f'https://www.fanfiction.net/u/{uid}'
 	print(lurl)
 
-	data = scrape.softScrapeWithMeta(lurl)
+	data = skitter.softScrape(lurl)
 	assert (data is not None)
 	ts = int(data['fetched'])
 	hourLimit = 6
 	if ts < int(time.time()) - 60 * 60 * hourLimit:
 		print(f'last scrape was more than {hourLimit}h ago, scraping again')
-		data = scrape.scrape(lurl)
+		data = skitter.scrape(lurl)
 		ts = int(data['fetched'])
 	else:
 		print(f'last scrape was LESS than {hourLimit}h ago, NOT scraping again')
@@ -2059,8 +2054,9 @@ def parseUserFavorites(uids: str) -> None:
 		#mid = m.mapFicId(m.mapFicType(fic.type), fic.localId)
 		#assert(mid is not None)
 
-		raise NotImplementedError()
+		# TODO
 		#r = m.upsertFFNUserFavorite(uid, storyId, mid[0], m.mapTimestamp(ts), 'exists')
+		info(ficId)
 
 	#cnt = m.invalidateOldFFNUserFavorites(uid, m.mapTimestamp(ts))
 	cnt = 1
