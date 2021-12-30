@@ -5,7 +5,6 @@ import sys
 import traceback
 import typing
 from typing import List, Tuple, Dict, Optional, Any, Sequence
-import PyQt5.QtCore
 import util
 import lite_oil
 
@@ -73,8 +72,7 @@ def saveWebRequest(
 	#import psycopg2
 	responseBytes: Optional[bytes] = None
 	if response is not None:
-		qb = PyQt5.QtCore.QByteArray(response.encode('utf-8'))
-		responseBytes = PyQt5.QtCore.qCompress(qb, 9).data()
+		responseBytes = util.compress(response.encode('utf-8'))
 
 	global __scrapeSource
 	if source is None:
@@ -193,8 +191,7 @@ def getMostRecentScrapeWithMeta(
 
 	response = res[3]
 	if response is not None:
-		qb = PyQt5.QtCore.QByteArray(response.tobytes())
-		response = PyQt5.QtCore.qUncompress(qb).data().decode('utf-8')
+		response = util.decompress(response.tobytes()).decode('utf-8')
 
 	return {'url': res[2], 'fetched': res[1], 'raw': response, 'status': res[4]}
 
