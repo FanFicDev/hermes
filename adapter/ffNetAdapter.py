@@ -1225,6 +1225,7 @@ class FFNAdapter(Adapter):
 	def softScrape(self, chapter: FicChapter) -> str:
 		if chapter.url is None:
 			chapter.url = self.buildUrl(chapter)  # type: ignore
+			chapter.localChapterId = str(chapter.chapterId)
 			chapter.upsert()
 		fic = chapter.getFic()
 
