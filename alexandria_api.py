@@ -106,7 +106,7 @@ def v0_fic_all(urlId: str) -> Any:
 		return Err.urlId_not_found.get()
 	fic = fics[0]
 	if fic.chapterCount is None:
-		print(f'err: fic has no chapter count: {fic.id}')
+		app.logger.error(f'err: fic has no chapter count: {fic.id}')
 		return Err.urlId_not_found.get()
 	ficChapters = {
 		fc.chapterId: fc
@@ -125,7 +125,7 @@ def v0_fic_all(urlId: str) -> Any:
 				content = scrape.decodeRequest(content, f'{fic.id}/{cid}')
 				content = cleanHtml(content)
 				if content != cleanHtml(content):
-					print(
+					app.logger.warn(
 						f'v0_fic_all: {fic.id}/{cid} did not round-trip through cleanHtml'
 					)
 			cres['content'] = content
@@ -143,18 +143,19 @@ def v0_lookup() -> Any:
 	if len(q.strip()) < 1:
 		return Err.no_query.get({'arg': q})
 
-	print(f'v0_lookup: query: {q}')
+	app.logger.info(f'v0_lookup: query: {q}')
 	ficId = FicId.tryParse(q)
 	if ficId is None:
 		return Err.bad_query.get({'arg': q})
 
-	print(f'v0_lookup: ficId: {ficId.__dict__}')
+	app.logger.info(f'v0_lookup: ficId: {ficId.__dict__}')
 	try:
 		fic = Fic.load(ficId)
 		return v0_fic(fic.urlId)
 	except:
-		print('v0_lookup: something went wrong in load:')
-		traceback.print_exc()
+		app.logger.error(
+			f'v0_lookup: something went wrong in load: {traceback.format_exc()}'
+		)
 		pass
 	return Err.bad_ficId.get({'arg': ficId.__dict__})
 
@@ -166,7 +167,7 @@ def v0_cache(urlId: str) -> Any:
 		return Err.urlId_not_found.get()
 	fic = fics[0]
 	if fic.chapterCount is None:
-		print(f'err: fic has no chapter count: {fic.id}')
+		app.logger.error(f'err: fic has no chapter count: {fic.id}')
 		return Err.urlId_not_found.get()
 	for cid in range(1, fic.chapterCount + 1):
 		try:
