@@ -321,13 +321,21 @@ class Ao3Adapter(Adapter):
         fic.ageRating = "<unkown>"
 
         # TODO: error handling
-        cText = " ".join(soup.find("dd", {"class": "chapters"}).contents).strip()
+        cText = (
+            " ".join(soup.find("dd", {"class": "chapters"}).contents)
+            .replace(",", "")
+            .strip()
+        )
         ps = cText.split("/")
         completedChapters = int(ps[0])
         totalChapters = None if ps[1] == "?" else int(ps[1])
         fic.chapterCount = completedChapters
 
-        wText = " ".join(soup.find("dd", {"class": "words"}).contents).strip()
+        wText = (
+            " ".join(soup.find("dd", {"class": "words"}).contents)
+            .replace(",", "")
+            .strip()
+        )
         fic.wordCount = int(wText)
 
         fic.reviewCount = 0
@@ -335,7 +343,7 @@ class Ao3Adapter(Adapter):
         fic.favoriteCount = 0
         kDefinition = soup.find("dd", {"class": "kudos"})
         if kDefinition is not None:
-            kText = " ".join(kDefinition.contents).strip()
+            kText = " ".join(kDefinition.contents).replace(",", "").strip()
             fic.favoriteCount = int(kText)
 
         fic.followCount = 0
