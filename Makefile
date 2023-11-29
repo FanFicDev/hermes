@@ -1,4 +1,4 @@
-default: type
+default: type format
 
 venv:
 	python3 -m venv ./venv
@@ -9,11 +9,11 @@ venv:
 
 .PHONY: format
 format: venv
-	./venv/bin/yapf -p -r -i alexandria_api.py command.py hermes.py htypes.py jdb.py lite_oil.py lite.py priv.ex.py priv.py schema.py scrape.py skitter_client.py skitter.py store.py util.py weaver_client.py adapter/ view/
+	./venv/bin/ruff format .
 
 .PHONY: format-diff
 format-diff: venv
-	./venv/bin/yapf -p -r -d alexandria_api.py command.py hermes.py htypes.py jdb.py lite_oil.py lite.py priv.ex.py priv.py schema.py scrape.py skitter_client.py skitter.py store.py util.py weaver_client.py adapter/ view/
+	./venv/bin/ruff format . --diff
 
 .PHONY: type
 type: venv

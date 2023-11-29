@@ -11,199 +11,205 @@ import util
 
 
 class ChapterInfo:
-	def __init__(self) -> None:
-		self.wordCount = 0
-		self.reviewCount = 0
-		self.updated: Optional[str] = None
+    def __init__(self) -> None:
+        self.wordCount = 0
+        self.reviewCount = 0
+        self.updated: Optional[str] = None
 
 
 class FanficAuthorsAdapter(Adapter):
-	def __init__(self) -> None:
-		super().__init__(
-			True, 'https://www.fanficauthors.net', 'fanficauthors.net',
-			FicType.fanficauthors
-		)
-		self.baseStoryUrl = 'https://{}.fanficauthors.net/{}'
+    def __init__(self) -> None:
+        super().__init__(
+            True,
+            "https://www.fanficauthors.net",
+            "fanficauthors.net",
+            FicType.fanficauthors,
+        )
+        self.baseStoryUrl = "https://{}.fanficauthors.net/{}"
 
-	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
-		authorLid = storyId.split('/')[0]
-		storyLid = storyId.split('/')[1]
-		url = self.baseStoryUrl.format(authorLid, storyLid)
-		if chapterId is not None:
-			url += f'/Chapter_{chapterId}/'
-		else:
-			url += '/index/'
-		return url
+    def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
+        authorLid = storyId.split("/")[0]
+        storyLid = storyId.split("/")[1]
+        url = self.baseStoryUrl.format(authorLid, storyLid)
+        if chapterId is not None:
+            url += f"/Chapter_{chapterId}/"
+        else:
+            url += "/index/"
+        return url
 
-	def buildUrl(self, chapter: 'FicChapter') -> str:
-		if chapter.fic is None:
-			chapter.fic = Fic.lookup((chapter.ficId, ))
-		return self.constructUrl(chapter.fic.localId, chapter.chapterId)
+    def buildUrl(self, chapter: "FicChapter") -> str:
+        if chapter.fic is None:
+            chapter.fic = Fic.lookup((chapter.ficId,))
+        return self.constructUrl(chapter.fic.localId, chapter.chapterId)
 
-	def tryParseUrl(self, url: str) -> Optional[FicId]:
-		parts = url.split('/')
-		httpOrHttps = (parts[0] == 'https:' or parts[0] == 'http:')
-		if len(parts) < 4:
-			return None
-		if (not parts[2].endswith(self.urlFragments[0])) or (not httpOrHttps):
-			return None
+    def tryParseUrl(self, url: str) -> Optional[FicId]:
+        parts = url.split("/")
+        httpOrHttps = parts[0] == "https:" or parts[0] == "http:"
+        if len(parts) < 4:
+            return None
+        if (not parts[2].endswith(self.urlFragments[0])) or (not httpOrHttps):
+            return None
 
-		storyLid = parts[3]
-		authorLid = parts[2].split('.')[0]
-		lid = f'{authorLid}/{storyLid}'
+        storyLid = parts[3]
+        authorLid = parts[2].split(".")[0]
+        lid = f"{authorLid}/{storyLid}"
 
-		ficId = FicId(self.ftype, lid)
+        ficId = FicId(self.ftype, lid)
 
-		if len(parts) > 4 and parts[4].startswith('Chapter_'):
-			cid = int(parts[4][len('Chapter_'):])
-			ficId.chapterId = cid
-			ficId.ambiguous = False
+        if len(parts) > 4 and parts[4].startswith("Chapter_"):
+            cid = int(parts[4][len("Chapter_") :])
+            ficId.chapterId = cid
+            ficId.ambiguous = False
 
-		return ficId
+        return ficId
 
-	def create(self, fic: Fic) -> Fic:
-		fic.url = self.constructUrl(fic.localId)
-		data = scrape.softScrape(fic.url)
-		if data is None:
-			raise Exception('unable to scrape? FIXME')
+    def create(self, fic: Fic) -> Fic:
+        fic.url = self.constructUrl(fic.localId)
+        data = scrape.softScrape(fic.url)
+        if data is None:
+            raise Exception("unable to scrape? FIXME")
 
-		fic = self.parseInfoInto(fic, data)
-		fic.upsert()
+        fic = self.parseInfoInto(fic, data)
+        fic.upsert()
 
-		return Fic.lookup((fic.id, ))
+        return Fic.lookup((fic.id,))
 
-	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup
-		soup = BeautifulSoup(html, 'html5lib')
-		storyChapterDisplay = soup.find(
-			'div', {'class': ['story', 'chapterDisplay']}
-		)
+    def extractContent(self, fic: Fic, html: str) -> str:
+        from bs4 import BeautifulSoup
 
-		# remove pager lists
-		while True:
-			pager = storyChapterDisplay.find(
-				'ul', {'class': ['pager', 'center-block']}
-			)
-			if pager is None:
-				break
-			pager.extract()
+        soup = BeautifulSoup(html, "html5lib")
+        storyChapterDisplay = soup.find("div", {"class": ["story", "chapterDisplay"]})
 
-		content = str(storyChapterDisplay)
-		return content
+        # remove pager lists
+        while True:
+            pager = storyChapterDisplay.find("ul", {"class": ["pager", "center-block"]})
+            if pager is None:
+                break
+            pager.extract()
 
-	def getCurrentInfo(self, fic: Fic) -> Fic:
-		# scrape fresh info
-		data = scrape.scrape(self.constructUrl(fic.localId))['raw']
+        content = str(storyChapterDisplay)
+        return content
 
-		return self.parseInfoInto(fic, data)
+    def getCurrentInfo(self, fic: Fic) -> Fic:
+        # scrape fresh info
+        data = scrape.scrape(self.constructUrl(fic.localId))["raw"]
 
-	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup
-		authorLid = fic.localId.split('/')[0]
-		storyLid = fic.localId.split('/')[1]
+        return self.parseInfoInto(fic, data)
 
-		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English")  # TODO: don't hard code?
+    def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
+        from bs4 import BeautifulSoup
 
-		fic.url = self.constructUrl(fic.localId)
+        authorLid = fic.localId.split("/")[0]
+        storyLid = fic.localId.split("/")[1]
 
-		# default optional fields
-		fic.reviewCount = 0
-		fic.favoriteCount = 0
-		fic.followCount = 0
+        fic.fetched = OilTimestamp.now()
+        fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
-		fic.ageRating = 'M'
+        fic.url = self.constructUrl(fic.localId)
 
-		soup = BeautifulSoup(wwwHtml, 'html5lib')
+        # default optional fields
+        fic.reviewCount = 0
+        fic.favoriteCount = 0
+        fic.followCount = 0
 
-		pageHeader = soup.find('div', {'class': 'page-header'})
-		titleH2 = pageHeader.find('h2')
-		fic.title = titleH2.getText().strip()
+        fic.ageRating = "M"
 
-		authorLink = pageHeader.find('a')
-		author = authorLink.getText().strip()
-		authorId = authorLid
-		authorUrl = self.baseStoryUrl.format(authorLid, 'contact/')
-		self.setAuthor(fic, author, authorUrl, authorId)
+        soup = BeautifulSoup(wwwHtml, "html5lib")
 
-		divWell = soup.find('div', {'class': 'well'})
+        pageHeader = soup.find("div", {"class": "page-header"})
+        titleH2 = pageHeader.find("h2")
+        fic.title = titleH2.getText().strip()
 
-		summaryQuote = divWell.find('blockquote')
+        authorLink = pageHeader.find("a")
+        author = authorLink.getText().strip()
+        authorId = authorLid
+        authorUrl = self.baseStoryUrl.format(authorLid, "contact/")
+        self.setAuthor(fic, author, authorUrl, authorId)
 
-		fic.description = str(
-			summaryQuote.getText()
-		).replace('\t', ' ').replace('\r', ' ').replace('\n', ' ')
-		while fic.description.find('  ') != -1:
-			fic.description = fic.description.replace('  ', ' ')
-		fic.description = fic.description.strip()
+        divWell = soup.find("div", {"class": "well"})
 
-		divWellText = divWell.getText().strip()
+        summaryQuote = divWell.find("blockquote")
 
-		match = re.search('Status:\s*([^-]*) -', divWellText)
-		if match is not None and match.group(1) == 'In progress':
-			fic.ficStatus = FicStatus.ongoing
-		else:
-			raise Exception('unable to find fic status')
+        fic.description = (
+            str(summaryQuote.getText())
+            .replace("\t", " ")
+            .replace("\r", " ")
+            .replace("\n", " ")
+        )
+        while fic.description.find("  ") != -1:
+            fic.description = fic.description.replace("  ", " ")
+        fic.description = fic.description.strip()
 
-		RegexMatcher(
-			divWellText, {
-				'ageRating': ('Rating\s*:\s+([^-]+) -', str),
-				'chapterCount': ('Chapters\s*:\s+(\d+) -', int),
-				'wordCount': ('Word count\s*:\s+([\d,]+) -', str),
-			}
-		).matchAll(fic)
-		assert (fic.chapterCount is not None)
+        divWellText = divWell.getText().strip()
 
-		if str(fic.wordCount).find(',') != -1:
-			fic.wordCount = int(str(fic.wordCount).replace(',', ''))
+        match = re.search("Status:\s*([^-]*) -", divWellText)
+        if match is not None and match.group(1) == "In progress":
+            fic.ficStatus = FicStatus.ongoing
+        else:
+            raise Exception("unable to find fic status")
 
-		wellParent = divWell.parent
-		cid = 0
-		wordCount = 0
-		reviewCount = 0
-		chapterDates: List[int] = []
+        RegexMatcher(
+            divWellText,
+            {
+                "ageRating": ("Rating\s*:\s+([^-]+) -", str),
+                "chapterCount": ("Chapters\s*:\s+(\d+) -", int),
+                "wordCount": ("Word count\s*:\s+([\d,]+) -", str),
+            },
+        ).matchAll(fic)
+        assert fic.chapterCount is not None
 
-		for child in wellParent.children:
-			if child.name != 'p': continue
-			cid += 1
-			if str(child).find(f'Chapter {cid}') == -1:
-				continue
-			chapterLink = child.find('a')
-			expectedUrl = f'/{storyLid}/Chapter_{cid}/'.lower()
-			if chapterLink.get('href').lower() != expectedUrl:
-				raise Exception('unexpected chapter url: ' + chapterLink.get('href'))
+        if str(fic.wordCount).find(",") != -1:
+            fic.wordCount = int(str(fic.wordCount).replace(",", ""))
 
-			chInfo = ChapterInfo()
+        wellParent = divWell.parent
+        cid = 0
+        wordCount = 0
+        reviewCount = 0
+        chapterDates: List[int] = []
 
-			RegexMatcher(
-				child.getText(), {
-					'wordCount': ('Word count\s*:\s+([\d,]+) -', str),
-					'reviewCount': ('Reviews\s*:\s+([^-]+) -', int),
-					'updated': ('Uploaded on\s*:\s+(.+)', str),
-				}
-			).matchAll(chInfo)
-			assert (chInfo.updated is not None)
+        for child in wellParent.children:
+            if child.name != "p":
+                continue
+            cid += 1
+            if str(child).find(f"Chapter {cid}") == -1:
+                continue
+            chapterLink = child.find("a")
+            expectedUrl = f"/{storyLid}/Chapter_{cid}/".lower()
+            if chapterLink.get("href").lower() != expectedUrl:
+                raise Exception("unexpected chapter url: " + chapterLink.get("href"))
 
-			if str(chInfo.wordCount).find(',') != -1:
-				chInfo.wordCount = int(str(chInfo.wordCount).replace(',', ''))
+            chInfo = ChapterInfo()
 
-			wordCount += chInfo.wordCount
-			reviewCount += chInfo.reviewCount
+            RegexMatcher(
+                child.getText(),
+                {
+                    "wordCount": ("Word count\s*:\s+([\d,]+) -", str),
+                    "reviewCount": ("Reviews\s*:\s+([^-]+) -", int),
+                    "updated": ("Uploaded on\s*:\s+(.+)", str),
+                },
+            ).matchAll(chInfo)
+            assert chInfo.updated is not None
 
-			dt = (util.parseDateAsUnix(chInfo.updated, int(time.time())))
-			chapterDates += [dt]
+            if str(chInfo.wordCount).find(",") != -1:
+                chInfo.wordCount = int(str(chInfo.wordCount).replace(",", ""))
 
-		# wordCount is already set from overall metadata
-		fic.reviewCount = reviewCount
+            wordCount += chInfo.wordCount
+            reviewCount += chInfo.reviewCount
 
-		fic.published = OilTimestamp(min(chapterDates))
-		fic.updated = OilTimestamp(max(chapterDates))
+            dt = util.parseDateAsUnix(chInfo.updated, int(time.time()))
+            chapterDates += [dt]
 
-		fic.upsert()
-		for cid in range(1, fic.chapterCount + 1):
-			ch = fic.chapter(cid)
-			ch.localChapterId = f'Chapter_{cid}'
-			ch.url = self.constructUrl(fic.localId, cid)
-			ch.upsert()
+        # wordCount is already set from overall metadata
+        fic.reviewCount = reviewCount
 
-		return fic
+        fic.published = OilTimestamp(min(chapterDates))
+        fic.updated = OilTimestamp(max(chapterDates))
+
+        fic.upsert()
+        for cid in range(1, fic.chapterCount + 1):
+            ch = fic.chapter(cid)
+            ch.localChapterId = f"Chapter_{cid}"
+            ch.url = self.constructUrl(fic.localId, cid)
+            ch.upsert()
+
+        return fic

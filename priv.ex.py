@@ -4,39 +4,36 @@ from skitter_client import SkitterClient
 from weaver_client import WeaverClient
 
 if TYPE_CHECKING:
-	import requests
+    import requests
 
 skitterClients: List[SkitterClient] = [
-	WeaverClient(
-		baseUrl='https://primary/weaver/',
-		apiKey='primaryApiKey',
-		uname='weaver_api',
-		upass='primaryPass'
-	),
-	SkitterClient(
-		baseUrl='https://secondary/skitter/',
-		apiKey='secondaryApiKey',
-		uname='skitter_api',
-		upass='secondaryPass'
-	),
+    WeaverClient(
+        baseUrl="https://primary/weaver/",
+        apiKey="primaryApiKey",
+        uname="weaver_api",
+        upass="primaryPass",
+    ),
+    SkitterClient(
+        baseUrl="https://secondary/skitter/",
+        apiKey="secondaryApiKey",
+        uname="skitter_api",
+        upass="secondaryPass",
+    ),
 ]
 
 
-def getDefaultCookies() -> 'requests.cookies.RequestsCookieJar':
-	import requests
-	cookies = requests.cookies.RequestsCookieJar()
+def getDefaultCookies() -> "requests.cookies.RequestsCookieJar":
+    import requests
 
-	# pretend we're an adult for fictionalley
-	cookies.set(
-		'fauser', 'wizard', domain='www.fictionalley.org', path='/authors'
-	)
+    cookies = requests.cookies.RequestsCookieJar()
 
-	# fake adult acceptance on livejournal
-	cookies.set('adult_explicit', '1', domain='.livejournal.com', path='/')
+    # pretend we're an adult for fictionalley
+    cookies.set("fauser", "wizard", domain="www.fictionalley.org", path="/authors")
 
-	# accept ao3 tos
-	cookies.set(
-		'accepted_tos', '20180523', domain='archiveofourown.org', path='/'
-	)
+    # fake adult acceptance on livejournal
+    cookies.set("adult_explicit", "1", domain=".livejournal.com", path="/")
 
-	return cookies
+    # accept ao3 tos
+    cookies.set("accepted_tos", "20180523", domain="archiveofourown.org", path="/")
+
+    return cookies

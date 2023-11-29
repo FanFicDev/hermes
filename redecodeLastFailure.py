@@ -2,11 +2,11 @@
 import scrape
 
 z = None
-with open(scrape.decodeFailureDumpFile, 'rb') as f:
-	z = f.read()
+with open(scrape.decodeFailureDumpFile, "rb") as f:
+    z = f.read()
 
-r = scrape.decodeRequest(z, '')
+r = scrape.decodeRequest(z, "")
 if r is None:
-	print('None')
+    print("None")
 else:
-	print(len(r))
+    print(len(r))

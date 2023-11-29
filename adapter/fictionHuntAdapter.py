@@ -10,157 +10,160 @@ import util
 
 
 class FictionHuntAdapter(Adapter):
-	def __init__(self) -> None:
-		super().__init__(
-			True, 'http://fictionhunt.com', 'fictionhunt.com', FicType.fictionhunt
-		)
+    def __init__(self) -> None:
+        super().__init__(
+            True, "http://fictionhunt.com", "fictionhunt.com", FicType.fictionhunt
+        )
 
-	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
-		if chapterId is None:
-			return f'{self.baseUrl}/read/{storyId}'
-		# note: does not support titles
-		return f'{self.baseUrl}/read/{storyId}/{chapterId}'
+    def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
+        if chapterId is None:
+            return f"{self.baseUrl}/read/{storyId}"
+        # note: does not support titles
+        return f"{self.baseUrl}/read/{storyId}/{chapterId}"
 
-	def buildUrl(self, chapter: 'FicChapter') -> str:
-		if chapter.fic is None:
-			chapter.fic = Fic.lookup((chapter.ficId, ))
-		return self.constructUrl(chapter.fic.localId, chapter.chapterId)
+    def buildUrl(self, chapter: "FicChapter") -> str:
+        if chapter.fic is None:
+            chapter.fic = Fic.lookup((chapter.ficId,))
+        return self.constructUrl(chapter.fic.localId, chapter.chapterId)
 
-	def tryParseUrl(self, url: str) -> Optional[FicId]:
-		parts = url.split('/')
-		httpOrHttps = (parts[0] == 'https:' or parts[0] == 'http:')
-		if len(parts) < 5:
-			return None
-		if (not parts[2].endswith(self.urlFragments[0])) or (not httpOrHttps):
-			return None
-		if parts[3] != 'read':
-			return None
-		if (
-			len(parts) < 5 or len(parts[4].strip()) < 1
-			or not parts[4].strip().isnumeric()
-		):
-			return None
+    def tryParseUrl(self, url: str) -> Optional[FicId]:
+        parts = url.split("/")
+        httpOrHttps = parts[0] == "https:" or parts[0] == "http:"
+        if len(parts) < 5:
+            return None
+        if (not parts[2].endswith(self.urlFragments[0])) or (not httpOrHttps):
+            return None
+        if parts[3] != "read":
+            return None
+        if (
+            len(parts) < 5
+            or len(parts[4].strip()) < 1
+            or not parts[4].strip().isnumeric()
+        ):
+            return None
 
-		storyId = int(parts[4])
-		chapterId = None
-		ambi = len(parts) < 6
-		if ambi == False and len(parts[5].strip()) > 0:
-			chapterId = int(parts[5])
-		return FicId(self.ftype, str(storyId), chapterId, ambi)
+        storyId = int(parts[4])
+        chapterId = None
+        ambi = len(parts) < 6
+        if ambi == False and len(parts[5].strip()) > 0:
+            chapterId = int(parts[5])
+        return FicId(self.ftype, str(storyId), chapterId, ambi)
 
-	def create(self, fic: Fic) -> Fic:
-		fic.url = self.constructUrl(fic.localId, 1)
+    def create(self, fic: Fic) -> Fic:
+        fic.url = self.constructUrl(fic.localId, 1)
 
-		# scrape fresh info
-		data = scrape.scrape(fic.url)
+        # scrape fresh info
+        data = scrape.scrape(fic.url)
 
-		fic = self.parseInfoInto(fic, data['raw'])
-		fic.insert()
+        fic = self.parseInfoInto(fic, data["raw"])
+        fic.insert()
 
-		chapter = fic.chapter(1)
-		chapter.setHtml(data['raw'])
-		chapter.upsert()
+        chapter = fic.chapter(1)
+        chapter.setHtml(data["raw"])
+        chapter.upsert()
 
-		return Fic.lookup((fic.id, ))
+        return Fic.lookup((fic.id,))
 
-	def extractContent(self, fic: Fic, html: str) -> str:
-		lines = html.replace('\r', '\n').split('\n')
-		parts: List[str] = []
-		inStory = False
-		for line in lines:
-			if line.find('class="text') != -1:
-				inStory = True
-			if inStory:
-				if (
-					line.find('<div class="pagerHolder') != -1
-					or line.lower().find('<script') != -1
-				):
-					inStory = False
-					break
-				parts += [line]
-		return ' '.join(parts)
+    def extractContent(self, fic: Fic, html: str) -> str:
+        lines = html.replace("\r", "\n").split("\n")
+        parts: List[str] = []
+        inStory = False
+        for line in lines:
+            if line.find('class="text') != -1:
+                inStory = True
+            if inStory:
+                if (
+                    line.find('<div class="pagerHolder') != -1
+                    or line.lower().find("<script") != -1
+                ):
+                    inStory = False
+                    break
+                parts += [line]
+        return " ".join(parts)
 
-	def getCurrentInfo(self, fic: Fic) -> Fic:
-		# scrape fresh info
-		data = scrape.scrape(self.constructUrl(fic.localId, 1))
+    def getCurrentInfo(self, fic: Fic) -> Fic:
+        # scrape fresh info
+        data = scrape.scrape(self.constructUrl(fic.localId, 1))
 
-		return self.parseInfoInto(fic, data['raw'])
+        return self.parseInfoInto(fic, data["raw"])
 
-	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup
-		soup = BeautifulSoup(wwwHtml, 'html.parser')
-		divDetails = soup.find_all('div', {'class': 'details'})
-		if len(divDetails) != 1:
-			raise Exception('error: unable to find details\n')
-		else:
-			divDetails = divDetails[0]
+    def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
+        from bs4 import BeautifulSoup
 
-		text = divDetails.get_text()
-		pt_str = str(divDetails)
+        soup = BeautifulSoup(wwwHtml, "html.parser")
+        divDetails = soup.find_all("div", {"class": "details"})
+        if len(divDetails) != 1:
+            raise Exception("error: unable to find details\n")
+        else:
+            divDetails = divDetails[0]
 
-		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English")  # TODO: don't hard code?
+        text = divDetails.get_text()
+        pt_str = str(divDetails)
 
-		divTitle = soup.find_all('div', {'class': 'title'})
-		if len(divTitle) == 1:
-			fic.title = divTitle[0].get_text().strip()
-		else:
-			raise Exception(f'error: unable to find title:\n{pt_str}\n')
+        fic.fetched = OilTimestamp.now()
+        fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
-		fic.url = self.constructUrl(fic.localId, 1)
+        divTitle = soup.find_all("div", {"class": "title"})
+        if len(divTitle) == 1:
+            fic.title = divTitle[0].get_text().strip()
+        else:
+            raise Exception(f"error: unable to find title:\n{pt_str}\n")
 
-		# TODO: this may not exist on fictionhunt?
-		fic.description = f'archive of {fic.title} from fictionhunt TODO'
+        fic.url = self.constructUrl(fic.localId, 1)
 
-		# default optional fields
-		fic.reviewCount = 0
-		fic.favoriteCount = 0
-		fic.followCount = 0
+        # TODO: this may not exist on fictionhunt?
+        fic.description = f"archive of {fic.title} from fictionhunt TODO"
 
-		matcher = RegexMatcher(
-			text, {
-				'ageRating': ('Rated:\s+(\S+)', str),
-				'chapterCount?': ('Chapters:\s+(\d+)', int),
-				'wordCount': ('Words:\s+(\S+)', int),
-				'reviewCount?': ('Reviews:\s+(\S+)', int),
-				'favoriteCount?': ('Favs:\s+(\S+)', int),
-				'followCount?': ('Follows:\s+(\S+)', int),
-				'updated?': ('Updated:\s+(\S+)', str),
-				'published': ('Published:\s+(\S+)', str),
-			}
-		)
-		matcher.matchAll(fic)
+        # default optional fields
+        fic.reviewCount = 0
+        fic.favoriteCount = 0
+        fic.followCount = 0
 
-		if fic.published is not None:
-			publishedUts = util.parseDateAsUnix(fic.published, fic.fetched)
-			fic.published = OilTimestamp(publishedUts)
+        matcher = RegexMatcher(
+            text,
+            {
+                "ageRating": ("Rated:\s+(\S+)", str),
+                "chapterCount?": ("Chapters:\s+(\d+)", int),
+                "wordCount": ("Words:\s+(\S+)", int),
+                "reviewCount?": ("Reviews:\s+(\S+)", int),
+                "favoriteCount?": ("Favs:\s+(\S+)", int),
+                "followCount?": ("Follows:\s+(\S+)", int),
+                "updated?": ("Updated:\s+(\S+)", str),
+                "published": ("Published:\s+(\S+)", str),
+            },
+        )
+        matcher.matchAll(fic)
 
-		if fic.updated is None:
-			fic.updated = fic.published
-		elif fic.updated is not None:
-			updatedUts = util.parseDateAsUnix(fic.updated, fic.fetched)
-			fic.updated = OilTimestamp(updatedUts)
+        if fic.published is not None:
+            publishedUts = util.parseDateAsUnix(fic.published, fic.fetched)
+            fic.published = OilTimestamp(publishedUts)
 
-		if fic.chapterCount is None:
-			fic.chapterCount = 1
+        if fic.updated is None:
+            fic.updated = fic.published
+        elif fic.updated is not None:
+            updatedUts = util.parseDateAsUnix(fic.updated, fic.fetched)
+            fic.updated = OilTimestamp(updatedUts)
 
-		match = re.search('- Complete -', text)
-		if match is None:
-			fic.ficStatus = FicStatus.ongoing
-		else:
-			fic.ficStatus = FicStatus.complete
+        if fic.chapterCount is None:
+            fic.chapterCount = 1
 
-		for a in divDetails.find_all('a'):
-			a_href = a.get('href')
-			if a_href.find('fanfiction.net/u/') != -1:
-				author = a.get_text()
-				authorUrl = a_href
-				authorId = a_href.split('/')[-1]
-				self.setAuthor(fic, author, authorUrl, authorId)
-				break
-		else:
-			raise Exception(f'unable to find author:\n{text}')
+        match = re.search("- Complete -", text)
+        if match is None:
+            fic.ficStatus = FicStatus.ongoing
+        else:
+            fic.ficStatus = FicStatus.complete
 
-		# TODO: hardcode Harry Potter fanfic?
+        for a in divDetails.find_all("a"):
+            a_href = a.get("href")
+            if a_href.find("fanfiction.net/u/") != -1:
+                author = a.get_text()
+                authorUrl = a_href
+                authorId = a_href.split("/")[-1]
+                self.setAuthor(fic, author, authorUrl, authorId)
+                break
+        else:
+            raise Exception(f"unable to find author:\n{text}")
 
-		return fic
+        # TODO: hardcode Harry Potter fanfic?
+
+        return fic

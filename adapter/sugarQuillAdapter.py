@@ -11,192 +11,194 @@ import util
 
 
 class SugarQuillAdapter(Adapter):
-	def __init__(self) -> None:
-		super().__init__(
-			True, 'http://www.sugarquill.net', 'sugarquill.net', FicType.sugarquill
-		)
-		self.baseStoryUrl = self.baseUrl + '/read.php'
+    def __init__(self) -> None:
+        super().__init__(
+            True, "http://www.sugarquill.net", "sugarquill.net", FicType.sugarquill
+        )
+        self.baseStoryUrl = self.baseUrl + "/read.php"
 
-	def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
-		if cid is None:
-			cid = 1
-		return f'{self.baseStoryUrl}?storyid={lid}&chapno={cid}'
+    def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
+        if cid is None:
+            cid = 1
+        return f"{self.baseStoryUrl}?storyid={lid}&chapno={cid}"
 
-	def tryParseUrl(self, url: str) -> Optional[FicId]:
-		if not url.startswith(self.baseStoryUrl):
-			return None
+    def tryParseUrl(self, url: str) -> Optional[FicId]:
+        if not url.startswith(self.baseStoryUrl):
+            return None
 
-		leftover = url[len(self.baseStoryUrl):]
-		if not leftover.startswith('?'):
-			return None
-		leftover = leftover[1:]
+        leftover = url[len(self.baseStoryUrl) :]
+        if not leftover.startswith("?"):
+            return None
+        leftover = leftover[1:]
 
-		qs = urllib.parse.parse_qs(leftover)
-		if 'storyid' not in qs or len(qs['storyid']) != 1:
-			return None
+        qs = urllib.parse.parse_qs(leftover)
+        if "storyid" not in qs or len(qs["storyid"]) != 1:
+            return None
 
-		assert (qs['storyid'][0].isnumeric())
-		ficId = FicId(self.ftype, qs['storyid'][0])
+        assert qs["storyid"][0].isnumeric()
+        ficId = FicId(self.ftype, qs["storyid"][0])
 
-		if 'chapno' in qs and len(qs['chapno']) == 1:
-			ficId.chapterId = int(qs['chapno'][0])
+        if "chapno" in qs and len(qs["chapno"]) == 1:
+            ficId.chapterId = int(qs["chapno"][0])
 
-		return ficId
+        return ficId
 
-	def create(self, fic: Fic) -> Fic:
-		fic.url = self.constructUrl(fic.localId)
+    def create(self, fic: Fic) -> Fic:
+        fic.url = self.constructUrl(fic.localId)
 
-		# scrape fresh info
-		data = scrape.scrape(fic.url)
+        # scrape fresh info
+        data = scrape.scrape(fic.url)
 
-		edumpContent(data['raw'], 'sugarquill')
+        edumpContent(data["raw"], "sugarquill")
 
-		fic = self.parseInfoInto(fic, data['raw'])
-		fic.upsert()
+        fic = self.parseInfoInto(fic, data["raw"])
+        fic.upsert()
 
-		return Fic.lookup((fic.id, ))
+        return Fic.lookup((fic.id,))
 
-	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup
-		soup = BeautifulSoup(html, 'html5lib')
-		content = soup.findAll('div', {'class': 'Section1'})
-		if len(content) != 1:
-			content = soup.findAll('td', {'class': 'content_pane'})
-		if len(content) != 1:
-			raise Exception(f'unable to find content section: {fic.url}')
+    def extractContent(self, fic: Fic, html: str) -> str:
+        from bs4 import BeautifulSoup
 
-		content = content[0]
+        soup = BeautifulSoup(html, "html5lib")
+        content = soup.findAll("div", {"class": "Section1"})
+        if len(content) != 1:
+            content = soup.findAll("td", {"class": "content_pane"})
+        if len(content) != 1:
+            raise Exception(f"unable to find content section: {fic.url}")
 
-		return str(content)
+        content = content[0]
 
-	def buildUrl(self, chapter: 'FicChapter') -> str:
-		if len(chapter.url.strip()) > 0:
-			return chapter.url
-		return self.constructUrl(chapter.getFic().localId, chapter.chapterId)
+        return str(content)
 
-	def getCurrentInfo(self, fic: Fic) -> Fic:
-		url = self.constructUrl(fic.localId)
-		# scrape fresh info
-		data = scrape.scrape(url)
+    def buildUrl(self, chapter: "FicChapter") -> str:
+        if len(chapter.url.strip()) > 0:
+            return chapter.url
+        return self.constructUrl(chapter.getFic().localId, chapter.chapterId)
 
-		edumpContent('<!-- {} -->\n{}'.format(url, data['raw']), 'sugarquill_ec')
-		return self.parseInfoInto(fic, data['raw'])
+    def getCurrentInfo(self, fic: Fic) -> Fic:
+        url = self.constructUrl(fic.localId)
+        # scrape fresh info
+        data = scrape.scrape(url)
 
-	def parseInfoInto(self, fic: Fic, html: str) -> Fic:
-		from bs4 import BeautifulSoup
-		html = html.replace('\r\n', '\n')
-		soup = BeautifulSoup(html, 'html.parser')
+        edumpContent("<!-- {} -->\n{}".format(url, data["raw"]), "sugarquill_ec")
+        return self.parseInfoInto(fic, data["raw"])
 
-		fic.fetched = OilTimestamp.now()
-		fic.languageId = Language.getId("English")  # TODO: don't hard code?
+    def parseInfoInto(self, fic: Fic, html: str) -> Fic:
+        from bs4 import BeautifulSoup
 
-		infoPane = soup.findAll('td', {'class': 'info2_pane'})
-		if len(infoPane) != 1:
-			raise Exception(f'unable to find info2_pane: {fic.url}')
-		infoPane = infoPane[0]
+        html = html.replace("\r\n", "\n")
+        soup = BeautifulSoup(html, "html.parser")
 
-		authorHrefPrefix = 'index.php?action=profile&id='
-		authorLinks = infoPane.findAll('a')
-		authorUrl = None
-		for authorLink in authorLinks:
-			if not authorLink.get('href').startswith(authorHrefPrefix):
-				continue
+        fic.fetched = OilTimestamp.now()
+        fic.languageId = Language.getId("English")  # TODO: don't hard code?
 
-			authorUrl = self.baseUrl + '/' + authorLink.get('href')
-			author = authorLink.getText()
-			authorLocalId = authorLink.get('href')[len(authorHrefPrefix):]
+        infoPane = soup.findAll("td", {"class": "info2_pane"})
+        if len(infoPane) != 1:
+            raise Exception(f"unable to find info2_pane: {fic.url}")
+        infoPane = infoPane[0]
 
-			self.setAuthor(fic, author, authorUrl, authorLocalId)
-			break
-		else:
-			raise Exception(f'unable to find author: {fic.url}')
+        authorHrefPrefix = "index.php?action=profile&id="
+        authorLinks = infoPane.findAll("a")
+        authorUrl = None
+        for authorLink in authorLinks:
+            if not authorLink.get("href").startswith(authorHrefPrefix):
+                continue
 
-		titleMatch = re.search(
-			'<b>Story</b>:((.|\r|\n)*)<b>Chapter</b>:', str(infoPane), re.MULTILINE
-		)
-		if titleMatch is None:
-			edumpContent(str(infoPane), 'sugarquill_title')
-			raise Exception('could not locate title')
+            authorUrl = self.baseUrl + "/" + authorLink.get("href")
+            author = authorLink.getText()
+            authorLocalId = authorLink.get("href")[len(authorHrefPrefix) :]
 
-		fic.title = titleMatch.group(1).replace('&nbsp;', ' ').strip()
+            self.setAuthor(fic, author, authorUrl, authorLocalId)
+            break
+        else:
+            raise Exception(f"unable to find author: {fic.url}")
 
-		chapterOptions = infoPane.findAll('option')
-		chapterTitles = {}
-		for chapterOption in chapterOptions:
-			cid = int(chapterOption.get('value'))
-			chapterTitles[cid] = chapterOption.getText().strip()
-		fic.chapterCount = len(chapterOptions)
+        titleMatch = re.search(
+            "<b>Story</b>:((.|\r|\n)*)<b>Chapter</b>:", str(infoPane), re.MULTILINE
+        )
+        if titleMatch is None:
+            edumpContent(str(infoPane), "sugarquill_title")
+            raise Exception("could not locate title")
 
-		fic.ageRating = '<unkown>'  # TODO
-		fic.favoriteCount = 0
-		fic.followCount = 0
+        fic.title = titleMatch.group(1).replace("&nbsp;", " ").strip()
 
-		fic.ficStatus = FicStatus.ongoing  # TODO: no uniform way to detect?
+        chapterOptions = infoPane.findAll("option")
+        chapterTitles = {}
+        for chapterOption in chapterOptions:
+            cid = int(chapterOption.get("value"))
+            chapterTitles[cid] = chapterOption.getText().strip()
+        fic.chapterCount = len(chapterOptions)
 
-		authorProfileHtml = scrape.scrape(authorUrl)['raw']
-		authorProfileHtml = authorProfileHtml.replace('\r', '')
-		authorSoup = BeautifulSoup(authorProfileHtml, 'html5lib')
+        fic.ageRating = "<unkown>"  # TODO
+        fic.favoriteCount = 0
+        fic.followCount = 0
 
-		storyTables = authorSoup.findAll('table', {'width': '90%'})
-		ourStoryTable = None
-		for storyTable in storyTables:
-			storyId = None
-			for a in storyTable.findAll('a'):
-				if not a.get('href').startswith('read.php?storyid='):
-					continue
-				storyId = a.get('href')[len('read.php?storyid='):]
-				storyId = storyId[:storyId.find('&')]
-				storyId = str(int(storyId))
-			if storyId is None:
-				continue
-			if storyId != str(fic.localId):
-				continue
-			ourStoryTable = storyTable
-		if ourStoryTable is None:
-			raise Exception(f'unable to find story table: {fic.localId} {authorUrl}')
+        fic.ficStatus = FicStatus.ongoing  # TODO: no uniform way to detect?
 
-		trs = ourStoryTable.findAll('tr')
-		if len(trs) != 3:
-			raise Exception(
-				f'ourStoryTable does not have 3 trs: {fic.localId} {authorUrl}'
-			)
+        authorProfileHtml = scrape.scrape(authorUrl)["raw"]
+        authorProfileHtml = authorProfileHtml.replace("\r", "")
+        authorSoup = BeautifulSoup(authorProfileHtml, "html5lib")
 
-		fic.description = trs[1].find('td').getText().strip()
+        storyTables = authorSoup.findAll("table", {"width": "90%"})
+        ourStoryTable = None
+        for storyTable in storyTables:
+            storyId = None
+            for a in storyTable.findAll("a"):
+                if not a.get("href").startswith("read.php?storyid="):
+                    continue
+                storyId = a.get("href")[len("read.php?storyid=") :]
+                storyId = storyId[: storyId.find("&")]
+                storyId = str(int(storyId))
+            if storyId is None:
+                continue
+            if storyId != str(fic.localId):
+                continue
+            ourStoryTable = storyTable
+        if ourStoryTable is None:
+            raise Exception(f"unable to find story table: {fic.localId} {authorUrl}")
 
-		reviewsMatch = re.search(
-			'\( Reviews: <a[^>]*>(\\d+)</a> \)</td>', str(trs[0]), re.MULTILINE
-		)
-		if reviewsMatch is None:
-			edumpContent(str(trs[0]), 'sugarquill_reviews')
-			raise Exception('could not locate reviews')
+        trs = ourStoryTable.findAll("tr")
+        if len(trs) != 3:
+            raise Exception(
+                f"ourStoryTable does not have 3 trs: {fic.localId} {authorUrl}"
+            )
 
-		fic.reviewCount = int(reviewsMatch.group(1).strip())
+        fic.description = trs[1].find("td").getText().strip()
 
-		updatedMatch = re.search('Last updated (\\d+/\\d+/\\d+)', str(trs[2]))
-		if updatedMatch is None:
-			edumpContent(str(trs[2]), 'sugarquill_updated')
-			raise Exception('could not locate last updated')
+        reviewsMatch = re.search(
+            "\( Reviews: <a[^>]*>(\\d+)</a> \)</td>", str(trs[0]), re.MULTILINE
+        )
+        if reviewsMatch is None:
+            edumpContent(str(trs[0]), "sugarquill_reviews")
+            raise Exception("could not locate reviews")
 
-		fic.updated = OilTimestamp(
-			util.parseDateAsUnix(updatedMatch.group(1), fic.fetched)
-		)
-		if fic.published is None:
-			fic.published = fic.updated
+        fic.reviewCount = int(reviewsMatch.group(1).strip())
 
-		fic.wordCount = 0
-		fic.upsert()
+        updatedMatch = re.search("Last updated (\\d+/\\d+/\\d+)", str(trs[2]))
+        if updatedMatch is None:
+            edumpContent(str(trs[2]), "sugarquill_updated")
+            raise Exception("could not locate last updated")
 
-		for cid in range(fic.chapterCount):
-			ch = fic.chapter(cid + 1)
-			ch.localChapterId = str(cid + 1)
-			ch.title = chapterTitles[cid + 1]
-			ch.cache()
-			ch.upsert()
-			chtml = ch.html()
-			if chtml is not None:
-				fic.wordCount += len(chtml.split())
+        fic.updated = OilTimestamp(
+            util.parseDateAsUnix(updatedMatch.group(1), fic.fetched)
+        )
+        if fic.published is None:
+            fic.published = fic.updated
 
-		fic.add(Fandom.define('Harry Potter'))
-		# TODO: chars/relationship?
+        fic.wordCount = 0
+        fic.upsert()
 
-		return fic
+        for cid in range(fic.chapterCount):
+            ch = fic.chapter(cid + 1)
+            ch.localChapterId = str(cid + 1)
+            ch.title = chapterTitles[cid + 1]
+            ch.cache()
+            ch.upsert()
+            chtml = ch.html()
+            if chtml is not None:
+                fic.wordCount += len(chtml.split())
+
+        fic.add(Fandom.define("Harry Potter"))
+        # TODO: chars/relationship?
+
+        return fic
