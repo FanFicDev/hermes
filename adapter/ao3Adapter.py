@@ -395,8 +395,8 @@ class Ao3Adapter(Adapter):
             authorId = author  # map pseudo to real?
             self.setAuthor(fic, author, authorUrl, authorId)
 
+        fic.upsert()
         if fic.chapterCount > 1:
-            fic.upsert()
             localChapterIdSelect = soup.find(id="selected_id").findAll("option")
             # note: ao3 sometimes says there are less chapters than there really
             # are, possibly due to caching on their end. We just ensure there's _at
@@ -420,6 +420,14 @@ class Ao3Adapter(Adapter):
                 if chap.title is not None:
                     chap.title = util.cleanChapterTitle(chap.title, cid)
                 chap.upsert()
+        else:
+            chap = fic.chapter(1)
+            chap.url = f"{self.baseUrl}{fic.localId}?view_adult=true"
+            # FIXME we don't track renaming this if the fic gains chapters
+            # later, which breaks user chapter read tracking.
+            chap.localChapterId = "<unknown>"
+            chap.title = None
+            chap.upsert()
 
         fandomDd = soup.find("dd", {"class": "fandom tags"})
         if fandomDd is not None:
