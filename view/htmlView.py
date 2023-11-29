@@ -4,6 +4,7 @@ import re
 
 if TYPE_CHECKING:
     from hermes import Hermes
+import contextlib
 import html
 
 from store import Fic, FicChapter, FicStatus
@@ -147,18 +148,15 @@ class HtmlView:
 
     def __processHTML(self, htmlText: str) -> None:
         # strip simple scripts TODO needs to be much better...
-        try:
-            htmlText = re.sub("<script>.*?</script>", "", htmlText, flags=re.DOTALL)
-            htmlText = re.sub("<noscript>.*?</noscript>", "", htmlText, flags=re.DOTALL)
-            htmlText = re.sub(
-                "<!--\[if lt IE 8\]>.*?<!\[endif\]-->", "", htmlText, flags=re.DOTALL
-            )
-            htmlText = htmlText.replace(
-                'Buy our stuff, go here to find out more: <a href="https://forums.spacebattles.com/threads/spacebattles-merchandise.398032/">https://forums.spacebattles.com/threads/spacebattles-merchandise.398032/</A>',
-                "",
-            )
-        except:
-            pass
+        htmlText = re.sub("<script>.*?</script>", "", htmlText, flags=re.DOTALL)
+        htmlText = re.sub("<noscript>.*?</noscript>", "", htmlText, flags=re.DOTALL)
+        htmlText = re.sub(
+            "<!--\[if lt IE 8\]>.*?<!\[endif\]-->", "", htmlText, flags=re.DOTALL
+        )
+        htmlText = htmlText.replace(
+            'Buy our stuff, go here to find out more: <a href="https://forums.spacebattles.com/threads/spacebattles-merchandise.398032/">https://forums.spacebattles.com/threads/spacebattles-merchandise.398032/</A>',
+            "",
+        )
 
         # bleh, remove badly encoded newlines and extra backslashes
         htmlText = htmlText.replace("\\n", "\n")  # bleh
@@ -466,7 +464,7 @@ class HtmlView:
                         self.__addLine(
                             f'[img: <a href="{src}" rel="noopener noreferrer">{ltext}</a>]'
                         )
-                except:
+                except:  # noqa: E722
                     util.logMessage(f"HtmlView: error: bad img: {fullInner}")
                     pass
                 idx = nclose + 1
@@ -486,7 +484,7 @@ class HtmlView:
                     href = a.attrs["href"]
                     if href.startswith("http://") or href.startswith("https://"):
                         cline += f'<a href="{href}" rel="noopener noreferrer">'
-                except:
+                except:  # noqa: E722
                     if fullInner != "a":
                         util.logMessage(f"HtmlView: error: bad a: {fullInner}")
                     pass
@@ -519,7 +517,7 @@ class HtmlView:
                 continue
 
             # if our target is not markdown, only standardize on strong and em
-            if self.markdown == False:
+            if not self.markdown:
                 if inner == "strong" or inner == "b" or inner == "bold":
                     cline += "<strong>"
                     idx = nclose + 1
@@ -633,11 +631,11 @@ class ChapterView:
         contentView = HtmlView(
             content, markdown=markdown, extraTitles=[extraTitle, f"-{extraTitle}-"]
         )
-        self.totalWords = sum([len(l.split()) for l in contentView.text])
+        self.totalWords = sum([len(line.split()) for line in contentView.text])
 
         self.text: List[Union[str, List[str]]] = []
 
-        if header == True:
+        if header:
             descriptionView = HtmlView(fic.description or "{missing description}")
             self.text += [
                 ["", f'"{fic.title}"', ""],
@@ -657,7 +655,7 @@ class ChapterView:
         self.headerLength = len(self.text)
 
         self.text += contentView.text
-        if footer == True:
+        if footer:
             if len(contentView.text) > 0 and contentView.text[-1] != "<hr />":
                 self.text += ["<hr />"]
             if chapter.title is not None and len(chapter.title) > 0:
@@ -987,11 +985,10 @@ class StoryView(Widget):
                 userFic.readStatus = FicStatus.complete
             userFic.upsert()
 
-        if key == ord("h") or key == curses.KEY_LEFT:
-            if self.chapterId > 1:
-                self.chapterId -= 1
-                self.__flipToChapter()
-                return True
+        if (key == ord("h") or key == curses.KEY_LEFT) and self.chapterId > 1:
+            self.chapterId -= 1
+            self.__flipToChapter()
+            return True
 
         if key == ord("l") or key == ord("m") or key == curses.KEY_RIGHT:
             assert self.fic.chapterCount is not None
@@ -1107,7 +1104,7 @@ class StoryView(Widget):
         self.minViewed = logicalLine + 1
 
         # draw current line with special formatting
-        if self.highlightCurrentLine == True:
+        if self.highlightCurrentLine:
             lines = self.cview.getLine(self.cursor.line)
 
             attr = curses.color_pair(self.currentLineColor)
@@ -1125,10 +1122,8 @@ class StoryView(Widget):
 
         # repaint ruler
         ruler = self.getRuler()
-        try:
+        with contextlib.suppress(curses.error):
             stdscr.addstr(self.height - 1, 0, ruler, curses.color_pair(0))
-        except curses.error:
-            pass
 
     def saveCursor(self) -> None:
         userChapter = self.chapter.getUserFicChapter()
@@ -1163,7 +1158,7 @@ class StoryView(Widget):
 
         cumLen = self.cview.cumulativeLength[self.cursor.line]
         curText = self.cview.getLine(self.cursor.line)
-        curLen = cumLen + sum([len(l) for l in curText[: self.cursor.subLine]])
+        curLen = cumLen + sum([len(line) for line in curText[: self.cursor.subLine]])
         perc = 100.0 * curLen / self.cview.totalLength
 
         rightParts = [

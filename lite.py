@@ -231,7 +231,7 @@ class StoreType:
                 raise
 
         global autocommit
-        if autocommit == True:
+        if autocommit:
             conn.commit()
 
     def update(self) -> None:
@@ -250,12 +250,12 @@ class StoreType:
             curs.execute(sql, data)
 
         global autocommit
-        if autocommit == True:
+        if autocommit:
             conn.commit()
 
     def upsert(self) -> None:
         me = type(self).get(self.getPKTuple())
-        if me == None:
+        if me is None:
             self.insert()
         else:
             self.update()

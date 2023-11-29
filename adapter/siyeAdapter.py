@@ -1,4 +1,5 @@
 from typing import Optional
+import contextlib
 import re
 import time
 import urllib
@@ -183,15 +184,13 @@ class SiyeAdapter(Adapter):
             fic.wordCount += int(words)
 
         if fic.wordCount == 0 and isSingleChapterFic:
-            try:
+            with contextlib.suppress(Exception):
                 fic.upsert()
                 ch1 = fic.chapter(1)
                 ch1.cache()
                 chtml = ch1.html()
                 if chtml is not None:
                     fic.wordCount = len(chtml.split())
-            except:
-                pass
 
         fic.add(Fandom.define("Harry Potter"))
         # TODO: chars/relationship?

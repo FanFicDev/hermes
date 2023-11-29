@@ -64,7 +64,7 @@ class Command:
         targs: List[Any] = []
         for aidx in range(len(argv)):
             mres = self.__match(idx, aidx, argv[aidx])
-            if mres[0] == False:
+            if not mres[0]:
                 self.printUsage()
                 return False
             else:

@@ -184,11 +184,9 @@ class Fic(store_bases.Fic):
 
         if len(_authorCache) == 0:
             _authorCache = {a.id: a for a in Author.select({})}
-        a = None
-        if self.authorId in _authorCache:
-            a = _authorCache[self.authorId]
-        else:
-            a = Author.lookup((self.authorId,))
+        # Ensure author is cached
+        if self.authorId not in _authorCache:
+            _authorCache[self.authorId] = Author.lookup((self.authorId,))
 
         if self.sourceId not in _authorSourceCache:
             _authorSourceCache[self.sourceId] = {}
@@ -393,7 +391,7 @@ class UserFicChapter(store_bases.UserFicChapter):
         self.upsert()
 
     def markRead(self) -> None:
-        e = ReadEvent.record(
+        _e = ReadEvent.record(
             self.userId, self.ficId, self.localChapterId, FicStatus.complete
         )
 
@@ -406,7 +404,7 @@ class UserFicChapter(store_bases.UserFicChapter):
         self.upsert()
 
     def markAbandoned(self) -> None:
-        e = ReadEvent.record(
+        _e = ReadEvent.record(
             self.userId, self.ficId, self.localChapterId, FicStatus.abandoned
         )
 

@@ -1,4 +1,5 @@
-from adapter.xenForoAdapter import *
+from adapter.xenForoAdapter import XenForoAdapter
+from htypes import FicType
 
 
 class TheFanfictionForumAdapter(XenForoAdapter):

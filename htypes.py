@@ -1,5 +1,6 @@
 import typing
 from typing import Any, Dict, Optional, Tuple
+import contextlib
 from enum import IntEnum
 
 if typing.TYPE_CHECKING:
@@ -124,24 +125,20 @@ class FicId:
             and ident.find("/url?") >= 0
             and ident.find("url=") >= 0
         ):
-            try:
+            with contextlib.suppress(Exception):
                 o = urllib.parse.urlparse(ident)
                 q = urllib.parse.parse_qs(o.query)
                 ident = q["url"][0]
-            except:
-                pass
         if (
             ident.find("//") >= 0
             and ident.find("google") >= 0
             and ident.find("/url?") >= 0
             and ident.find("q=") >= 0
         ):
-            try:
+            with contextlib.suppress(Exception):
                 o = urllib.parse.urlparse(ident)
                 q = urllib.parse.parse_qs(o.query)
                 ident = q["q"][0]
-            except:
-                pass
 
         # if this is a facebook redirect url, extract the target
         if (
@@ -150,12 +147,10 @@ class FicId:
             and ident.find("?") >= 0
             and ident.find("u=") >= 0
         ):
-            try:
+            with contextlib.suppress(Exception):
                 o = urllib.parse.urlparse(ident)
                 q = urllib.parse.parse_qs(o.query)
                 ident = q["u"][0]
-            except:
-                pass
 
         return ident
 
@@ -192,9 +187,9 @@ class FicId:
                 continue
             if a.botLinkSuffix is None:
                 continue
-            l = f"link{a.botLinkSuffix}("
-            if ident.startswith(l) and ident.endswith(")"):
-                mid = ident[len(l) : -1]
+            pre = f"link{a.botLinkSuffix}("
+            if ident.startswith(pre) and ident.endswith(")"):
+                mid = ident[len(pre) : -1]
                 if not mid.isnumeric():
                     return FicId.tryParse(ident)
                 return FicId(ftype, mid, ambiguous=False)
@@ -254,19 +249,12 @@ class FicId:
         manualAdapter = adapters[FicType.manual]
         assert manualAdapter is not None
         fid = None
-        try:
+        with contextlib.suppress(Exception):
             fid = manualAdapter.tryParseUrl(ident)
-        except:
-            pass
         if fid is None:
-            if not ident.endswith("/"):
-                ident = ident + "/"
-            else:
-                ident = ident.rstrip("/")
-            try:
+            ident = ident + "/" if not ident.endswith("/") else ident.rstrip("/")
+            with contextlib.suppress(Exception):
                 fid = manualAdapter.tryParseUrl(ident)
-            except:
-                pass
         return fid
 
     @staticmethod

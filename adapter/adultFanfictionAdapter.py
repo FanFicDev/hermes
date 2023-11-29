@@ -337,10 +337,12 @@ class AdultFanfictionAdapter(Adapter):
         return fic
 
     def extractSearchMetadata(
-        self, html: str, metas: Dict[str, AdultFanfictionMeta] = {}
+        self, html: str, metas: Optional[Dict[str, AdultFanfictionMeta]] = None
     ) -> Dict[str, AdultFanfictionMeta]:
         from bs4 import BeautifulSoup
 
+        if metas is None:
+            metas = {}
         archiveFandomMap = {
             "naruto": "Naruto",
             "hp": "Harry Potter",

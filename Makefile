@@ -1,4 +1,4 @@
-default: type format
+default: type lint format
 
 venv:
 	python3 -m venv ./venv

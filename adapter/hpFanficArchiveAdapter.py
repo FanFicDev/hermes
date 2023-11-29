@@ -135,7 +135,7 @@ class HpFanficArchiveAdapter(Adapter):
             elif cur.find("!-- SUMMARY END --") != -1:
                 inDescription = False
 
-            if inDescription == True:
+            if inDescription:
                 description += cur + "\n"
 
         fic.description = description

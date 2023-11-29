@@ -132,5 +132,5 @@ while True:
                 continue  # has since been rescraped
             res = scrape.scrape(url)
             print(len(res["raw"]))
-        except:
+        except:  # noqa: E722
             time.sleep(60)

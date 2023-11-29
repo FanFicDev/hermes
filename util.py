@@ -1,4 +1,5 @@
 from typing import List, Optional, Union
+import contextlib
 import datetime
 import math
 import os
@@ -51,7 +52,7 @@ def urlTitle(title: str) -> str:
 def randomString(length: int = 2, charset: Optional[str] = None) -> str:
     charset = rippleCharset if charset is None else charset
     res = ""
-    for i in range(length):
+    for _i in range(length):
         res += random.choice(charset)
     return res
 
@@ -107,10 +108,7 @@ _writtenMonths = [
 
 
 def isWrittenDate(val: str) -> bool:
-    for wm in _writtenMonths:
-        if val.find(wm) >= 0:
-            return True
-    return False
+    return any(val.find(wm) >= 0 for wm in _writtenMonths)
 
 
 def parseDateAsUnix(
@@ -196,10 +194,8 @@ def logMessage(
     with open(lname, "a+") as f:
         f.write(str(int(time.time())) + "|" + msg)
     # TODO this is a hacky workaround for shared log files
-    try:
+    with contextlib.suppress(Exception):
         os.chmod(lname, 0o666)  # rw-rw-rw-
-    except:
-        pass
 
 
 # generic word wrapping algorithm

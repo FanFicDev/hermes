@@ -1,5 +1,6 @@
 import typing
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+import contextlib
 import os
 import random
 import sys
@@ -307,10 +308,8 @@ def decodeRequest(data: Optional[bytes], url: str) -> Optional[str]:
     if data is None:
         return None
 
-    try:
+    with contextlib.suppress(UnicodeDecodeError):
         return data.decode("utf-8")
-    except:
-        pass
 
     setupCP1252()
 

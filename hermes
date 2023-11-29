@@ -1,5 +1,6 @@
 #!./venv/bin/python
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, cast
+import contextlib
 import curses
 import datetime
 import functools
@@ -237,7 +238,7 @@ def dumpPreRenderAll(minRating: int = -1) -> None:
         for cid in range(1, fic.chapterCount + 1):
             try:
                 dumpPreRender(FicId(FicType(fic.sourceId), fic.localId, cid))
-            except:
+            except:  # noqa: E722
                 print(f"unable to dump pre render: {fic.sourceId}/{fic.localId}/{cid}")
 
 
@@ -298,8 +299,8 @@ def dumpUrl(url: str, lpad: int) -> None:
     print(lp + util.equiPad(["", url], 78))
     print(lp + util.equiPad(["", f"words: {util.formatNumber(wordCount)}"], 78))
 
-    for l in wrappedText:
-        print(lp + l)
+    for line in wrappedText:
+        print(lp + line)
 
     print(lp + util.equiPad(["", f"words: {util.formatNumber(wordCount)}"], 78))
     print(lp + util.equiPad(["", url], 78))
@@ -623,7 +624,7 @@ def search(ficId: FicId, expr: str) -> None:
         chapterView.preWrap = "  "
         chapterView.wrap(78)
         for line in range(len(chapterView.text)):
-            if type(chapterView.text[line]) == list:
+            if isinstance(chapterView.text[line], list):
                 continue
             ltmp = chapterView.text[line]
             rline = ltmp if isinstance(ltmp, str) else " ".join(ltmp)
@@ -760,7 +761,7 @@ def deepCacheAll() -> None:
     for fic in fics:
         try:
             deepCache(fic.fid())
-        except:
+        except:  # noqa: E722
             time.sleep(5)
 
 
@@ -870,14 +871,12 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
         chapterInfo = f"[completely read, {fic.chapterCount:>2} chapters]"
     elif userFic.lastChapterViewed is not None and userFic.lastChapterViewed > 0:
         for cid in range(userFic.lastChapterViewed + 1, fic.chapterCount + 1):
-            try:
+            with contextlib.suppress(Exception):
                 chapter = fic.chapter(cid)
                 content = chapter.html()
                 if content is None:
                     continue
                 remainingWordCount += len(content.split())
-            except:
-                pass
         chapterInfo = "[on chapter {:>2} of {:>2}]".format(
             userFic.lastChapterViewed, fic.chapterCount
         )
@@ -1213,7 +1212,7 @@ def updateList(ficIds: List[FicId]) -> List[Fic]:
             try:
                 fic = Fic.load(ficId)
                 print(f'{fic.id} "{fic.title}" might be broken:\n  {fic.url}')
-            except:
+            except:  # noqa: E722
                 print(f"{ficId.__dict__} might be broken")
 
     return updated
@@ -1400,7 +1399,7 @@ def checkFilteredIncompleteForUpdates(
         try:
             f = Fic.load(fic.fid())
             cache(f.fid())
-        except:
+        except:  # noqa: E722
             tierTwoBroken |= {fic.id}
 
     print("=" * 72)
@@ -1410,17 +1409,15 @@ def checkFilteredIncompleteForUpdates(
         try:
             f = Fic.load(fic.fid())  # FIXME why are we reloading this
             info(f.fid())
-        except:
+        except:  # noqa: E722
             tierTwoBroken |= {fic.id}
 
     print("=" * 72)
     print("interesting:")
     for fic in updated:
-        try:
+        with contextlib.suppress(Exception):
             if ficIsInteresting(fic):
                 info(fic.fid())
-        except:
-            pass
 
     print("")
     print("updated:")
@@ -1571,7 +1568,7 @@ def readInLastDay(maxDays: int = 30) -> None:
                     ]
                     ordWT.sort()
                     ordWT.reverse()
-                    for tid, wc, c, title, fid in ordWT:
+                    for _tid, wc, c, title, fid in ordWT:
                         print(
                             f"  {title} {fid} : {{}} ({c} chapters)".format(
                                 util.formatNumber(wc)
@@ -1607,7 +1604,7 @@ def readInLastMonth() -> None:
 def readAllTime() -> None:
     startDay = getDayNum(1456815600)  # 2016-03-01
     curDay = getDayNum(time.time())
-    curDayStart = 86400 * int(curDay) + tzOffset
+    _curDayStart = 86400 * int(curDay) + tzOffset
 
     grandTotal = 0
     # TODO FIXME userId
@@ -1624,11 +1621,9 @@ def readAllTime() -> None:
         if dOff != lastDOff:
             lastDOff = dOff
         cwords = 0
-        try:
+        with contextlib.suppress(Exception):
             content = ficChapter.cachedContent()
             cwords = len(content.split())
-        except:
-            pass
         totalWordsPerDay[-1 - dOff] += cwords
         grandTotal += cwords
 
@@ -1644,7 +1639,7 @@ def readAllTime() -> None:
 def readByFandomAllTime() -> None:
     startDay = getDayNum(1456815600)  # 2016-03-01
     curDay = getDayNum(time.time())
-    curDayStart = 86400 * int(curDay) + tzOffset
+    _curDayStart = 86400 * int(curDay) + tzOffset
 
     grandTotal = 0
     ficChapters = FicChapter.select({}, "markedRead DESC")
@@ -1653,7 +1648,6 @@ def readByFandomAllTime() -> None:
     maxDays = int(curDay - startDay) + 5
     totalWordsPerFandomPerDay = {"total": [0] * maxDays}
 
-    lastDOff = None
     for ficChapter in ficChapters:
         userFicChapter = ficChapter.getUserFicChapter()
         if userFicChapter.markedRead is None:
@@ -1754,7 +1748,7 @@ def readByFandomAllTimeWhitelist() -> None:
     startDayWeekOffset = 2  # must subtract 2 days to get to start of week
     startDay = getDayNum(1456815600)  # 2016-03-01
     curDay = getDayNum(time.time())
-    curDayStart = 86400 * int(curDay) + tzOffset
+    _curDayStart = 86400 * int(curDay) + tzOffset
 
     ficChapters = FicChapter.select({}, "markedRead DESC")
     fics = {fic.id: fic for fic in Fic.select()}
@@ -1762,7 +1756,6 @@ def readByFandomAllTimeWhitelist() -> None:
     maxDays = int(curDay - startDay) + 5  # extra padding
     totalWordsPerFandomPerDay = {"total": [0] * maxDays}
 
-    lastDOff = None
     for ficChapter in ficChapters:
         userFicChapter = ficChapter.getUserFicChapter()
         if userFicChapter.markedRead is None:
@@ -1815,7 +1808,6 @@ def readByFandomAllTimeWhitelist() -> None:
         total = 0
         if fandom in preCutoffTotals:
             total = preCutoffTotals[fandom]
-        totalPerWeek = total / weeksPreCutoff
         totalWordsPerFandomPerWeek[fandom] = (
             [total // weeksPreCutoff] * weeksPreCutoff
         ) + totalWordsPerFandomPerWeek[fandom]
@@ -1932,10 +1924,8 @@ def readLocal(fname: str) -> None:
     hermes = Hermes(fic)
     mainLoop = functools.partial(Hermes.mainLoop, hermes)
 
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         curses.wrapper(mainLoop)
-    except KeyboardInterrupt:
-        pass
 
     lite.shutdown()
 
@@ -2116,7 +2106,7 @@ def scrapeRedditThread(url: str) -> None:
     ids = r.stdout.decode("utf-8").split()
     seenFids = set()
     for uid in ids:
-        try:
+        with contextlib.suppress(Exception):
             print(uid)
             fid = FicId.parse(uid)
             fic = Fic.load(fid)
@@ -2128,8 +2118,6 @@ def scrapeRedditThread(url: str) -> None:
             fid.chapterId = None
             fid.ambiguous = True
             cache(fid)
-        except:
-            pass
 
 
 def tryCommand(argv: List[str]) -> int:
@@ -2150,10 +2138,8 @@ def repl() -> None:
             line = input("> ")
             if len(line) == 0:
                 break
-            try:
+            with contextlib.suppress(Exception):
                 tryCommand(line.split())
-            except:
-                pass
         except EOFError:
             print("")
             break

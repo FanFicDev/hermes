@@ -1,4 +1,5 @@
 from typing import List, Optional, Union
+import contextlib
 import os
 
 from htypes import FicId, FicType
@@ -14,10 +15,8 @@ def edumpContent(html: str, which: str) -> None:
 
     # TODO this is a hacky workaround for shared log files
     fname = os.path.join(edumpContentDir, f"{which}_content.html")
-    try:
+    with contextlib.suppress(Exception):
         os.chmod(fname, 0o666)  # rw-rw-rw-
-    except:
-        pass
 
 
 # used to extract specific pieces from raw page content
@@ -26,10 +25,12 @@ class Adapter:
         self,
         cacheable: bool,
         baseUrl: str,
-        urlFragments: Union[str, List[str]] = [],
+        urlFragments: Union[str, List[str], None] = None,
         ftype: FicType = FicType.broken,
         botLinkSuffix: Optional[str] = None,
     ):
+        if urlFragments is None:
+            urlFragments = []
         self.cacheable = cacheable
         self.baseUrl = baseUrl
         self.urlFragments = urlFragments
@@ -118,9 +119,11 @@ class ManualAdapter(Adapter):
     def __init__(
         self,
         baseUrl: str,
-        urlFragments: Union[str, List[str]] = [],
+        urlFragments: Union[str, List[str], None] = None,
         ftype: FicType = FicType.manual,
     ):
+        if urlFragments is None:
+            urlFragments = []
         super().__init__(False, baseUrl, urlFragments, ftype)
 
     def extractContent(self, fic: Fic, html: str) -> str:

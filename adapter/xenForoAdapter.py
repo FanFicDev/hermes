@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
 if typing.TYPE_CHECKING:
     pass
+import contextlib
 from html import escape as htmlEscape
 import time
 import traceback
@@ -29,13 +30,15 @@ class XenForoAdapter(Adapter):
     def __init__(
         self,
         baseUrl: str,
-        urlFragments: Union[str, List[str]] = [],
+        urlFragments: Union[str, List[str], None] = None,
         ftype: FicType = FicType.broken,
         titleSuffix: str = "",
         rewrites: Optional[List[Tuple[str, str]]] = None,
         postContainer: Union[str, List[str]] = "li",
         postsPerPage: int = 10,
     ):
+        if urlFragments is None:
+            urlFragments = []
         super().__init__(True, baseUrl, urlFragments, ftype)
         self.titleSuffix = titleSuffix
         self.defaultDelay = 10
@@ -79,7 +82,7 @@ class XenForoAdapter(Adapter):
         storyId = int(storyId_s)
         chapterId = None
         ambi = True  # TODO: ? len(parts) < 6
-        if ambi == False and len(parts[2].strip()) > 0:
+        if not ambi and len(parts[2].strip()) > 0:
             chapterId = int(parts[2])
         return FicId(self.ftype, str(storyId), chapterId, ambi)
 
@@ -269,10 +272,8 @@ class XenForoAdapter(Adapter):
 
     def deepSoftScrape(self, fic: Fic) -> None:
         # try to grab reader pages first to be sure we have them
-        try:
+        with contextlib.suppress(Exception):
             self.readerSoftScrape(fic)
-        except:
-            pass
 
         urls = self.getDeepPageUrls(fic)
         util.logMessage(f"deepSoftScrape|{fic.id}|{len(urls)}")
@@ -286,7 +287,6 @@ class XenForoAdapter(Adapter):
             self.scrapeLike(url)
 
     def extractPostThreadmarkTitle(self, postSoup: Any) -> Optional[str]:
-        title = ""
         # try to grab the title from the threadmark label
         try:
             labelSpans = postSoup.find_all("span", {"class": "threadmarkLabel"})
@@ -618,10 +618,9 @@ class XenForoAdapter(Adapter):
         if len(titles) != 1:
             raise Exception(f"error: cannot find title: {len(titles)}")
         ntitle = ""
-        try:
+        # TODO FIXME
+        with contextlib.suppress(Exception):
             ntitle = titles[0].get_text()
-        except:
-            pass  # TODO FIXME
         if fic.title is None or len(ntitle.strip()) > 0:
             fic.title = ntitle
         if len(self.titleSuffix) > 0 and fic.title.endswith(self.titleSuffix):
@@ -655,7 +654,7 @@ class XenForoAdapter(Adapter):
             url = f"{self.baseUrl}threads/{fic.localId}/threadmarks{sep}category_id=1"
             threadmarksHtml = self.scrapeLike(url)
             self.readerSoftScrape(fic)
-        except:
+        except:  # noqa: E722
             # note: we do this before the theardmarks check for old-style fics
             # soft scrape all thread pages to ensure we have everything
             self.deepSoftScrape(fic)
@@ -677,7 +676,9 @@ class XenForoAdapter(Adapter):
                 if bbWrapper is not None:
                     desc = bbWrapper.decode_contents()
                     descView = HtmlView(desc, markdown=False)
-                    fic.description = "".join([f"<p>{l}</p>" for l in descView.text])
+                    fic.description = "".join(
+                        [f"<p>{line}</p>" for line in descView.text]
+                    )
 
             # determine chapter count based on threadmarks
             threadmarkList = threadmarksSoup.find("div", {"class": "threadmarkList"})

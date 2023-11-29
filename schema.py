@@ -78,13 +78,12 @@ def symlinkSql() -> None:
 def initDB() -> None:
     from lite_oil import getConnection
 
-    with getConnection("hermes") as conn:
-        with conn.cursor() as curs:
-            for spath, _, _ in walkSql():
-                print(f"executing {spath}")
-                with open(spath) as f:
-                    sql = f.read()
-                    curs.execute(sql)
+    with getConnection("hermes") as conn, conn.cursor() as curs:
+        for spath, _, _ in walkSql():
+            print(f"executing {spath}")
+            with open(spath) as f:
+                sql = f.read()
+                curs.execute(sql)
 
 
 if __name__ == "__main__":
@@ -310,22 +309,21 @@ def getClassName(name: str) -> str:
 def getTypeOid(typename: str, namespace: str = "public") -> int:
     from lite_oil import getConnection
 
-    with getConnection("hermes") as conn:
-        with conn.cursor() as curs:
-            curs.execute(
-                """
-                SELECT pg_type.oid
-                  FROM pg_type JOIN pg_namespace
-                         ON typnamespace = pg_namespace.oid
-                WHERE typname = %(typename)s
-                  AND nspname = %(namespace)s
-                """,
-                {"typename": typename, "namespace": namespace},
-            )
-            r = curs.fetchone()
-            if r is None:
-                raise Exception(f"unable to determine oid: {typename}, {namespace}")
-            return int(r[0])
+    with getConnection("hermes") as conn, conn.cursor() as curs:
+        curs.execute(
+            """
+            SELECT pg_type.oid
+              FROM pg_type JOIN pg_namespace
+                     ON typnamespace = pg_namespace.oid
+            WHERE typname = %(typename)s
+              AND nspname = %(namespace)s
+            """,
+            {"typename": typename, "namespace": namespace},
+        )
+        r = curs.fetchone()
+        if r is None:
+            raise Exception(f"unable to determine oid: {typename}, {namespace}")
+        return int(r[0])
 
 
 class OilTimestamp:

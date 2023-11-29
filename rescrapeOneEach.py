@@ -117,5 +117,5 @@ while True:
         print(f"refetching {wid}: {url}")
         try:
             scrape.scrape(url)
-        except:
+        except:  # noqa: E722
             time.sleep(60)

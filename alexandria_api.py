@@ -1,10 +1,12 @@
 from typing import Any, Optional, Tuple, Union
+import contextlib
 from enum import IntEnum
 import traceback
 
 from flask import Flask, Response, make_response, request
 import werkzeug.wrappers
 
+import adapter
 from htypes import FicId
 from lite import JSONable
 import scrape
@@ -15,7 +17,6 @@ from view import HtmlView
 BasicFlaskResponse = Union[Response, werkzeug.wrappers.Response, str, JSONable]
 FlaskResponse = Union[BasicFlaskResponse, Tuple[BasicFlaskResponse, int]]
 
-import adapter
 
 adapter.registerAdapters()
 
@@ -25,7 +26,7 @@ app.url_map.strict_slashes = False
 
 def cleanHtml(html: str) -> str:
     view = HtmlView(html, markdown=False)
-    html = "".join([f"<p>{l}</p>" for l in view.text])
+    html = "".join([f"<p>{line}</p>" for line in view.text])
     return html
 
 
@@ -112,7 +113,7 @@ def v0_fic_all(urlId: str) -> Any:
             return Err.cid_not_found.get({"arg": f"{fic.id}/{cid}"})
         chapter = ficChapters[cid]
         cres = chapter.toJSONable()
-        try:
+        with contextlib.suppress(Exception):
             content = cres["content"]
             if content is not None:
                 content = util.decompress(content)
@@ -124,8 +125,6 @@ def v0_fic_all(urlId: str) -> Any:
                     )
             cres["content"] = content
             chapters[cid] = cres
-        except:
-            pass
 
     res = fic.toJSONable()
     return Err.ok({"info": res, "chapters": chapters})
@@ -146,7 +145,7 @@ def v0_lookup() -> Any:
     try:
         fic = Fic.load(ficId)
         return v0_fic(fic.urlId)
-    except:
+    except:  # noqa: E722
         app.logger.error(
             f"v0_lookup: something went wrong in load: {traceback.format_exc()}"
         )

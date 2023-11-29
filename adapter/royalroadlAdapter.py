@@ -1,4 +1,5 @@
 from typing import List, Optional
+import contextlib
 
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
@@ -115,21 +116,19 @@ class RoyalRoadlAdapter(Adapter):
         self.setAuthor(fic, author, authorUrl, authorId)
 
         divDescription = soup.find("div", {"class": "description"})
-        try:
+
+        fic.description = divDescription.getText().strip()
+        with contextlib.suppress(Exception):
             descView = HtmlView(str(divDescription), markdown=False)
-            desc = "".join([f"<p>{l}</p>" for l in descView.text])
+            desc = "".join([f"<p>{line}</p>" for line in descView.text])
             fic.description = desc
-        except:
-            fic.description = divDescription.getText().strip()
 
         fictionInfo = str(soup.find("div", {"class": "fiction-info"}))
         if fictionInfo.find(">ONGOING<") != -1:
             fic.ficStatus = FicStatus.ongoing
         elif fictionInfo.find(">COMPLETED<") != -1:
             fic.ficStatus = FicStatus.complete
-        elif fictionInfo.find(">HIATUS<") != -1:
-            fic.ficStatus = FicStatus.ongoing  # TODO?
-        elif fictionInfo.find(">STUB<") != -1:
+        elif fictionInfo.find(">HIATUS<") != -1 or fictionInfo.find(">STUB<") != -1:
             fic.ficStatus = FicStatus.ongoing  # TODO?
         elif fictionInfo.find(">DROPPED<") != -1:
             fic.ficStatus = FicStatus.abandoned

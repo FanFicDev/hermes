@@ -435,9 +435,11 @@ class Ao3Adapter(Adapter):
                     or f == "sherlock holmes (downey films)"
                 ):
                     fic.add(Fandom.define("Sherlock Holmes"))
-                elif f == "furry (fandom)" or f == "harry - fandom":
-                    continue  # skip
-                elif f == "fleurmione - fandom":
+                elif (
+                    f == "furry (fandom)"
+                    or f == "harry - fandom"
+                    or f == "fleurmione - fandom"
+                ):
                     continue  # skip
                 elif f == "skyfall (2012) - fandom":
                     fic.add(Fandom.define("James Bond"))

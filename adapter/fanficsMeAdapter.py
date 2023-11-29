@@ -62,7 +62,7 @@ class FanficsMeAdapter(Adapter):
 
         soup = BeautifulSoup(html, "html5lib")
         readContent = soup.find("div", {"class": "ReadContent"})
-        header = readContent.find("h2")  # TODO: this is the chapter title
+        _header = readContent.find("h2")  # TODO: this is the chapter title
         chapter = readContent.find("div", {"class": "chapter"})
         return str(chapter)
 
@@ -116,7 +116,7 @@ class FanficsMeAdapter(Adapter):
             elif t == "Изменен:":
                 fic.updated = self.parseRussianDate(v)
             elif t == "Ссылка:":
-                src = v  # source archive url
+                _src = v  # TODO source archive url
             elif t == "Читателей:":
                 fic.followCount = int(v)
             elif t == "Персонажи:":

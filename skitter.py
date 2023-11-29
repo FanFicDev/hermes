@@ -1,3 +1,5 @@
+import contextlib
+
 import priv
 import scrape as sc
 import util
@@ -36,21 +38,17 @@ def softScrape(url: str, fallback: bool = False) -> sc.ScrapeMeta:
     for c in reversed(priv.skitterClients):
         if isinstance(c, WeaverClient):
             continue
-        try:
+        with contextlib.suppress(Exception):
             # util.logMessage(f'skitter.softScrape: {c.ident}.staleScrape({url})')
             r = c.staleScrape(url)
             if r is not None:
                 return r
-        except:
-            pass
 
     # attempt to softScrape
     for c in priv.skitterClients:
-        try:
+        with contextlib.suppress(Exception):
             # util.logMessage(f'FFNAdapter.softScrape: {c.ident}.softScrape({url})')
             return c.softScrape(url)
-        except:
-            pass
 
     if fallback:
         r = sc.softScrapeWithMeta(url)

@@ -210,7 +210,7 @@ class FicSelect(Widget):
         if ficId is not None:
             self.idx = 0
             self.list = []
-            if ficId.ambiguous == False:
+            if not ficId.ambiguous:
                 fic = Fic.tryLoad(ficId)
                 if fic is None:
                     fic = Fic.load(ficId)
@@ -282,9 +282,8 @@ class FicSelect(Widget):
             elif "description".startswith(tag):
                 if rel is not None:
                     descRel = (rel, arg)
-            elif "title".startswith(tag):
-                if rel is not None:
-                    titleRel = (rel, arg)
+            elif "title".startswith(tag) and rel is not None:
+                titleRel = (rel, arg)
 
         self.pushMessage(
             "f:{}, r:{}, n:{}, c:{}, a:{}, f2:{} p:{}".format(
@@ -304,27 +303,30 @@ class FicSelect(Widget):
             if fic.id not in userFics:
                 userFics[fic.id] = UserFic.default((1, fic.id))
             userFic = userFics[fic.id]
-            if favRel is not None or ratRel is not None or isNew:
-                if favRel is not None:
-                    if not self.fcmp(favRel[0], userFic.isFavorite, favRel[1]):
-                        continue
-                if ratRel is not None:
-                    if not self.fcmp(ratRel[0], userFic.rating or -1, ratRel[1]):
-                        continue
-                if isNew is not None:
-                    if userFic.lastChapterViewed != 0:
-                        continue
-            if descRel is not None:
-                if not self.fcmp(descRel[0], fic.description or "", descRel[1]):
-                    continue
-            if titleRel is not None:
-                if not self.fcmp(titleRel[0], fic.title or "", titleRel[1]):
-                    continue
+            if favRel is not None and not self.fcmp(
+                favRel[0], userFic.isFavorite, favRel[1]
+            ):
+                continue
+            if ratRel is not None and not self.fcmp(
+                ratRel[0], userFic.rating or -1, ratRel[1]
+            ):
+                continue
+            if isNew is not None and userFic.lastChapterViewed != 0:
+                continue
+            if descRel is not None and not self.fcmp(
+                descRel[0], fic.description or "", descRel[1]
+            ):
+                continue
+            if titleRel is not None and not self.fcmp(
+                titleRel[0], fic.title or "", titleRel[1]
+            ):
+                continue
             if isComplete is not None and fic.ficStatus != FicStatus.complete:
                 continue
-            if authorRel is not None:
-                if not self.fcmp(authorRel[0], fic.getAuthorName(), authorRel[1]):
-                    continue
+            if authorRel is not None and not self.fcmp(
+                authorRel[0], fic.getAuthorName(), authorRel[1]
+            ):
+                continue
             if fandomRel is not None:
                 ficFandoms = [fandom.name for fandom in fic.fandoms()]
                 matchesFandom = False

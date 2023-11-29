@@ -311,7 +311,6 @@ class FictionPressAdapter(Adapter):
         curl = self.constructUrl(fic.localId, chapter.chapterId, None)
         # util.logMessage(f'FictionPressAdapter.scrape: {curl}')
         url = scrape.getLastUrlLike(curl)
-        delay: float = 5
         if url is None:
             url = curl
 

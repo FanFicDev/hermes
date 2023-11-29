@@ -30,8 +30,8 @@ class HarryPotterFanfictionAdapter(Adapter):
         # format is: storyId:author:story
         matching: List[List[str]] = []
         with gzip.open(self.storyMapPath, "rb") as f:
-            for l in f.readlines():
-                line = l.decode("utf-8")[:-1]
+            for rl in f.readlines():
+                line = rl.decode("utf-8")[:-1]
                 parts = line.split(":")
                 if int(parts[0]) == storyId:
                     matching += [parts]
@@ -45,8 +45,8 @@ class HarryPotterFanfictionAdapter(Adapter):
         # format is: storyId:author:story:cid:chapterId
         matching: List[List[str]] = []
         with gzip.open(self.chapterMapPath, "rb") as f:
-            for l in f.readlines():
-                line = l.decode("utf-8")[:-1]
+            for rl in f.readlines():
+                line = rl.decode("utf-8")[:-1]
                 parts = line.split(":")
                 if int(parts[4]) == chapterId:
                     matching += [parts]
@@ -59,8 +59,8 @@ class HarryPotterFanfictionAdapter(Adapter):
     def getChapterIds(self, storyId: int) -> Dict[int, str]:
         matching: List[List[str]] = []
         with gzip.open(self.chapterMapPath, "rb") as f:
-            for l in f.readlines():
-                line = l.decode("utf-8")[:-1]
+            for rl in f.readlines():
+                line = rl.decode("utf-8")[:-1]
                 parts = line.split(":")
                 if int(parts[0]) == storyId:
                     matching += [parts]

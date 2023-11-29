@@ -31,6 +31,6 @@ class PortkeyArchiveAdapter(ManualAdapter):
         storyId = int(parts[4])
         chapterId = None
         ambi = len(parts) < 6
-        if ambi == False and len(parts[5].strip()) > 0:
+        if not ambi and len(parts[5].strip()) > 0:
             chapterId = int(parts[5])
         return FicId(self.ftype, str(storyId), chapterId, ambi)

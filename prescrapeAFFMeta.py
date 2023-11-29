@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from typing import Optional
+import contextlib
 import sys
 import time
 import urllib.parse
@@ -35,13 +36,10 @@ def fetch(url: str, pageNo: int, delay: int, force: bool = False) -> Optional[st
 def getPageFromUrl(url: str, defl: int = -1) -> int:
     r = url[url.find("?") + 1 :]
     qs = urllib.parse.parse_qs(r)
-    if "page" not in qs or len(qs["page"]) != 1:
+    if "page" not in qs or len(qs["page"]) != 1 or not qs["page"][0].isnumeric():
         return defl
-    try:
-        page = int(qs["page"][0])
-        return page
-    except:
-        pass
+    with contextlib.suppress(ValueError):
+        return int(qs["page"][0])
     return defl
 
 

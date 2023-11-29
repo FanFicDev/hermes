@@ -853,7 +853,7 @@ class FFNAdapter(Adapter):
                 fic.description = div.get_text()
                 descriptionFound = True
                 break
-        if descriptionFound == False:
+        if not descriptionFound:
             raise Exception(f"error: unable to find description:\n{pt_str}\n")
 
         # default optional fields

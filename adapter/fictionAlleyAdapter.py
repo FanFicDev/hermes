@@ -47,7 +47,7 @@ class FictionAlleyAdapter(Adapter):
                 storyId = storyId[: -len(suffix)]
 
         # note: seems to be safe to lowercase these
-        lid = (author + "/" + storyId).lower()
+        _lid = (author + "/" + storyId).lower()
         # print(lid)
         # make lid author/story ?
 

@@ -116,10 +116,7 @@ class WavesArisenAdapter(Adapter):
         return Fic.lookup((fic.id,))
 
     def parseInfoInto(self, fic: Fic, html: str) -> Fic:
-        from bs4 import BeautifulSoup
-
         html = html.replace("\r\n", "\n")
-        soup = BeautifulSoup(html, "html.parser")
 
         # wooh hardcoding
         fic.fetched = OilTimestamp.now()
