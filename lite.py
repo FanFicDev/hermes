@@ -8,7 +8,8 @@ import psycopg2
 import schema
 from schema import ColumnInfo
 import util
-from lite_oil import getConnection, commit, shutdown
+from lite_oil import getConnection, commit
+from lite_oil import shutdown as shutdown
 
 if TYPE_CHECKING:
 	from psycopg2 import connection  # type: ignore[attr-defined]

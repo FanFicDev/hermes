@@ -18,3 +18,11 @@ format-diff: venv
 .PHONY: type
 type: venv
 	./venv/bin/mypy hermes.py alexandria_api.py
+
+.PHONY: lint
+lint: type
+	./venv/bin/ruff check .
+
+.PHONY: lint-fix
+lint-fix: type
+	./venv/bin/ruff check . --fix
