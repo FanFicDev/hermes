@@ -1,15 +1,13 @@
+from typing import Optional
 import re
-import time
 import urllib
 import urllib.parse
-from typing import Optional
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Fic, FicStatus, FicChapter, Fandom, Language
-import util
-import scrape
 
 from adapter.adapter import Adapter, edumpContent
+from htypes import FicId, FicType
+import scrape
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class SugarQuillAdapter(Adapter):
@@ -22,7 +20,7 @@ class SugarQuillAdapter(Adapter):
 	def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
 		if cid is None:
 			cid = 1
-		return '{}?storyid={}&chapno={}'.format(self.baseStoryUrl, lid, cid)
+		return f'{self.baseStoryUrl}?storyid={lid}&chapno={cid}'
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
 		if not url.startswith(self.baseStoryUrl):
@@ -65,7 +63,7 @@ class SugarQuillAdapter(Adapter):
 		if len(content) != 1:
 			content = soup.findAll('td', {'class': 'content_pane'})
 		if len(content) != 1:
-			raise Exception('unable to find content section: {}'.format(fic.url))
+			raise Exception(f'unable to find content section: {fic.url}')
 
 		content = content[0]
 
@@ -94,7 +92,7 @@ class SugarQuillAdapter(Adapter):
 
 		infoPane = soup.findAll('td', {'class': 'info2_pane'})
 		if len(infoPane) != 1:
-			raise Exception('unable to find info2_pane: {}'.format(fic.url))
+			raise Exception(f'unable to find info2_pane: {fic.url}')
 		infoPane = infoPane[0]
 
 		authorHrefPrefix = 'index.php?action=profile&id='
@@ -111,7 +109,7 @@ class SugarQuillAdapter(Adapter):
 			self.setAuthor(fic, author, authorUrl, authorLocalId)
 			break
 		else:
-			raise Exception('unable to find author: {}'.format(fic.url))
+			raise Exception(f'unable to find author: {fic.url}')
 
 		titleMatch = re.search(
 			'<b>Story</b>:((.|\r|\n)*)<b>Chapter</b>:', str(infoPane), re.MULTILINE

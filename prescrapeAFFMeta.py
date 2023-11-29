@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-import scrape
+from typing import Optional
 import sys
 import time
 import urllib.parse
-from typing import Optional
+
 from bs4 import BeautifulSoup  # type: ignore
 
+import scrape
+
 archive = sys.argv[1]
-url = 'http://{}.adult-fanfiction.org/search.php'.format(archive)
+url = f'http://{archive}.adult-fanfiction.org/search.php'
 url += '?auth=&title=&summary=&tags=%2BCOMPLETE+-MM&cats=0&search=Search'
 url += '&page={}'
 url = scrape.canonizeUrl(url)
@@ -22,7 +24,7 @@ def fetch(url: str,
 
 	mostRecent = scrape.getMostRecentScrape(url)
 	if mostRecent is not None and not force:
-		print('url has already been scraped: {}'.format(url))
+		print(f'url has already been scraped: {url}')
 		return None
 
 	res = scrape.scrape(url)

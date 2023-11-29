@@ -1,14 +1,14 @@
+from typing import Optional
 import re
 import time
 import urllib
-from typing import Optional
 
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom
-import util
-import scrape
 from adapter.adapter import Adapter, edumpContent
 from adapter.regex_matcher import RegexMatcher
+from htypes import FicId, FicType
+import scrape
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class HpFanficArchiveAdapter(Adapter):
@@ -22,8 +22,8 @@ class HpFanficArchiveAdapter(Adapter):
 
 	def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
 		if cid is None:
-			return '{}?sid={}'.format(self.baseStoryUrl, lid)
-		return '{}?sid={}&chapter={}'.format(self.baseStoryUrl, lid, cid)
+			return f'{self.baseStoryUrl}?sid={lid}'
+		return f'{self.baseStoryUrl}?sid={lid}&chapter={cid}'
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
 		if url.startswith("https://"):
@@ -197,7 +197,7 @@ class HpFanficArchiveAdapter(Adapter):
 			elif complete == 'Yes':
 				fic.ficStatus = FicStatus.complete
 			else:
-				raise Exception('unknown complete value: {}'.format(complete))
+				raise Exception(f'unknown complete value: {complete}')
 
 		match = re.search('Crossovers', infoText)
 		if match is not None:

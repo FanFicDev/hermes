@@ -1,32 +1,32 @@
-from adapter.adapter import Adapter, ManualAdapter
-from adapter.ffNetAdapter import FFNAdapter
-from adapter.dummyAdapter import DummyAdapter
+from adapter.adapter import ManualAdapter
+from adapter.adultFanfictionAdapter import AdultFanfictionAdapter
 from adapter.ao3Adapter import Ao3Adapter
-from adapter.hpFanficArchiveAdapter import HpFanficArchiveAdapter
-from adapter.fictionAlleyAdapter import FictionAlleyAdapter
+from adapter.bulbagardenAdapter import BulbagardenAdapter
+from adapter.dummyAdapter import DummyAdapter
 from adapter.fanficAuthorsAdapter import FanficAuthorsAdapter
-from adapter.portkeyArchiveAdapter import PortkeyArchiveAdapter
-from adapter.siyeAdapter import SiyeAdapter
-from adapter.fictionPressAdapter import FictionPressAdapter
+from adapter.fanficParadiseAdapter import (
+	FanficParadiseNSFWAdapter,
+	FanficParadiseSFWAdapter,
+)
+from adapter.fanficsMeAdapter import FanficsMeAdapter
+from adapter.ffNetAdapter import FFNAdapter
+from adapter.fictionAlleyAdapter import FictionAlleyAdapter
 from adapter.fictionHuntAdapter import FictionHuntAdapter
-from adapter.spaceBattlesAdapter import SpaceBattlesAdapter
-from adapter.sufficientVelocityAdapter import SufficientVelocityAdapter
-from adapter.questionableQuestingAdapter import QuestionableQuestingAdapter
+from adapter.fictionPressAdapter import FictionPressAdapter
+from adapter.hpFanficArchiveAdapter import HpFanficArchiveAdapter
 from adapter.hpffAdapter import HarryPotterFanfictionAdapter
 from adapter.parahumansAdapter import ParahumansAdapter
-from adapter.adultFanfictionAdapter import AdultFanfictionAdapter
-from adapter.fanficsMeAdapter import FanficsMeAdapter
+from adapter.portkeyArchiveAdapter import PortkeyArchiveAdapter
+from adapter.questionableQuestingAdapter import QuestionableQuestingAdapter
 from adapter.royalroadlAdapter import RoyalRoadlAdapter
-from adapter.wavesArisenAdapter import WavesArisenAdapter
+from adapter.siyeAdapter import SiyeAdapter
+from adapter.spaceBattlesAdapter import SpaceBattlesAdapter
+from adapter.sufficientVelocityAdapter import SufficientVelocityAdapter
 from adapter.sugarQuillAdapter import SugarQuillAdapter
-from adapter.bulbagardenAdapter import BulbagardenAdapter
 from adapter.theFanfictionForumAdapter import TheFanfictionForumAdapter
-from adapter.fanficParadiseAdapter import (
-	FanficParadiseSFWAdapter, FanficParadiseNSFWAdapter
-)
 from adapter.wanderingInnAdapter import WanderingInnAdapter
-
-from htypes import adapters, FicType
+from adapter.wavesArisenAdapter import WavesArisenAdapter
+from htypes import FicType, adapters
 
 
 def registerAdapters() -> None:

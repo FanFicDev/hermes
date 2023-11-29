@@ -1,36 +1,44 @@
 #!/usr/bin/env python3
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, cast
+import curses
+import datetime
+import functools
 import gc
+import gzip
+import json
+import math
 import os
 import re
 import sys
 import time
-import curses
-import functools
-import datetime
-import gzip
 import traceback
-import json
-import math
-import typing
-from typing import List, Dict, Optional, Tuple, Set, Any, Union, cast, Callable
 
-import schema
+import adapter
+from adapter.adultFanfictionAdapter import AdultFanfictionMeta
+from adapter.xenForoAdapter import XenForoAdapter
+from command import Command
 import htypes
 from htypes import FicType, getAdapter
+import lite
+import scrape
 from store import (
-	TagBase, FicStatus, Fic, FicId, FicChapter, Fandom, Character, Genre, Tag,
-	UserFicChapter, UserFic
+	Character,
+	Fandom,
+	Fic,
+	FicChapter,
+	FicId,
+	FicStatus,
+	Genre,
+	Tag,
+	TagBase,
+	UserFic,
+	UserFicChapter,
 )
+import util
+
 #, ImportQueue, QueueStatus
 import view
-from view import StoryView, ChapterView, HtmlView, FicSelect
-import scrape
-import util
-import lite
-from command import Command
-import adapter
-from adapter.xenForoAdapter import XenForoAdapter
-from adapter.adultFanfictionAdapter import AdultFanfictionMeta
+from view import ChapterView, FicSelect, HtmlView, StoryView
 
 
 class Hermes:
@@ -342,7 +350,7 @@ def dumpWithWidth(ficId: FicId, width: int) -> None:
 	for cid in range(scid, ecid + 1):
 		chapter = fic.chapter(cid)
 		if chapter.html() is None:
-			print('chapter {} is missing'.format(cid))
+			print(f'chapter {cid} is missing')
 			continue
 
 		cv = ChapterView(chapter)
@@ -365,7 +373,7 @@ def dump(ficId: FicId) -> None:
 def rdump(ficId: FicId) -> None:
 	fic = Fic.load(ficId)
 	assert (fic.chapterCount is not None)
-	print('<h2>{}</h2>'.format(fic.title))
+	print(f'<h2>{fic.title}</h2>')
 
 	scid = ficId.chapterId if ficId.chapterId is not None else 1
 	ecid = ficId.chapterId if ficId.chapterId is not None else fic.chapterCount
@@ -502,7 +510,7 @@ def altSanitize(html: str) -> str:
 
 def altDump(ficId: FicId) -> None:
 	fic = Fic.load(ficId)
-	print('<h2>{}</h2>'.format(fic.title))
+	print(f'<h2>{fic.title}</h2>')
 
 	scid = ficId.chapterId if ficId.chapterId is not None else 1
 	ecid = ficId.chapterId if ficId.chapterId is not None else fic.chapterCount
@@ -561,7 +569,7 @@ def dumpAFFMeta() -> None:
 	nextPerc = 0
 	for url in uniqueUrls:
 		if (uidx * 100 / len(uniqueUrls)) > nextPerc:
-			print('{}% ({}/{})'.format(nextPerc, uidx, len(uniqueUrls)))
+			print(f'{nextPerc}% ({uidx}/{len(uniqueUrls)})')
 			nextPerc += 1
 		html = scrape.getMostRecentScrape(url)
 		if html is None:
@@ -587,7 +595,7 @@ def searchAll(expr: str) -> None:
 
 
 def search(ficId: FicId, expr: str) -> None:
-	print('{} => {}'.format(expr, diversifyExpression(expr)))
+	print(f'{expr} => {diversifyExpression(expr)}')
 	expr = diversifyExpression(expr)
 	pattern = re.compile(expr)
 
@@ -608,12 +616,12 @@ def search(ficId: FicId, expr: str) -> None:
 			m = pattern.search(rline)
 			if m is not None:
 				totalMatches += 1
-				print('{}:{}'.format(chapterId, line))
+				print(f'{chapterId}:{line}')
 				wtext = chapterView.getLine(line)
 				for text in wtext:
-					print('  {}'.format(text))
+					print(f'  {text}')
 
-	print('total matches: {}'.format(totalMatches))
+	print(f'total matches: {totalMatches}')
 
 
 def needsCached() -> None:
@@ -621,7 +629,7 @@ def needsCached() -> None:
 
 	for fic in cacheInfo:
 		for cid in cacheInfo[fic]:
-			print('{}/{}'.format(fic, cid))
+			print(f'{fic}/{cid}')
 
 
 def ficCommandREPL(ficCommand: Callable[[FicId], Any], ps: str = '') -> None:
@@ -710,7 +718,7 @@ def cache(ficId: FicId) -> bool:
 		if cid in chapterMap and chapterMap[cid].content is not None:
 			continue
 
-		print('  caching {}/{}...'.format(cid, fic.chapterCount))
+		print(f'  caching {cid}/{fic.chapterCount}...')
 		fic.cache(cid)
 		cachedAny = True
 		time.sleep(.01)
@@ -752,7 +760,7 @@ def fixXenForo(ficId: FicId) -> None:
 	origTitle = fic.title
 	a.updateTitle(fic)
 	if fic.title != origTitle:
-		print('{}|{}|{}'.format(fic.id, origTitle, fic.title))
+		print(f'{fic.id}|{origTitle}|{fic.title}')
 
 	info(fic.fid())
 
@@ -772,13 +780,13 @@ def cleanXenForoTitles() -> None:
 		cnt = 0
 		for fic in fics:
 			cnt += 1
-			print('{} ({}/{})'.format(ftype, cnt, len(fics)))
+			print(f'{ftype} ({cnt}/{len(fics)})')
 			a.getCurrentInfo(fic)
 
 			origTitle = fic.title
 			a.updateTitle(fic)
 			if fic.title != origTitle:
-				print('{}|{}|{}'.format(fic.id, origTitle, fic.title))
+				print(f'{fic.id}|{origTitle}|{fic.title}')
 
 			info(fic.fid())
 
@@ -843,9 +851,9 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
 	userFic = fic.getUserFic()
 
 	remainingWordCount = 0
-	chapterInfo = '[{:>2} chapters]'.format(fic.chapterCount)
+	chapterInfo = f'[{fic.chapterCount:>2} chapters]'
 	if userFic.lastChapterRead == fic.chapterCount:
-		chapterInfo = '[completely read, {:>2} chapters]'.format(fic.chapterCount)
+		chapterInfo = f'[completely read, {fic.chapterCount:>2} chapters]'
 	elif userFic.lastChapterViewed is not None and userFic.lastChapterViewed > 0:
 		for cid in range(userFic.lastChapterViewed + 1, fic.chapterCount + 1):
 			try:
@@ -861,7 +869,7 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
 		)
 
 	twidth = width
-	einfo = '({} {:>8})'.format(fic.id, fic.localId)
+	einfo = f'({fic.id} {fic.localId:>8})'
 	rhead = ''.join(
 		[
 			str(userFic.rating) if userFic.rating and userFic.rating >= 0 else ' ',
@@ -881,7 +889,7 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
 
 	headerParts = [
 		f'words: {util.formatNumber(fic.wordCount or -1)}',
-		'{}'.format(fic.getAuthorName()),
+		f'{fic.getAuthorName()}',
 		(
 			f'to read: {util.formatNumber(remainingWordCount)}'
 			if remainingWordCount > 0 else ''
@@ -893,16 +901,16 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
 
 	ourDoms = fic.fandoms()
 	if len(ourDoms) > 0:
-		print('    fandoms: {}'.format([dom.name for dom in ourDoms]))
+		print(f'    fandoms: {[dom.name for dom in ourDoms]}')
 	ourCats = fic.genres()
 	if len(ourCats) > 0:
-		print('    genres: {}'.format([cat.name for cat in ourCats]))
+		print(f'    genres: {[cat.name for cat in ourCats]}')
 	ourTags = fic.tags()
 	if len(ourTags) > 0:
-		print('    tags: {}'.format([tag.name for tag in ourTags]))
+		print(f'    tags: {[tag.name for tag in ourTags]}')
 	ourChars = fic.characters()
 	if len(ourChars) > 0:
-		print('    chars: {}'.format([char.name for char in ourChars]))
+		print(f'    chars: {[char.name for char in ourChars]}')
 
 	userFic = fic.getUserFic()
 	if userFic.readStatus == FicStatus.abandoned:
@@ -914,7 +922,7 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
 			for line in w:
 				if line.strip() == '<hr />':
 					continue
-				print('  {}'.format(line))
+				print(f'  {line}')
 			print('')
 
 	updatedStr = fic.getUpdatedDateString()
@@ -924,7 +932,7 @@ def infoWithWidth(ficId: FicId, width: int) -> None:
 	)
 	print(ficDates)
 
-	print('  {}'.format(fic.url))
+	print(f'  {fic.url}')
 	print('{:>{}}'.format(einfo, twidth))
 	print('')
 
@@ -935,7 +943,7 @@ def info(ficId: FicId) -> None:
 
 def favorite(ficId: FicId) -> None:
 	fic = Fic.load(ficId)
-	print('marking "{}" as a favorite'.format(fic.title))
+	print(f'marking "{fic.title}" as a favorite')
 	userFic = fic.getUserFic()
 	userFic.isFavorite = True
 	userFic.update()
@@ -944,7 +952,7 @@ def favorite(ficId: FicId) -> None:
 def listIds() -> None:
 	fics = Fic.select({}, 'title ASC')
 	for fic in fics:
-		print('{:>10} {} {}'.format(fic.localId, fic.id, fic.title))
+		print(f'{fic.localId:>10} {fic.id} {fic.title}')
 
 
 def markRead(ficId: FicId) -> None:
@@ -955,7 +963,7 @@ def markRead(ficId: FicId) -> None:
 	lastViewed = ficId.chapterId
 	lastRead = ficId.chapterId
 	if lastViewed is None:
-		print('marking entire "{}" read'.format(fic.title))
+		print(f'marking entire "{fic.title}" read')
 		if userFic.readStatus == FicStatus.ongoing:
 			userFic.readStatus = FicStatus.complete
 			userFic.update()
@@ -977,7 +985,7 @@ def markRead(ficId: FicId) -> None:
 		userFic.lastChapterViewed is not None
 		and userFic.lastChapterViewed > lastViewed
 	):
-		print('already marked last as {}'.format(userFic.lastChapterViewed))
+		print(f'already marked last as {userFic.lastChapterViewed}')
 	else:
 		userFic.updateLastViewed(lastViewed)
 
@@ -1043,13 +1051,13 @@ def fixMissingFandoms() -> None:
 		if len(fandoms) > 0:
 			continue
 		if fic.sourceId == FicType.portkeyarchive:
-			print('skipping "{}" ({}) (portkey)...'.format(fic.title, fic.id))
+			print(f'skipping "{fic.title}" ({fic.id}) (portkey)...')
 			continue
 		if fic.sourceId != FicType.ff_net and fic.sourceId != FicType.hpfanficarchive:
 			print(f'skipping "{fic.title}" ({fic.id}) ({fic.sourceId})...')
 			continue
 
-		print('checking "{}" ({}) for fandoms...'.format(fic.title, fic.id))
+		print(f'checking "{fic.title}" ({fic.id}) for fandoms...')
 		fic.checkForUpdates()
 
 		ufandoms = fic.fandoms()
@@ -1107,7 +1115,7 @@ def wasCheckedRecently(fic: Fic) -> bool:
 def update(ficId: FicId) -> bool:
 	fic = Fic.load(ficId)
 	if wasCheckedRecently(fic):
-		print('skipping "{}" ({}), checked "recently"'.format(fic.title, fic.id))
+		print(f'skipping "{fic.title}" ({fic.id}), checked "recently"')
 		return False
 	return forceUpdate(ficId)
 
@@ -1183,7 +1191,7 @@ def updateList(ficIds: List[FicId]) -> List[Fic]:
 	if len(updated) > 0:
 		print(f'updateList: {len(updated)} fics have updates')
 	for fic in updated:
-		print('{} "{}" has updates'.format(fic.id, fic.title))
+		print(f'{fic.id} "{fic.title}" has updates')
 
 	if len(broken) > 0:
 		print('=' * 72)
@@ -1481,7 +1489,7 @@ def listCommands() -> None:
 
 
 def printUsage() -> None:
-	print('commands: {}'.format([cmd.name for cmd in cmds]))
+	print(f'commands: {[cmd.name for cmd in cmds]}')
 
 
 def printCommandUsage(cmd: str) -> None:
@@ -1489,7 +1497,7 @@ def printCommandUsage(cmd: str) -> None:
 		if c.name == cmd:
 			c.printUsage()
 			return
-	print('error: no such command "{}"'.format(cmd))
+	print(f'error: no such command "{cmd}"')
 
 
 # timezone offset TODO: lookup from host?
@@ -1565,7 +1573,7 @@ def readInLastDay(maxDays: int = 30) -> None:
 		titleBreakdown[idx][f.title][0] += cwords
 		titleBreakdown[idx][f.title][1] += 1
 
-	print(' total words: {}'.format(totalWordsPerDay))
+	print(f' total words: {totalWordsPerDay}')
 	# util.formatNumber(n) for n in totalWordsPerDay]))
 	print(f'total titles: {util.formatNumber(totalTitles)}')
 	# print(titleBreakdown)
@@ -1667,8 +1675,8 @@ def readByFandomAllTime() -> None:
 
 	for fandom in totalWordsPerFandomPerDay:
 		cname = fandom.replace(' ', '_')
-		print('{0}: {1}'.format(cname, fandom))
-		os.makedirs('./readstats/{0}'.format(cname), exist_ok=True)
+		print(f'{cname}: {fandom}')
+		os.makedirs(f'./readstats/{cname}', exist_ok=True)
 
 		# get per week totals
 		for i in range(150, len(totalWordsPerFandomPerDay[fandom])):
@@ -1689,11 +1697,11 @@ def readByFandomAllTime() -> None:
 
 	for fandom in totalWordsPerFandomPerWeek:
 		cname = fandom.replace(' ', '_')
-		print('{0}: {1}'.format(cname, fandom))
-		with open('./readstats/{0}/stats'.format(cname), 'w') as f:
+		print(f'{cname}: {fandom}')
+		with open(f'./readstats/{cname}/stats', 'w') as f:
 			for i in range(len(totalWordsPerFandomPerWeek[fandom])):
 				t = totalWordsPerFandomPerWeek[fandom][i]
-				f.write('{0} {1}\n'.format(i, t))
+				f.write(f'{i} {t}\n')
 
 	del totalWordsPerFandomPerWeek['total']
 
@@ -1711,16 +1719,16 @@ def readByFandomAllTime() -> None:
 			wstamp = int(startStamp + (secondsInADay * 7) * i - secondsInADay * 10)
 			dt = datetime.date.fromtimestamp(wstamp)
 			fd = dt.strftime("%Y-%m-%d")
-			row = '{0}'.format(fd)
+			row = f'{fd}'
 			for fandom in totalWordsPerFandomPerWeek:
 				t = totalWordsPerFandomPerWeek[fandom][i]
-				row += ',{0}'.format(t)
-			f.write('{0}\n'.format(row))
+				row += f',{t}'
+			f.write(f'{row}\n')
 
 
 def readByFandomAllTimeWhitelist() -> None:
 	fandomWhitelist = {'Harry Potter', 'Avatar', 'Worm', 'Naruto'}
-	print('fandom whitelits: {}'.format(fandomWhitelist))
+	print(f'fandom whitelits: {fandomWhitelist}')
 
 	startDayWeekOffset = 2  # must subtract 2 days to get to start of week
 	startDay = getDayNum(1456815600)  # 2016-03-01
@@ -1779,7 +1787,7 @@ def readByFandomAllTimeWhitelist() -> None:
 			else:
 				week = int((i - cutoffDay - startDayWeekOffset) / 7)
 				if week < 0:
-					print('uhm... {}'.format(i))
+					print(f'uhm... {i}')
 				totalWordsPerFandomPerWeek[fandom][week] += t
 
 	# smear pre cutoff across initial cutoffDay / 7 weeks
@@ -1819,12 +1827,12 @@ def readByFandomAllTimeWhitelist() -> None:
 			wstamp = int(startStamp + (secondsInADay * 7) * i)
 			dt = datetime.date.fromtimestamp(wstamp)
 			fd = dt.strftime("%Y-%m-%d")
-			row = '{0}'.format(fd)
+			row = f'{fd}'
 			for o in order:
 				fandom = o[1]
 				t = totalWordsPerFandomPerWeek[fandom][i]
-				row += ',{0}'.format(t)
-			f.write('{0}\n'.format(row))
+				row += f',{t}'
+			f.write(f'{row}\n')
 
 
 def cacheFavorites() -> None:
@@ -1898,7 +1906,7 @@ class LocalFic:
 
 def readLocal(fname: str) -> None:
 	text = None
-	with open(fname, 'r') as ifile:
+	with open(fname) as ifile:
 		text = ifile.read()
 
 	fic = cast(Fic, LocalFic(text))
@@ -1929,10 +1937,10 @@ def fandomFic(ficId: FicId, fandom: str) -> None:
 def characterFic(ficId: FicId, char: str) -> None:
 	parts = char.split('/')
 	if len(parts) != 2:
-		raise Exception('char must be fandom/character: {}'.format(char))
+		raise Exception(f'char must be fandom/character: {char}')
 	charFandom = parts[0]
 	charName = parts[1]
-	print('adding character "{}" from "{}" to fic'.format(charName, charFandom))
+	print(f'adding character "{charName}" from "{charFandom}" to fic')
 	fic = Fic.load(ficId)
 	fandom = Fandom.define(charFandom)
 	fic.add(fandom)
@@ -1994,9 +2002,10 @@ def characterFic(ficId: FicId, char: str) -> None:
 
 
 def parseUserFavorites(uids: str) -> None:
-	import skitter
-	import subprocess
+
 	from bs4 import BeautifulSoup
+
+	import skitter
 	ts = None
 
 	if uids.startswith('https://www.fanfiction.net/u/'):
@@ -2061,7 +2070,7 @@ def parseUserFavorites(uids: str) -> None:
 	#cnt = m.invalidateOldFFNUserFavorites(uid, m.mapTimestamp(ts))
 	cnt = 1
 
-	print('{} invalidated'.format(cnt))
+	print(f'{cnt} invalidated')
 	if cnt > 0:
 		util.logMessage('FIXME TODO user actually has removed fics')
 		raise Exception('TODO')
@@ -2230,7 +2239,7 @@ cmds = [
 
 def main() -> int:
 	hardCommands = {'def', 'add', 'read'}
-	if len(sys.argv) > 1 and not (sys.argv[1] in hardCommands):
+	if len(sys.argv) > 1 and sys.argv[1] not in hardCommands:
 		return tryCommand(sys.argv[1:])
 
 	if len(sys.argv) > 1 and sys.argv[1] == 'def':
@@ -2242,7 +2251,7 @@ def main() -> int:
 		which = sys.argv[3]
 		what = sys.argv[2]
 
-		print('trying to def "{}" as {}'.format(which, what))
+		print(f'trying to def "{which}" as {what}')
 
 		if 'genre'.startswith(what):
 			cat = Genre.define(which)
@@ -2271,9 +2280,7 @@ def main() -> int:
 		what = sys.argv[2]
 
 		print(
-			'trying to add "{}" to story "{}" ({})'.format(
-				which, fic.title, ficId.localId
-			)
+			f'trying to add "{which}" to story "{fic.title}" ({ficId.localId})'
 		)
 
 		thing: Optional[TagBase] = None
@@ -2287,7 +2294,7 @@ def main() -> int:
 			thing = Tag.define(which)
 
 		if thing is None:
-			print('thing {} does not exist, try to def it'.format(which))
+			print(f'thing {which} does not exist, try to def it')
 			return 1
 		fic.add(thing)
 

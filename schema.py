@@ -1,12 +1,12 @@
 #!./venv/bin/python
-from typing import TYPE_CHECKING, List, Dict, Any, Tuple, Optional, IO, Sequence
-import os
-import sys
-import shutil
-import time
+from typing import IO, TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 import datetime
-import psycopg2
-from psycopg2.extensions import AsIs, register_adapter, new_type, register_type
+import os
+import shutil
+import sys
+import time
+
+from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 
 if TYPE_CHECKING:
 	from psycopg2 import cursor  # type: ignore[attr-defined]
@@ -81,7 +81,7 @@ def initDB() -> None:
 		with conn.cursor() as curs:
 			for spath, _, _ in walkSql():
 				print(f'executing {spath}')
-				with open(spath, 'r') as f:
+				with open(spath) as f:
 					sql = f.read()
 					curs.execute(sql)
 
@@ -522,7 +522,7 @@ def writeColumnInfo(f: IO, clsName: str, columns: List[ColumnInfo]) -> None:
 
 def writeInit(f: IO, clsName: str, columns: List[ColumnInfo]) -> None:
 	# default values?
-	f.write(f'\tdef __init__(self) -> None:\n')
+	f.write('\tdef __init__(self) -> None:\n')
 	for col in columns:
 		if col.dflt_value is not None:
 			f.write(f'\t\tself.{col.name}: {col.ptype} = {col.dflt_value}\n')
@@ -590,16 +590,16 @@ def writeToJSONable(f: IO, clsName: str, columns: List[ColumnInfo]) -> None:
 	if len(columns) < 1:
 		f.writelines(
 			[
-				f"\tdef toJSONable(self) -> lite.JSONable:\n",
-				f'\t\treturn {{ }}\n',
+				"\tdef toJSONable(self) -> lite.JSONable:\n",
+				'\t\treturn { }\n',
 			]
 		)
 		return
 
 	f.writelines(
 		[
-			f"\tdef toJSONable(self) -> lite.JSONable:\n",
-			f'\t\treturn {{\n',
+			"\tdef toJSONable(self) -> lite.JSONable:\n",
+			'\t\treturn {\n',
 		]
 	)
 	for col in columns:
@@ -616,8 +616,8 @@ def writeToJSONable(f: IO, clsName: str, columns: List[ColumnInfo]) -> None:
 			f.write(f'\t\t\t"{col.name}": self.{col.name},\n')
 
 	f.writelines([
-		f'\t\t}}\n',
-		f'\n',
+		'\t\t}\n',
+		'\n',
 	])
 
 
@@ -636,7 +636,7 @@ def writeEnum(f: IO, name: str, values: Sequence[str]) -> None:
 			f"\treturn AsIs(\"'%s'::{name}\" % {name}.name)\n",
 			f"def cast{clsName}(value: str | bytes | None, curs: 'cursor'\n",
 			f'\t\t) -> Optional[{clsName}]:\n',
-			f'\tif value is None: return None\n',
+			'\tif value is None: return None\n',
 			f'\tif isinstance(value, bytes): return {clsName}[value.decode(\'utf-8\')]\n',
 			f'\treturn {clsName}[value]\n',
 			'\n',
@@ -671,11 +671,11 @@ def generateBaseClasses() -> None:
 			]
 		)
 
-		print(f'generating enums')
+		print('generating enums')
 		for enum, values in entities['enums'].items():
 			writeEnum(f, enum, values)
 
-		print(f'generating tables')
+		print('generating tables')
 		for table, sql in entities['tables']:
 			clsName = getClassName(table)
 			print(f'  generating table {table} => {clsName}')

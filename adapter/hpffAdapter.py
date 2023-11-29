@@ -1,13 +1,13 @@
-import re
-import math
+from typing import Dict, List, Optional
 import gzip
-import time
-from typing import Optional, List, Dict
-import util
+import math
+import re
+
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
 from htypes import FicId, FicType
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class HarryPotterFanfictionAdapter(Adapter):
@@ -19,7 +19,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 		)
 		self.storyPrefix = '/viewstory.php?psid='
 		self.chapterPrefix = '/viewstory.php?chapterid='
-		self.archivePath = '/srv/{}'.format(self.urlFragments[0])
+		self.archivePath = f'/srv/{self.urlFragments[0]}'
 		self.storyMapPath = self.archivePath + '/' + 'story_map.gz'
 		self.chapterMapPath = self.archivePath + '/' + 'chapter_map.gz'
 		self.encoding = 'ISO-8859-1'
@@ -34,9 +34,9 @@ class HarryPotterFanfictionAdapter(Adapter):
 				if int(parts[0]) == storyId:
 					matching += [parts]
 		if len(matching) < 1:
-			raise Exception('story {} is missing'.format(storyId))
+			raise Exception(f'story {storyId} is missing')
 		if len(matching) > 1:
-			raise Exception('storyId is in map multiple times: {}'.format(storyId))
+			raise Exception(f'storyId is in map multiple times: {storyId}')
 		return matching[0]
 
 	def getArchiveChapterInfo(self, chapterId: int) -> Optional[List[str]]:
@@ -52,7 +52,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 			return None
 		if len(matching) > 1:
 			raise Exception(
-				'chapterId is in map multiple times: {}'.format(chapterId)
+				f'chapterId is in map multiple times: {chapterId}'
 			)
 		return matching[0]
 
@@ -68,7 +68,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 		localChapterIdMap: Dict[int, str] = {}
 		for r in matching:
 			if int(r[3]) in localChapterIdMap:
-				raise Exception('chapterId is in map multiple times: {}'.format(r[3]))
+				raise Exception(f'chapterId is in map multiple times: {r[3]}')
 			localChapterIdMap[int(r[3])] = r[4]
 		return localChapterIdMap
 
@@ -118,8 +118,8 @@ class HarryPotterFanfictionAdapter(Adapter):
 
 	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		if chapterId is None:
-			return '{}{}{}'.format(self.baseUrl, self.storyPrefix, storyId)
-		return '{}{}{}'.format(self.baseUrl, self.chapterPrefix, chapterId)
+			return f'{self.baseUrl}{self.storyPrefix}{storyId}'
+		return f'{self.baseUrl}{self.chapterPrefix}{chapterId}'
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		# TODO: do we need these 2 lines or will they always be done by however
@@ -163,9 +163,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 	def getCurrentInfo(self, fic: Fic) -> Fic:
 		# grab the content from disk
 		info = self.getArchiveStoryInfo(int(fic.localId))
-		spath = '{}/archive/{}/{}/summary.html.gz'.format(
-			self.archivePath, info[1], info[2]
-		)
+		spath = f'{self.archivePath}/archive/{info[1]}/{info[2]}/summary.html.gz'
 		data = self.slurp(spath)
 		fic = self.parseInfoInto(fic, data)
 		fic.upsert()
@@ -202,7 +200,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 			href = a.get('href')
 			if (
 				not href.startswith(disclaimerJs)
-				and href != '?psid={}'.format(fic.localId)
+				and href != f'?psid={fic.localId}'
 			):
 				continue
 			fic.title = a.getText()
@@ -264,7 +262,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 		elif status == 'Abandoned':
 			fic.ficStatus = FicStatus.abandoned
 		else:
-			raise Exception('unknown status: {}'.format(status))
+			raise Exception(f'unknown status: {status}')
 
 		for a in soup.findAll('a'):
 			a_href = a.get('href')
@@ -275,7 +273,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 				self.setAuthor(fic, author, authorUrl, authorId)
 				break
 		else:
-			raise Exception('unable to find author:\n{}'.format(text))
+			raise Exception(f'unable to find author:\n{text}')
 
 		# TODO: chars/pairings?
 		fic.add(Fandom.define('Harry Potter'))

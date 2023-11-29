@@ -1,13 +1,12 @@
+from typing import List, Optional
 import time
 import urllib
-from typing import Optional, List
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom
-import util
-import scrape
 
 from adapter.adapter import Adapter
+from htypes import FicId, FicType
+import scrape
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class FanficsMeAdapter(Adapter):
@@ -16,9 +15,9 @@ class FanficsMeAdapter(Adapter):
 		self.baseStoryUrl = self.baseUrl + '/read2.php'
 
 	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
-		url = self.baseStoryUrl + '?id={}'.format(storyId)
+		url = self.baseStoryUrl + f'?id={storyId}'
 		if chapterId is not None:
-			url += '&chapter={}'.format(chapterId - 1)
+			url += f'&chapter={chapterId - 1}'
 		return url
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
@@ -72,7 +71,7 @@ class FanficsMeAdapter(Adapter):
 
 	def parseRussianDate(self, datestr: str) -> OilTimestamp:
 		parts = datestr.split('.')
-		dtstr = '{}.{}.{}'.format(parts[1], parts[0], parts[2])
+		dtstr = f'{parts[1]}.{parts[0]}.{parts[2]}'
 		uts = util.parseDateAsUnix(dtstr, int(time.time()))
 		return OilTimestamp(uts)
 
@@ -170,14 +169,14 @@ class FanficsMeAdapter(Adapter):
 
 			# try to get it out of current blob first
 			if chapter.html() is None:
-				contentDiv = soup.find('div', {'id': 'c{}'.format(cid - 1)})
+				contentDiv = soup.find('div', {'id': f'c{cid - 1}'})
 				if contentDiv is not None:
 					chapter.setHtml(
 						'<div class="ReadContent">' + str(contentDiv) + '</div>'
 					)
 
 			if chapter.title is None or len(chapter.title) < 1:
-				contentDiv = soup.find('div', {'id': 'c{}'.format(cid - 1)})
+				contentDiv = soup.find('div', {'id': f'c{cid - 1}'})
 				if contentDiv is not None:
 					chapterTitle = contentDiv.previous_sibling
 					if chapterTitle is not None and chapterTitle.name == 'h2':
@@ -189,7 +188,7 @@ class FanficsMeAdapter(Adapter):
 				assert (cdata is not None)
 				chapter.setHtml(self.extractContent(fic, cdata))
 				csoup = BeautifulSoup(cdata, 'html5lib')
-				contentDiv = csoup.find('div', {'id': 'c{}'.format(cid - 1)})
+				contentDiv = csoup.find('div', {'id': f'c{cid - 1}'})
 				chapterTitle = contentDiv.previous_sibling
 				if chapterTitle is not None and chapterTitle.name == 'h2':
 					chapter.title = chapterTitle.getText()

@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING, List
+
 from skitter_client import SkitterClient
 from weaver_client import WeaverClient
+
 if TYPE_CHECKING:
 	import requests
 

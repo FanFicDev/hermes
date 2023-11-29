@@ -1,15 +1,14 @@
+from typing import List, Optional
 import re
 import time
-from typing import Optional, List
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom
-import util
-import scrape
-import skitter
 
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
+from htypes import FicId, FicType
+import scrape
+import skitter
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 fictionPressCategories = {
 	'fiction',
@@ -54,12 +53,10 @@ class FictionPressAdapter(Adapter):
 		title: Optional[str] = None
 	) -> str:
 		if chapterId is None:
-			return '{}/s/{}'.format(self.baseUrl, storyId)
+			return f'{self.baseUrl}/s/{storyId}'
 		if title is None:
-			return '{}/s/{}/{}'.format(self.baseUrl, storyId, chapterId)
-		return '{}/s/{}/{}/{}'.format(
-			self.baseUrl, storyId, chapterId, util.urlTitle(title)
-		)
+			return f'{self.baseUrl}/s/{storyId}/{chapterId}'
+		return f'{self.baseUrl}/s/{storyId}/{chapterId}/{util.urlTitle(title)}'
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		if chapter.fic is None:
@@ -168,7 +165,7 @@ class FictionPressAdapter(Adapter):
 				fic.title = b.get_text()
 				break
 		else:
-			raise Exception('error: unable to find title:\n{}\n'.format(pt_str))
+			raise Exception(f'error: unable to find title:\n{pt_str}\n')
 
 		fic.url = self.constructUrl(fic.localId, 1, fic.title)
 
@@ -181,7 +178,7 @@ class FictionPressAdapter(Adapter):
 				fic.description = div.get_text()
 				break
 		else:
-			raise Exception('error: unable to find description:\n{}\n'.format(pt_str))
+			raise Exception(f'error: unable to find description:\n{pt_str}\n')
 
 		# default optional fields
 		fic.reviewCount = 0
@@ -223,7 +220,7 @@ class FictionPressAdapter(Adapter):
 			if status == 'Complete':
 				fic.ficStatus = FicStatus.complete
 			else:
-				raise Exception('unknown status: {}'.format(status))
+				raise Exception(f'unknown status: {status}')
 
 		for a in profile_top.find_all('a'):
 			a_href = a.get('href')
@@ -234,7 +231,7 @@ class FictionPressAdapter(Adapter):
 				self.setAuthor(fic, author, authorUrl, authorId)
 				break
 		else:
-			raise Exception('unable to find author:\n{}'.format(text))
+			raise Exception(f'unable to find author:\n{text}')
 
 		preStoryLinks = soup.find(id='pre_story_links')
 		preStoryLinksLinks = preStoryLinks.find_all('a')
@@ -250,7 +247,7 @@ class FictionPressAdapter(Adapter):
 				cat = hrefParts[1]
 				if cat in fictionPressCategories:
 					continue  # skip categories
-				raise Exception('unknown category: {}'.format(cat))
+				raise Exception(f'unknown category: {cat}')
 
 			# if it's a regular genre in some category
 			if (
@@ -259,7 +256,7 @@ class FictionPressAdapter(Adapter):
 			):
 				# ensure category is in our map
 				if hrefParts[1] not in fictionPressCategories:
-					raise Exception('unknown category: {}'.format(hrefParts[1]))
+					raise Exception(f'unknown category: {hrefParts[1]}')
 
 				# ensure it's in our whitelist
 				if hrefParts[2] not in fictionPressGenres:
@@ -328,6 +325,6 @@ class FictionPressAdapter(Adapter):
 			data.lower().find('chapter not found.') != -1
 			and data.lower().find("id='storytext'") == -1
 		):
-			raise Exception('unable to find chapter content {}'.format(url))
+			raise Exception(f'unable to find chapter content {url}')
 
 		return data

@@ -4,9 +4,10 @@
 #   if it needs scraped and the request is successful, [success delay] can be
 #     used to specify a delay before returning
 #   if force is set the url is always fetched
-import scrape
 import sys
 import time
+
+import scrape
 
 url = sys.argv[1]
 url = scrape.canonizeUrl(url)
@@ -17,10 +18,10 @@ if len(sys.argv) > 3 and sys.argv[3] == 'force':
 
 mostRecent = scrape.getMostRecentScrape(url)
 if mostRecent is not None and not force:
-	print('url has already been scraped: {}'.format(url))
+	print(f'url has already been scraped: {url}')
 	sys.exit(0)
 
-print('scraping {}'.format(url))
+print(f'scraping {url}')
 
 res = scrape.scrape(url)
 

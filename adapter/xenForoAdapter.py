@@ -1,22 +1,28 @@
-from typing import Dict, List, Set, Optional, Tuple, Union, Any, cast
 import typing
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
+
 if typing.TYPE_CHECKING:
-	from bs4 import BeautifulSoup
+	pass
+from html import escape as htmlEscape
 import time
-import dateutil.parser
 import traceback
 import urllib
-from html import escape as htmlEscape
 
-from htypes import FicType, FicId
-from store import (
-	OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom, Character, Tag
-)
-import util
-import scrape
-from view import HtmlView
+import dateutil.parser
 
 from adapter.adapter import Adapter, edumpContent
+from htypes import FicId, FicType
+import scrape
+from store import (
+	Fandom,
+	Fic,
+	FicStatus,
+	Language,
+	OilTimestamp,
+	Tag,
+)
+import util
+from view import HtmlView
 
 
 class XenForoAdapter(Adapter):
@@ -59,7 +65,7 @@ class XenForoAdapter(Adapter):
 		if parts[0] == 'posts':
 			nurl = scrape.resolveRedirects(url)
 			if nurl == url:
-				raise Exception('unable to resolve redirects: {}'.format(url))
+				raise Exception(f'unable to resolve redirects: {url}')
 			return self.tryParseUrl(nurl)
 		if not parts[0].endswith('threads'):
 			return None
@@ -223,7 +229,7 @@ class XenForoAdapter(Adapter):
 
 	def getDeepPageUrls(self, fic: Fic) -> List[str]:
 		from bs4 import BeautifulSoup
-		ficUrl = '{}threads/{}'.format(self.baseUrl, fic.localId)
+		ficUrl = f'{self.baseUrl}threads/{fic.localId}'
 		wwwHtml = self.scrapeLike(ficUrl)
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 		pageCount, _ = self.getPageCount(soup)
@@ -231,13 +237,13 @@ class XenForoAdapter(Adapter):
 			return [ficUrl]
 		urls = [ficUrl]
 		for i in range(2, pageCount + 1):
-			purl = self.baseUrl + 'threads/{}/page-{}'.format(fic.localId, i)
+			purl = self.baseUrl + f'threads/{fic.localId}/page-{i}'
 			urls += [purl]
 		return urls
 
 	def getReaderUrls(self, fic: Fic) -> List[str]:
 		from bs4 import BeautifulSoup
-		readerUrl = '{}threads/{}/reader'.format(self.baseUrl, fic.localId)
+		readerUrl = f'{self.baseUrl}threads/{fic.localId}/reader'
 		wwwHtml = self.scrapeLike(readerUrl)
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 		pageCount, oldStyle = self.getPageCount(soup)
@@ -264,14 +270,14 @@ class XenForoAdapter(Adapter):
 			pass
 
 		urls = self.getDeepPageUrls(fic)
-		util.logMessage('deepSoftScrape|{}|{}'.format(fic.id, len(urls)))
+		util.logMessage(f'deepSoftScrape|{fic.id}|{len(urls)}')
 		for url in urls:
 			self.scrapeLike(url, 5)
 
 	def readerSoftScrape(self, fic: Fic) -> None:
 		urls = self.getReaderUrls(fic)
 		util.logMessage(
-			'readerSoftScrape|fic.id: {}|len(urls): {}'.format(fic.id, len(urls))
+			f'readerSoftScrape|fic.id: {fic.id}|len(urls): {len(urls)}'
 		)
 		for url in urls:
 			self.scrapeLike(url)
@@ -384,7 +390,7 @@ class XenForoAdapter(Adapter):
 				if not (b.startswith('li id=') or b.startswith('article class=')):
 					continue
 				# check for 'message' -- simulates checking for message class
-				if not 'message' in s:
+				if 'message' not in s:
 					continue
 				# to check the data-author we simply look for the author and hope
 				# there aren't collisions
@@ -425,7 +431,7 @@ class XenForoAdapter(Adapter):
 					attrs |= {k}
 				attrs = attrs - usedAttrs - ignoredAttrs
 				if len(attrs) > 0:
-					raise Exception('unknown attrs: {}'.format(attrs))
+					raise Exception(f'unknown attrs: {attrs}')
 
 				src = img.get('src')
 				if src is None:
@@ -449,18 +455,18 @@ class XenForoAdapter(Adapter):
 				if alt is not None and alt.lower() == '[img]':
 					alt = None
 
-				print('    src: "{}"'.format(src))
+				print(f'    src: "{src}"')
 				if title is not None:
-					print('  title: "{}"'.format(title))
+					print(f'  title: "{title}"')
 				if alt is not None:
-					print('    alt: "{}" ({})'.format(alt, len(alt)))
+					print(f'    alt: "{alt}" ({len(alt)})')
 
 				raise NotImplementedError('TODO: actually scrape images')
 				#imgSrc |= { src }
 
 		leftover = dataUrls - imgSrc
 		if len(leftover) > 0:
-			raise Exception('leftover img urls: {}'.format(leftover))
+			raise Exception(f'leftover img urls: {leftover}')
 
 	def getLastFetchedThreadmarksUrl(self, fic: Fic) -> str:
 		if self.baseUrl.find('?') >= 0:
@@ -480,33 +486,33 @@ class XenForoAdapter(Adapter):
 	def getLastFetchedReaderUrl(self, fic: Fic) -> str:
 		return self.getLastLikeOrDefault(
 			[
-				'{}threads/{}/reader_%'.format(self.baseUrl, fic.localId),
-				'{}threads/%.{}/reader_%'.format(self.baseUrl, fic.localId),
-			], '{}threads/{}/reader'.format(self.baseUrl, fic.localId)
+				f'{self.baseUrl}threads/{fic.localId}/reader_%',
+				f'{self.baseUrl}threads/%.{fic.localId}/reader_%',
+			], f'{self.baseUrl}threads/{fic.localId}/reader'
 		)
 
 	def getLastFetchedReaderStartUrl(self, fic: Fic) -> str:
 		return self.getLastLikeOrDefault(
 			[
-				'{}threads/{}/reader'.format(self.baseUrl, fic.localId),
-				'{}threads/%.{}/reader'.format(self.baseUrl, fic.localId),
-			], '{}threads/{}/reader'.format(self.baseUrl, fic.localId)
+				f'{self.baseUrl}threads/{fic.localId}/reader',
+				f'{self.baseUrl}threads/%.{fic.localId}/reader',
+			], f'{self.baseUrl}threads/{fic.localId}/reader'
 		)
 
 	def getLastFetchedDeepUrl(self, fic: Fic) -> str:
 		return self.getLastLikeOrDefault(
 			[
-				'{}threads/{}/page-%'.format(self.baseUrl, fic.localId),
-				'{}threads/%.{}/page-%'.format(self.baseUrl, fic.localId),
-			], '{}threads/{}'.format(self.baseUrl, fic.localId)
+				f'{self.baseUrl}threads/{fic.localId}/page-%',
+				f'{self.baseUrl}threads/%.{fic.localId}/page-%',
+			], f'{self.baseUrl}threads/{fic.localId}'
 		)
 
 	def getLastFetchedDeepStartUrl(self, fic: Fic) -> str:
 		return self.getLastLikeOrDefault(
 			[
-				'{}threads/{}'.format(self.baseUrl, fic.localId),
-				'{}threads/%.{}'.format(self.baseUrl, fic.localId),
-			], '{}threads/{}'.format(self.baseUrl, fic.localId)
+				f'{self.baseUrl}threads/{fic.localId}',
+				f'{self.baseUrl}threads/%.{fic.localId}',
+			], f'{self.baseUrl}threads/{fic.localId}'
 		)
 
 	def getUrlsToRefetch(self, fic: Fic) -> Set[str]:
@@ -690,9 +696,9 @@ class XenForoAdapter(Adapter):
 				a = threadmark.find('a')
 				purl = a.get('href')
 				if purl.startswith('threads/'):
-					purl = '{}{}'.format(self.baseUrl, purl)
+					purl = f'{self.baseUrl}{purl}'
 				elif purl.startswith('/threads/'):
-					purl = '{}{}'.format(self.baseUrl, purl[1:])
+					purl = f'{self.baseUrl}{purl[1:]}'
 				postUrls += [purl]
 
 				chapterTitles[len(postUrls)] = a.getText().strip()

@@ -1,15 +1,21 @@
+from typing import (
+	TYPE_CHECKING,
+	Any,
+	Dict,
+	List,
+	Optional,
+	Sequence,
+	Tuple,
+	Type,
+	TypeVar,
+)
 import re
 import threading
-from typing import (
-	TYPE_CHECKING, Dict, List, Tuple, Any, Sequence, Optional, Sequence, Type,
-	TypeVar
-)
-import psycopg2
-import schema
+
+from lite_oil import getConnection
+from lite_oil import shutdown as shutdown
 from schema import ColumnInfo
 import util
-from lite_oil import getConnection, commit
-from lite_oil import shutdown as shutdown
 
 if TYPE_CHECKING:
 	from psycopg2 import connection  # type: ignore[attr-defined]
@@ -75,7 +81,7 @@ def logQuery(kind: str, table: str, sql: str, data: Sequence[Any]) -> None:
 T = TypeVar('T', bound='StoreType')
 
 
-class StoreType(object):
+class StoreType:
 	subDB: str = 'meta'
 	columns: List[ColumnInfo]
 	pkColumns: List[ColumnInfo]
@@ -105,10 +111,10 @@ class StoreType(object):
 		table = cls.getTableName()
 
 		conn = cls.getConnection()
-		sql = 'SELECT * FROM {} WHERE '.format(table)
-		whereParts = ['{} = %s'.format(pk.name) for pk in cls.pkColumns]
+		sql = f'SELECT * FROM {table} WHERE '
+		whereParts = [f'{pk.name} = %s' for pk in cls.pkColumns]
 		if len(whereParts) == 0:
-			raise Exception('table {} has no primary key'.format(table))
+			raise Exception(f'table {table} has no primary key')
 		sql += ' AND '.join(whereParts)
 
 		with conn.cursor() as curs:
@@ -146,7 +152,7 @@ class StoreType(object):
 					whereParts += [f'{col} {bit[0]} %s']
 					data += [bit[1]]
 				else:
-					whereParts += ['{} = %s'.format(col)]
+					whereParts += [f'{col} = %s']
 					data += [whereData[col]]
 			whereSql = ' WHERE ' + ' AND '.join(whereParts)
 		return (tuple(data), whereSql)
@@ -161,7 +167,7 @@ class StoreType(object):
 		conn = cls.getConnection()
 
 		data, whereSql = StoreType.buildWhere(whereData)
-		sql = 'SELECT * FROM {} {}'.format(table, whereSql)
+		sql = f'SELECT * FROM {table} {whereSql}'
 
 		if orderBy is not None:
 			sql += ' ORDER BY ' + orderBy
@@ -179,7 +185,7 @@ class StoreType(object):
 		conn = cls.getConnection()
 
 		data, whereSql = StoreType.buildWhere(whereData)
-		sql = 'SELECT COUNT(1) FROM {} {}'.format(table, whereSql)
+		sql = f'SELECT COUNT(1) FROM {table} {whereSql}'
 		print(sql)
 
 		with conn.cursor() as curs:
@@ -231,7 +237,7 @@ class StoreType(object):
 		pkCols = type(self).pkColumns
 		nkCols = type(self).regColumns
 
-		sql = 'UPDATE {} '.format(table)
+		sql = f'UPDATE {table} '
 		sql += ' SET ' + (', '.join([col.name + ' = %s' for col in nkCols]))
 		sql += ' WHERE ' + (' AND '.join([col.name + ' = %s' for col in pkCols]))
 		data = tuple(list(self.getNonPKTuple()) + list(self.getPKTuple()))

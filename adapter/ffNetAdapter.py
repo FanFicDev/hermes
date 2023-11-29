@@ -1,16 +1,15 @@
+from typing import Dict, List, Optional
 import re
 import time
 import traceback
-from typing import Optional, List, Dict
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom
-import util
-import scrape
-import skitter
 
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
+from htypes import FicId, FicType
+import scrape
+import skitter
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 # yapf: disable
 ffNetGenres = {"Adventure", "Angst", "Crime", "Drama", "Family", "Fantasy",
@@ -621,12 +620,10 @@ class FFNAdapter(Adapter):
 		title: Optional[str] = None
 	) -> str:
 		if chapterId is None:
-			return '{}/s/{}'.format(self.baseUrl, storyId)
+			return f'{self.baseUrl}/s/{storyId}'
 		if title is None:
-			return '{}/s/{}/{}'.format(self.baseUrl, storyId, chapterId)
-		return '{}/s/{}/{}/{}'.format(
-			self.baseUrl, storyId, chapterId, util.urlTitle(title)
-		)
+			return f'{self.baseUrl}/s/{storyId}/{chapterId}'
+		return f'{self.baseUrl}/s/{storyId}/{chapterId}/{util.urlTitle(title)}'
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		# TODO: do we need these 2 lines or will they always be done by however
@@ -759,7 +756,7 @@ class FFNAdapter(Adapter):
 
 		# ensure messy is in our map
 		if fandom not in ffNetFandomMap:
-			util.logMessage('unknown fandom: {} (from {})'.format(fandom, fic.url))
+			util.logMessage(f'unknown fandom: {fandom} (from {fic.url})')
 		else:
 			fandoms.append(Fandom.define(ffNetFandomMap[fandom]))
 
@@ -777,9 +774,7 @@ class FFNAdapter(Adapter):
 		missingIds = [fId for fId in fIds if fId not in ffNetFandomIdMap]
 		if len(missingIds) > 0:
 			util.logMessage(
-				'unknown fandom ids: {} from {} in {}'.format(
-					missingIds, href, fic.url
-				)
+				f'unknown fandom ids: {missingIds} from {href} in {fic.url}'
 			)
 			return fandoms
 
@@ -789,15 +784,15 @@ class FFNAdapter(Adapter):
 		missingMessy = [m for m in messys if m not in ffNetFandomMap]
 		if len(missingMessy) > 0:
 			util.logMessage(
-				'unknown messy fandom: {} from {}'.format(missingMessy, href)
+				f'unknown messy fandom: {missingMessy} from {href}'
 			)
 			return fandoms
 
 		# check crossover value
-		expected = '{}_and_{}_Crossovers'.format(messys[0], messys[1])
+		expected = f'{messys[0]}_and_{messys[1]}_Crossovers'
 		if expected != fandom:
 			util.logMessage(
-				'crossover got "{}" expected "{}"'.format(fandom, expected)
+				f'crossover got "{fandom}" expected "{expected}"'
 			)
 			return fandoms
 
@@ -843,7 +838,7 @@ class FFNAdapter(Adapter):
 				fic.title = b.get_text()
 				break
 		else:
-			raise Exception('error: unable to find title:\n{}\n'.format(pt_str))
+			raise Exception(f'error: unable to find title:\n{pt_str}\n')
 
 		fic.url = self.constructUrl(fic.localId, 1, fic.title)
 
@@ -858,7 +853,7 @@ class FFNAdapter(Adapter):
 				descriptionFound = True
 				break
 		if descriptionFound == False:
-			raise Exception('error: unable to find description:\n{}\n'.format(pt_str))
+			raise Exception(f'error: unable to find description:\n{pt_str}\n')
 
 		# default optional fields
 		fic.reviewCount = 0
@@ -903,7 +898,7 @@ class FFNAdapter(Adapter):
 			if status == 'Complete':
 				fic.ficStatus = FicStatus.complete
 			else:
-				raise Exception('unknown status: {}: {}'.format(fic.url, status))
+				raise Exception(f'unknown status: {fic.url}: {status}')
 
 		for a in profile_top.find_all('a'):
 			a_href = a.get('href')
@@ -914,7 +909,7 @@ class FFNAdapter(Adapter):
 				self.setAuthor(fic, author, authorUrl, authorId)
 				break
 		else:
-			raise Exception('unable to find author:\n{}'.format(text))
+			raise Exception(f'unable to find author:\n{text}')
 
 		preStoryLinks = soup.find(id='pre_story_links')
 		preStoryLinksLinks = []
@@ -933,7 +928,7 @@ class FFNAdapter(Adapter):
 				cat = hrefParts[1]
 				if cat in ffNetFandomCategories:
 					continue  # skip categories
-				raise Exception('unknown category: {}'.format(cat))
+				raise Exception(f'unknown category: {cat}')
 
 			# if it's a crossover /Fandom1_and_Fandm2_Crossovers/f1id/f2id/
 			if (
@@ -953,17 +948,17 @@ class FFNAdapter(Adapter):
 			):
 				# ensure category is in our map
 				if hrefParts[1] not in ffNetFandomCategories:
-					raise Exception('unknown category: {}'.format(hrefParts[1]))
+					raise Exception(f'unknown category: {hrefParts[1]}')
 
 				pendingFandoms += self.handleFandom(fic, hrefParts[2])
 				continue
 
-			util.logMessage('unknown fandom {0}: {1}'.format(fic.id, href))
+			util.logMessage(f'unknown fandom {fic.id}: {href}')
 
 		fic.upsert()
 		poss = Fic.select({'sourceId': fic.sourceId, 'localId': fic.localId})
 		if len(poss) != 1:
-			raise Exception(f'unable to upsert fic?')
+			raise Exception('unable to upsert fic?')
 		fic = poss[0]
 		for pfandom in pendingFandoms:
 			fic.add(pfandom)
@@ -1147,13 +1142,13 @@ class FFNAdapter(Adapter):
 			fic.title = a.getText()
 			break
 		else:
-			raise Exception('error: unable to find title:\n{}\n'.format(pt_str))
+			raise Exception(f'error: unable to find title:\n{pt_str}\n')
 
 		for div in soup.find_all('div', {'class': 'z-padtop'}):
 			fic.description = div.contents[0]
 			break
 		else:
-			raise Exception('error: unable to find description:\n{}\n'.format(pt_str))
+			raise Exception(f'error: unable to find description:\n{pt_str}\n')
 
 		matcher = RegexMatcher(
 			text, {
@@ -1192,7 +1187,7 @@ class FFNAdapter(Adapter):
 			if status == 'Complete':
 				fic.ficStatus = FicStatus.complete
 			else:
-				raise Exception('unknown status: {}: {}'.format(fic.url, status))
+				raise Exception(f'unknown status: {fic.url}: {status}')
 
 		for a in soup.find_all('a'):
 			a_href = a.get('href')
@@ -1203,7 +1198,7 @@ class FFNAdapter(Adapter):
 				self.setAuthor(fic, author, authorUrl, authorId)
 				break
 		else:
-			raise Exception('unable to find author:\n{}'.format(text))
+			raise Exception(f'unable to find author:\n{text}')
 
 		zl = soup.find('div', {'class': 'z-list'})
 		fan = None if zl is None else zl.get('data-category')
@@ -1264,6 +1259,6 @@ class FFNAdapter(Adapter):
 			data.lower().find('chapter not found.') != -1
 			and data.lower().find("id='storytext'") == -1
 		):
-			raise Exception('unable to find chapter content {}'.format(url))
+			raise Exception(f'unable to find chapter content {url}')
 
 		return data

@@ -1,13 +1,9 @@
-import time
-import zlib
-from typing import List, Optional, Dict, Set, Type, Union, Any, TypeVar, Tuple
-from enum import IntEnum
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, TypeVar
 
+from htypes import FicId, FicType, getAdapter
 from lite import StoreType
 import store_bases
-from store_bases import OilTimestamp, ImportStatus, FicStatus, TagType
-from htypes import FicId, FicType, getAdapter
-import scrape
+from store_bases import FicStatus, ImportStatus, OilTimestamp, TagType
 import util
 
 defaultUserId = 1  # FIXME

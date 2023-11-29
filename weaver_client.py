@@ -1,5 +1,6 @@
 from typing import Optional
 import urllib.parse
+
 from scrape import (
 	ScrapeMeta,
 	canonizeUrl,

@@ -1,14 +1,15 @@
-from typing import TYPE_CHECKING, List, Dict, Optional, Tuple, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, TypeVar
+
 if TYPE_CHECKING:
 	from hermes import Hermes
-import time
-import datetime
 import curses
+import time
+
 from htypes import FicId
-from store import FicStatus, Fic, UserFic
+from store import Fic, FicStatus, UserFic
+import util
 from view.htmlView import HtmlView
 from view.widget import Widget
-import util
 
 T = TypeVar('T', int, str)
 
@@ -61,7 +62,7 @@ class FicSelect(Widget):
 				self.list = self.fics
 				self.__refilter(fic)
 
-				self.pushMessage('added fic "{}" ({})'.format(fic.title, fic.localId))
+				self.pushMessage(f'added fic "{fic.title}" ({fic.localId})')
 			elif self.parent is not None:
 				self.parent.selectFic(self.list[self.idx])
 			return True
@@ -98,7 +99,7 @@ class FicSelect(Widget):
 		if key == 21:  # ctrl u
 			userFic.lastChapterViewed = 0
 			userFic.update()
-			self.pushMessage('marked "{}" no last chapter'.format(fic.title))
+			self.pushMessage(f'marked "{fic.title}" no last chapter')
 			return True
 		if key == 1 and fic.chapterCount is not None:  # ctrl a
 			userFic.readStatus = FicStatus.complete
@@ -110,7 +111,7 @@ class FicSelect(Widget):
 					continue
 				chap.readStatus = FicStatus.complete
 				chap.update()
-			self.pushMessage('marked "{}" all read'.format(fic.title))
+			self.pushMessage(f'marked "{fic.title}" all read')
 			return True
 		if key == ord('+'):
 			if userFic.rating is None or userFic.rating < 0: userFic.rating = 0
@@ -132,11 +133,11 @@ class FicSelect(Widget):
 		if key == 6:  # ctrl f
 			userFic.isFavorite = not userFic.isFavorite
 			userFic.update()
-			self.pushMessage('changed favorite status of "{}"'.format(fic.title))
+			self.pushMessage(f'changed favorite status of "{fic.title}"')
 			return True
 		if key == 9:  # ctrl i
 			fic.checkForUpdates()
-			self.pushMessage('checked "{}" for updates'.format(fic.title))
+			self.pushMessage(f'checked "{fic.title}" for updates')
 			return True
 		if key == 23:  # ctrl w
 			fic.ficStatus = {
@@ -186,7 +187,7 @@ class FicSelect(Widget):
 			return util.subsequenceMatch(str(val).lower(), str(arg).lower())
 		if rel == '.':
 			return (str(val).lower().find(str(arg).lower()) > -1)
-		raise Exception('invalid relation: {}'.format(rel))
+		raise Exception(f'invalid relation: {rel}')
 
 	def __refilter(
 		self, target: Optional[Fic] = None, force: bool = False
@@ -366,7 +367,7 @@ class FicSelect(Widget):
 				(userFic.lastChapterViewed or 0) < (fic.chapterCount or -1)
 			)
 		):
-			onC = '({}/{})'.format(userFic.lastChapterViewed, fic.chapterCount)
+			onC = f'({userFic.lastChapterViewed}/{fic.chapterCount})'
 		if width - 5 - len(onC) <= 0:
 			onC = ''
 
@@ -450,9 +451,9 @@ class FicSelect(Widget):
 			hmid + 7, lm,
 			util.equiPad(
 				[
-					'chapters: {}'.format(fic.chapterCount),
-					'{}'.format(fic.getAuthorName()),
-					'words: {}'.format(util.formatNumber(fic.wordCount or -1)),
+					f'chapters: {fic.chapterCount}',
+					f'{fic.getAuthorName()}',
+					f'words: {util.formatNumber(fic.wordCount or -1)}',
 				], tWidth
 			)
 		)
@@ -462,8 +463,8 @@ class FicSelect(Widget):
 			hmid + 8, lm,
 			util.equiPad(
 				[
-					'published: {}'.format(publishedStr),
-					str(fic.id), 'updated: {}'.format(updatedStr)
+					f'published: {publishedStr}',
+					str(fic.id), f'updated: {updatedStr}'
 				], tWidth
 			)
 		)
@@ -489,7 +490,7 @@ class FicSelect(Widget):
 				self.getAttr(self.idx + i)
 			)
 
-		cursor = '>  {} <'.format(self.getHeader(self.idx, tWidth - 1))
+		cursor = f'>  {self.getHeader(self.idx, tWidth - 1)} <'
 
 		attr = self.getAttr(self.idx)
 		attr = attr if attr is not None else curses.color_pair(1)
@@ -510,7 +511,7 @@ class FicSelect(Widget):
 		self.draw(0, 0, text, curses.color_pair(4))
 
 	def drawFilter(self) -> None:
-		stext = '({:>3}/{:>3})'.format(self.idx + 1, len(self.list))
+		stext = f'({self.idx + 1:>3}/{len(self.list):>3})'
 		ltext = '> ' + self.filter
 
 		self.draw(

@@ -1,17 +1,13 @@
-import re
-import time
-import urllib
-from typing import Optional, List
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter
-import util
-import scrape
-import skitter
-from view import HtmlView
+from typing import List, Optional
 
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
+from htypes import FicId, FicType
+import scrape
+import skitter
+from store import Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
+from view import HtmlView
 
 
 class RoyalRoadlAdapter(Adapter):
@@ -24,7 +20,7 @@ class RoyalRoadlAdapter(Adapter):
 
 	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		if chapterId is None:
-			return '{}{}'.format(self.baseStoryUrl, storyId)
+			return f'{self.baseStoryUrl}{storyId}'
 		# TODO: lookup url in existing chapters?
 		raise NotImplementedError()
 
@@ -117,7 +113,7 @@ class RoyalRoadlAdapter(Adapter):
 		divDescription = soup.find('div', {'class': 'description'})
 		try:
 			descView = HtmlView(str(divDescription), markdown=False)
-			desc = ''.join(['<p>{}</p>'.format(l) for l in descView.text])
+			desc = ''.join([f'<p>{l}</p>' for l in descView.text])
 			fic.description = desc
 		except:
 			fic.description = divDescription.getText().strip()

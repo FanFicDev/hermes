@@ -1,17 +1,16 @@
+from typing import Dict, List, Optional, Set
+import datetime
 import re
 import time
 import urllib
-import datetime
-from typing import Set, Optional, List, Dict
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom
-import util
-import scrape
-from view import HtmlView
 
 from adapter.adapter import Adapter, edumpContent
 from adapter.regex_matcher import RegexMatcher
+from htypes import FicId, FicType
+import scrape
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
+from view import HtmlView
 
 
 class AdultFanfictionMeta:
@@ -59,7 +58,7 @@ class AdultFanfictionMeta:
 		self.tags = set(res.strip().split())
 
 	def info(self) -> None:
-		chapterInfo = '[{:>2} chapters]'.format(self.chapterCount)
+		chapterInfo = f'[{self.chapterCount:>2} chapters]'
 		# TODO: look up more info if it's already been added?
 		#if fic.lastChapterRead == fic.chapterCount:
 		#	chapterInfo = '[completely read, {:>2} chapters]'.format(fic.chapterCount)
@@ -68,7 +67,7 @@ class AdultFanfictionMeta:
 		#			fic.lastChapterViewed, fic.chapterCount)
 
 		twidth = 80
-		einfo = '({:>8})'.format(self.localId)
+		einfo = f'({self.localId:>8})'
 		rhead = ''.join(['C' if self.ficStatus == FicStatus.complete else 'I'])
 
 		title = self.title or '[MISSING TITLE]'
@@ -77,17 +76,17 @@ class AdultFanfictionMeta:
 		print('{:<{}} {}'.format('"' + title + '"', twidth - len(rhead) - 1, rhead))
 
 		print(util.equiPad([
-			'{}'.format(self.author),
+			f'{self.author}',
 			chapterInfo,
 		], twidth))
 
 		if len(self.fandoms) > 0:
-			print('    fandoms: {}'.format(self.fandoms))
+			print(f'    fandoms: {self.fandoms}')
 		if len(self.tags) > 0:
-			print('    tags: {}'.format(self.tags))
+			print(f'    tags: {self.tags}')
 		if len(self.chars) > 0:
-			print('    chars: {}'.format(self.chars))
-		print('      loc: {}'.format(self.located))
+			print(f'    chars: {self.chars}')
+		print(f'      loc: {self.located}')
 
 		desc = HtmlView(self.description or '{no description}').text
 		for dline in desc:
@@ -95,7 +94,7 @@ class AdultFanfictionMeta:
 			for line in w:
 				if line.strip() == '<hr />':
 					continue
-				print('  {}'.format(line))
+				print(f'  {line}')
 			print('')
 
 		assert (self.updated is not None and self.published is not None)
@@ -106,13 +105,13 @@ class AdultFanfictionMeta:
 		print(
 			util.equiPad(
 				[
-					'published: {}'.format(publishedStr),
-					'updated: {}'.format(updatedStr)
+					f'published: {publishedStr}',
+					f'updated: {updatedStr}'
 				], twidth
 			)
 		)
 
-		print('  {}'.format(self.url))
+		print(f'  {self.url}')
 		print('{:>{}}'.format(einfo, twidth))
 		print('')
 
@@ -130,7 +129,7 @@ class AdultFanfictionAdapter(Adapter):
 		storyNo = storyId.split('/')[1]
 		url = self.baseStoryUrl.format(archive, storyNo)
 		if chapterId is not None:
-			url += '&chapter={}'.format(chapterId)
+			url += f'&chapter={chapterId}'
 		return url
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
@@ -156,7 +155,7 @@ class AdultFanfictionAdapter(Adapter):
 
 		storyNumber = int(qs['no'][0])
 		archive = parts[2].split('.')[0]
-		lid = '{}/{}'.format(archive, storyNumber)
+		lid = f'{archive}/{storyNumber}'
 
 		ficId = FicId(self.ftype, lid)
 
@@ -190,7 +189,7 @@ class AdultFanfictionAdapter(Adapter):
 		tables = soup.findAll('table', {'width': '100%'})
 		if len(tables) != 5:
 			edumpContent(html, 'aff')
-			raise Exception('table count mismatch: {}'.format(len(tables)))
+			raise Exception(f'table count mismatch: {len(tables)}')
 		ficTable = tables[2]
 		trs = ficTable.findAll('tr')
 
@@ -209,7 +208,7 @@ class AdultFanfictionAdapter(Adapter):
 
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 
-		titleH2 = soup.find('a', {'href': '/story.php?no={}'.format(storyNo)})
+		titleH2 = soup.find('a', {'href': f'/story.php?no={storyNo}'})
 		fic.title = str(titleH2.getText())
 
 		membersUrl = 'http://members.adult-fanfiction.org/profile.php?no='
@@ -429,7 +428,7 @@ class AdultFanfictionAdapter(Adapter):
 
 			for c1 in chars:
 				for c2 in chars:
-					if loclow.endswith('{}/{}'.format(c1, c2).lower()):
+					if loclow.endswith(f'{c1}/{c2}'.lower()):
 						meta.chars += [c1, c2]
 
 			# TODO: try parse category, get chars

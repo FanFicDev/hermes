@@ -1,5 +1,5 @@
+from typing import Any, Dict, Optional, Tuple
 import re
-from typing import Dict, Optional, Tuple, Any
 
 
 # used to extract values from text given regex and types
@@ -24,7 +24,7 @@ class RegexMatcher:
 		elif ttype == str:
 			target.__setattr__(aname, val)
 		elif ttype != str:
-			raise Exception('unknown type: {}'.format(ttype.__name__))
+			raise Exception(f'unknown type: {ttype.__name__}')
 
 	def get(self, which: str) -> Optional[str]:
 		match = re.search(self.patterns[which][0], self.text)
@@ -35,7 +35,5 @@ class RegexMatcher:
 			return None
 		else:
 			raise Exception(
-				'error: cannot find {} ({}) in {}'.format(
-					which, self.patterns[which], self.text
-				)
+				f'error: cannot find {which} ({self.patterns[which]}) in {self.text}'
 			)

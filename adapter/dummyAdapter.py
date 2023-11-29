@@ -1,5 +1,5 @@
-from htypes import FicType
 from adapter.adapter import ManualAdapter
+from htypes import FicType
 
 
 class DummyAdapter(ManualAdapter):

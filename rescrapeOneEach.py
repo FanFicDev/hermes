@@ -9,11 +9,12 @@
 # in minerva, which due to a bug in the import is likely to be chapter 2.
 #
 # A more complete solution is still incoming.
-import scrape
+from typing import Any, List, Sequence
 import random
-import time
 import sys
-from typing import List, Iterable, Sequence, Any
+import time
+
+import scrape
 
 firstGoodId = 68830
 batchSize = 100  # somewhere around an hours worth...
@@ -102,7 +103,7 @@ while True:
 		wid = r[0]
 		url = r[1]
 		s = 10 + random.randint(0, 10)
-		patt = '%{}%'.format(getDomain(url))
+		patt = f'%{getDomain(url)}%'
 		while True:
 			ls = getLastScrapeTime(patt)
 			diff = (ls + s) - int(time.time())
@@ -112,7 +113,7 @@ while True:
 			else:
 				time.sleep(diff + 1)
 		time.sleep(3 * random.random())
-		print('refetching {}: {}'.format(wid, url))
+		print(f'refetching {wid}: {url}')
 		try:
 			scrape.scrape(url)
 		except:

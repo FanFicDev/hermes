@@ -1,9 +1,8 @@
-import os
-import time
-
 from typing import List, Optional, Union
-from htypes import FicType, FicId
-from store import OilTimestamp, Author, AuthorSource, Fic, FicChapter
+import os
+
+from htypes import FicId, FicType
+from store import Author, AuthorSource, Fic, FicChapter, OilTimestamp
 
 edumpContentDir = './edump/'
 
@@ -21,7 +20,7 @@ def edumpContent(html: str, which: str) -> None:
 
 
 # used to extract specific pieces from raw page content
-class Adapter(object):
+class Adapter:
 	def __init__(
 		self,
 		cacheable: bool,
@@ -62,7 +61,7 @@ class Adapter(object):
 		if len(existing) == 1:
 			return existing[0]
 		if not self.cacheable:
-			raise Exception('cannot cache {}/{}'.format(localId, self.ftype))
+			raise Exception(f'cannot cache {localId}/{self.ftype}')
 
 		fic = Fic.new()
 		fic.sourceId = self.ftype

@@ -1,14 +1,13 @@
+from typing import List, Optional
 import re
 import time
-from typing import Optional, List
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter
-import util
-import scrape
 
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
+from htypes import FicId, FicType
+import scrape
+from store import Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class ChapterInfo:
@@ -31,7 +30,7 @@ class FanficAuthorsAdapter(Adapter):
 		storyLid = storyId.split('/')[1]
 		url = self.baseStoryUrl.format(authorLid, storyLid)
 		if chapterId is not None:
-			url += '/Chapter_{}/'.format(chapterId)
+			url += f'/Chapter_{chapterId}/'
 		else:
 			url += '/index/'
 		return url
@@ -51,7 +50,7 @@ class FanficAuthorsAdapter(Adapter):
 
 		storyLid = parts[3]
 		authorLid = parts[2].split('.')[0]
-		lid = '{}/{}'.format(authorLid, storyLid)
+		lid = f'{authorLid}/{storyLid}'
 
 		ficId = FicId(self.ftype, lid)
 
@@ -167,10 +166,10 @@ class FanficAuthorsAdapter(Adapter):
 		for child in wellParent.children:
 			if child.name != 'p': continue
 			cid += 1
-			if str(child).find('Chapter {}'.format(cid)) == -1:
+			if str(child).find(f'Chapter {cid}') == -1:
 				continue
 			chapterLink = child.find('a')
-			expectedUrl = '/{}/Chapter_{}/'.format(storyLid, cid).lower()
+			expectedUrl = f'/{storyLid}/Chapter_{cid}/'.lower()
 			if chapterLink.get('href').lower() != expectedUrl:
 				raise Exception('unexpected chapter url: ' + chapterLink.get('href'))
 
@@ -203,7 +202,7 @@ class FanficAuthorsAdapter(Adapter):
 		fic.upsert()
 		for cid in range(1, fic.chapterCount + 1):
 			ch = fic.chapter(cid)
-			ch.localChapterId = 'Chapter_{}'.format(cid)
+			ch.localChapterId = f'Chapter_{cid}'
 			ch.url = self.constructUrl(fic.localId, cid)
 			ch.upsert()
 

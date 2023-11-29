@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
+import json
 import os
 import sys
-import json
 import time
-from store import Fic, FicChapter, Fandom, Character, Genre, Tag, Status
-from htypes import FicType
-import util
-import lite
+
 import adapter
+from htypes import FicType
+import lite
+from store import Character, Fandom, Fic, FicChapter, Genre, Status, Tag
+import util
 
 
 # return dependency order of DAG represented by obj
@@ -109,7 +110,7 @@ def importFic(fdata):
 
 	fic = Fic.new()
 	for field in ofic:
-		print('setting "{}" to "{}"'.format(field, ofic[field]))
+		print(f'setting "{field}" to "{ofic[field]}"')
 		fic.__dict__[field] = ofic[field]
 
 	fic.published = util.parseDateAsUnix(fic.published, int(time.time()))
@@ -117,12 +118,12 @@ def importFic(fdata):
 	print('setting "{}" to "{}"'.format('published', fic.published))
 	print('setting "{}" to "{}"'.format('updated', fic.updated))
 
-	print('adding "{}" ({}/{})'.format(fic.title, fic.type, fic.localId))
+	print(f'adding "{fic.title}" ({fic.type}/{fic.localId})')
 
 	fic.insert()
 
 	for fandom in fdata['fandoms']:
-		print('  adding fandom "{}"'.format(fandom))
+		print(f'  adding fandom "{fandom}"')
 		fic.add(Fandom.define(fandom))
 	for character in fdata['characters']:
 		print(
@@ -134,16 +135,16 @@ def importFic(fdata):
 			Character.define(Fandom.define(character['fandom']), character['name'])
 		)
 	for genre in fdata['genres']:
-		print('  adding genre "{}"'.format(genre))
+		print(f'  adding genre "{genre}"')
 		fic.add(Genre.define(genre))
 	for tag in fdata['tags']:
-		print('  adding tag "{}"'.format(tag))
+		print(f'  adding tag "{tag}"')
 		fic.add(Tag.define(tag))
 
 	cids = [int(cid) for cid in fdata['chapters']]
 	cids.sort()
 	for cid in cids:
-		print('  adding chapter {}'.format(cid))
+		print(f'  adding chapter {cid}')
 		ochap = fdata['chapters'][str(cid)]
 		chapter = FicChapter.new()
 		chapter.fic = fic
@@ -151,14 +152,12 @@ def importFic(fdata):
 		chapter.chapterId = cid
 		for field in ochap:
 			chapter.__dict__[field] = ochap[field]
-		contentPath = './content/{}/{}/{}/content.html'.format(
-			fic.type, fic.localId, cid
-		)
+		contentPath = f'./content/{fic.type}/{fic.localId}/{cid}/content.html'
 		if os.path.isfile(contentPath):
 			html = None
-			with open(contentPath, 'r') as f:
+			with open(contentPath) as f:
 				html = f.read()
-			print('    has content: {}'.format(len(html)))
+			print(f'    has content: {len(html)}')
 			chapter.setHtml(html)
 		chapter.insert()
 
@@ -203,7 +202,7 @@ def dumpDB():
 
 	fics = Fic.select()
 	for fic in fics:
-		k = '{}/{}'.format(fic.type, fic.localId)
+		k = f'{fic.type}/{fic.localId}'
 		o = fic.__dict__.copy()
 		o = deflateObject(o, frename)
 
@@ -232,9 +231,7 @@ def dumpDB():
 			if chapter.raw is None:
 				continue
 
-			contentPath = './content/{}/{}/{}/'.format(
-				fic.type, fic.localId, chapter.chapterId
-			)
+			contentPath = f'./content/{fic.type}/{fic.localId}/{chapter.chapterId}/'
 			if not os.path.isdir(contentPath):
 				os.makedirs(contentPath)
 			with open(contentPath + 'content.html', 'w') as f:
@@ -294,9 +291,7 @@ def populateKMTemplate(url, chapterUrls):
 
 
 def populateFATemplate(author, storyAbbreviation, chapterCount):
-	url = 'http://www.fictionalley.org/authors/{}/{}.html'.format(
-		author, storyAbbreviation
-	)
+	url = f'http://www.fictionalley.org/authors/{author}/{storyAbbreviation}.html'
 	lastUrl = url[:-5] + '01.html'
 	if chapterCount == 1:
 		lastUrl = url[:-5] + '01a.html'
@@ -308,7 +303,7 @@ def populateFATemplate(author, storyAbbreviation, chapterCount):
 		'characters': [],
 		'tags': [],
 		'genres': [],
-		'authorUrl': 'http://www.fictionalley.org/authors/{}'.format(author),
+		'authorUrl': f'http://www.fictionalley.org/authors/{author}',
 		'author': author,
 		'authorId': author,
 		'ageRating': 'PG',
@@ -337,7 +332,7 @@ def populateFATemplate(author, storyAbbreviation, chapterCount):
 	fic['chapterCount'] = chapterCount
 
 	for cid in range(1, chapterCount + 1):
-		chapterUrl = url[:-5] + '{:02}.html'.format(cid)
+		chapterUrl = url[:-5] + f'{cid:02}.html'
 		if chapterCount == 1:
 			chapterUrl = url[:-5] + '01a.html'
 		fic['chapters'][cid] = {
@@ -346,7 +341,7 @@ def populateFATemplate(author, storyAbbreviation, chapterCount):
 			'fetched': int(time.time()),
 			'url': chapterUrl
 		}
-		contentDir = './content/{}/{}/{}'.format(FicType.fictionalley, lid, cid)
+		contentDir = f'./content/{FicType.fictionalley}/{lid}/{cid}'
 		if not os.path.isdir(contentDir):
 			os.makedirs(contentDir)
 
@@ -415,13 +410,13 @@ if __name__ == '__main__':
 
 	if len(sys.argv) != 3 or cmd is None:
 		for i in range(len(cmds)):
-			print('usage: jdb {} <file>'.format(cmds[i]))
+			print(f'usage: jdb {cmds[i]} <file>')
 		sys.exit(0)
 
 	lite.autocommit = False
 
 	if sys.argv[1] == 'import':
-		with open(sys.argv[2], 'r') as f:
+		with open(sys.argv[2]) as f:
 			data = json.load(f)
 			importDB(data)
 			lite.shutdown()
@@ -456,7 +451,7 @@ if __name__ == '__main__':
 			f.write(json.dumps(fic, sort_keys=True, indent=4) + '\n')
 
 	if sys.argv[1] == 'single':
-		with open(sys.argv[2], 'r') as f:
+		with open(sys.argv[2]) as f:
 			data = json.load(f)
 			importFic(data)
 			lite.shutdown()

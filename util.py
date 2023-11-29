@@ -1,13 +1,14 @@
-import os
-import re
-import math
-import random
-import datetime
-import dateutil.parser
-import time
-import struct
-import zlib
 from typing import List, Optional, Union
+import datetime
+import math
+import os
+import random
+import re
+import time
+import zlib
+
+import dateutil.parser
+
 from schema import OilTimestamp
 
 defaultLogFile = 'hermes.log'
@@ -29,7 +30,7 @@ def getNumberLength(num: int) -> int:
 
 
 def formatNumber(num: int) -> str:
-	b = '{}'.format(num)
+	b = f'{num}'
 	b = '{:>{}}'.format(b, int((len(b) + 2) / 3) * 3)
 	n = ''
 	for i in range(int(len(b) / 3)):
@@ -147,7 +148,7 @@ def parseDateAsUnix(
 
 	slashedParts = updated.split('/')
 	if len(slashedParts) == 2:
-		fdate = ('{}/{}/{}'.format(currentYear, slashedParts[0], slashedParts[1]))
+		fdate = (f'{currentYear}/{slashedParts[0]}/{slashedParts[1]}')
 		dt = (dateutil.parser.parse(fdate))
 		uts = dtToUnix(dt)
 		return uts
@@ -176,8 +177,8 @@ def parseDateAsUnix(
 		uts = dtToUnix(dt)
 		return uts
 
-	logMessage('error parsing date: {}'.format(updated))
-	raise Exception('error parsing date: {}'.format(updated))
+	logMessage(f'error parsing date: {updated}')
+	raise Exception(f'error parsing date: {updated}')
 
 
 def logMessage(
@@ -258,7 +259,7 @@ def filterUnicode(line: str) -> str:
 		ellipseSqueezeRe = re.compile('(…\s*){2,}')
 	if ellipseSpaceRe is None:
 		punctuation = '"”?\\.\'\\)_*'
-		ellipseSpaceRe = re.compile('…([^ {}])'.format(punctuation))
+		ellipseSpaceRe = re.compile(f'…([^ {punctuation}])')
 
 	# remove some unicode characters
 	# ['“', '”'] ['‘', '’'] "…"
@@ -320,11 +321,11 @@ def equiPad(strs: List[str], width: int) -> str:
 def cleanChapterTitle(title: str, cid: int) -> str:
 	title = title.strip()
 	prefixes = [
-		'{}-'.format(cid),
-		'{}.'.format(cid),
-		'chapter {}'.format(cid),
-		'chapter {}'.format(cid + 1),
-		'chapter {}'.format(cid - 1),
+		f'{cid}-',
+		f'{cid}.',
+		f'chapter {cid}',
+		f'chapter {cid + 1}',
+		f'chapter {cid - 1}',
 		':',
 		'-',
 	]

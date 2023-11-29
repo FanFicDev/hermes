@@ -4,9 +4,10 @@
 #   if it needs scraped and the request is successful, [success delay] can be
 #     used to specify a delay before returning
 #   if force is set the url is always fetched
-import scrape
 import sys
 import time
+
+import scrape
 
 url = sys.argv[1]
 url = scrape.canonizeUrl(url)

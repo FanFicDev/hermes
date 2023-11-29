@@ -1,9 +1,6 @@
-from typing import List
-
-from htypes import FicType
-import scrape
 
 from adapter.wordpressAdapter import WordpressAdapter
+from htypes import FicType
 
 
 class WanderingInnAdapter(WordpressAdapter):

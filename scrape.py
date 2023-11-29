@@ -1,16 +1,16 @@
-import time
-import random
-import os
-import sys
-import traceback
 import typing
-from typing import List, Tuple, Dict, Optional, Any, Sequence
-import util
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+import os
+import random
+import sys
+import time
+import traceback
+
 import lite_oil
+import util
 
 if typing.TYPE_CHECKING:
 	from psycopg2 import connection  # type: ignore[attr-defined]
-	import psycopg2
 	import requests
 
 __scrapeSource: Optional[str] = None
@@ -347,7 +347,7 @@ def decodeRequest(data: Optional[bytes], url: str) -> Optional[str]:
 		return data.decode('cp1252')
 	except Exception as e:
 		util.logMessage(
-			'error decoding {}: {}\n{}'.format(url, e, traceback.format_exc())
+			f'error decoding {url}: {e}\n{traceback.format_exc()}'
 		)
 		with open(decodeFailureDumpFile, 'wb') as f:
 			f.write(data)
@@ -394,7 +394,7 @@ def scrape(
 
 		last = getMostRecentScrapeWithMeta(url, beforeId=_staleBefore)
 		if last is None or 'raw' not in last:
-			raise Exception('failed to stale scrape url: {}'.format(url))
+			raise Exception(f'failed to stale scrape url: {url}')
 		return {'url': url, 'fetched': ts, 'raw': last['raw']}
 
 	import requests
@@ -405,13 +405,13 @@ def scrape(
 	try:
 		r = requests.get(url, headers=headers, cookies=cookies, timeout=timeout)
 	except:
-		util.logMessage('scrape|exception|{}'.format(url), 'scrape.log')
+		util.logMessage(f'scrape|exception|{url}', 'scrape.log')
 		raise
 
 	if r.status_code != 200:
 		saveWebRequest(ts, url, r.status_code, None)
 		delaySecs(delay)
-		raise Exception('failed to download url {}: {}'.format(r.status_code, url))
+		raise Exception(f'failed to download url {r.status_code}: {url}')
 
 	raw = r.content
 	text = decodeRequest(raw, url)
@@ -437,7 +437,7 @@ if __name__ == '__main__':
 		print('url is already in minerva')
 		sys.exit(0)
 
-	with open(fname, 'r') as f:
+	with open(fname) as f:
 		content = f.read()
 		saveWebRequest(uts, url, 200, content)
 

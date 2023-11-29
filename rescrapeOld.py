@@ -12,11 +12,12 @@
 # This script scrapes slowly and delays since the _last_ time the domain was
 # hit. If hermes hits a domain while this script is paused, this script will
 # wait longer to avoid excessive requests.
-import scrape
+from typing import Any, List, Sequence
 import random
-import time
 import sys
-from typing import List, Iterable, Sequence, Any
+import time
+
+import scrape
 
 firstGoodId = 68830
 batchSize = 100  # somewhere around an hours worth...
@@ -95,7 +96,7 @@ if len(sys.argv) > 1:
 	globalPattern = sys.argv[1]
 
 scrape.importEnvironment()
-print('source: {}'.format(scrape.__scrapeSource))
+print(f'source: {scrape.__scrapeSource}')
 assert (scrape.__scrapeSource is not None)
 
 while True:
@@ -107,7 +108,7 @@ while True:
 		wid = r[0]
 		url = r[1]
 		s = 15 + random.randint(0, 5)
-		patt = '%{}%'.format(getDomain(url))
+		patt = f'%{getDomain(url)}%'
 		while True:
 			if not isOld(firstGoodId, url):
 				print('not old anymore')
@@ -123,7 +124,7 @@ while True:
 			print('not old anymore')
 			continue  # has since been rescraped
 		time.sleep(3 * random.random())
-		print('refetching {}: {}'.format(wid, url))
+		print(f'refetching {wid}: {url}')
 		try:
 			if not isOld(firstGoodId, url):
 				print('not old anymore')

@@ -1,10 +1,8 @@
 from typing import Optional
 
+from adapter.wordpressAdapter import WordpressAdapter
 from htypes import FicType
 from store import FicChapter
-import scrape
-
-from adapter.wordpressAdapter import WordpressAdapter
 
 
 class ParahumansAdapter(WordpressAdapter):

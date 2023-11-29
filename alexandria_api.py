@@ -1,16 +1,16 @@
-from typing import List, Any, Dict, Union, Tuple, Optional, cast
-import traceback
+from typing import Any, Optional, Tuple, Union
 from enum import IntEnum
-from flask import Flask, Response, request, make_response
-import werkzeug.wrappers
-from werkzeug.exceptions import NotFound
+import traceback
 
-from store import Fic, FicChapter
+from flask import Flask, Response, make_response, request
+import werkzeug.wrappers
+
 from htypes import FicId
-import util
-import scrape
-from view import HtmlView
 from lite import JSONable
+import scrape
+from store import Fic, FicChapter
+import util
+from view import HtmlView
 
 BasicFlaskResponse = Union[Response, werkzeug.wrappers.Response, str, JSONable]
 FlaskResponse = Union[BasicFlaskResponse, Tuple[BasicFlaskResponse, int]]
@@ -25,7 +25,7 @@ app.url_map.strict_slashes = False
 
 def cleanHtml(html: str) -> str:
 	view = HtmlView(html, markdown=False)
-	html = ''.join(['<p>{}</p>'.format(l) for l in view.text])
+	html = ''.join([f'<p>{l}</p>' for l in view.text])
 	return html
 
 
@@ -173,7 +173,7 @@ def v0_cache(urlId: str) -> Any:
 		try:
 			chapter = fic.chapter(cid)
 			chapter.cache()
-		except Exception as e:
+		except Exception:
 			return Err.failed_to_cache_cid.get({'arg': f'{fic.id}/{cid}'})
 
 	return Err.ok(fic.toJSONable())

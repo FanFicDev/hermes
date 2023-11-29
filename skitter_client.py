@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-from typing import Optional, Dict
+from typing import Dict, Optional
 import time
 import urllib.parse
 
-import util
 from scrape import (
 	ScrapeMeta,
 	canonizeUrl,
-	delaySecs,
 	decodeRequest,
-	saveWebRequest,
+	delaySecs,
 	getLastUrlLike,
 	getMostRecentScrapeWithMeta,
+	saveWebRequest,
 )
+import util
 
 
 def buildScrapeMeta(
@@ -66,7 +66,7 @@ class SkitterClient:
 				)
 			except:
 				util.logMessage(
-					'SkitterClient._makeRequest|exception|{}'.format(apiUrl), 'scrape.log'
+					f'SkitterClient._makeRequest|exception|{apiUrl}', 'scrape.log'
 				)
 				raise
 			# if we got rate limited
@@ -164,7 +164,7 @@ class SkitterClient:
 		url = canonizeUrl(url)
 		# TODO staleOnly?
 		if self.staleOnly:
-			util.logMessage('staleScrape|{}'.format(url), 'scrape.log')
+			util.logMessage(f'staleScrape|{url}', 'scrape.log')
 
 			#r = getMostRecentScrapeWithMeta(url, beforeId = _staleBefore)
 			#if r is None or 'raw' not in r:

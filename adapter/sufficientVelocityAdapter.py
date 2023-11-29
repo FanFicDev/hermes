@@ -1,5 +1,5 @@
-from htypes import FicType
 from adapter.xenForoAdapter import XenForoAdapter
+from htypes import FicType
 
 
 class SufficientVelocityAdapter(XenForoAdapter):

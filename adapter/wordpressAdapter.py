@@ -1,14 +1,14 @@
-import re
 from typing import Dict, List, Optional, Tuple, Union, cast
-import dateutil.parser
+import re
 import urllib
 
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, Fic, FicChapter, Fandom, FicStatus
-import util
-import scrape
+import dateutil.parser
 
 from adapter.adapter import Adapter
+from htypes import FicId, FicType
+import scrape
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class WordpressAdapter(Adapter):
@@ -36,7 +36,7 @@ class WordpressAdapter(Adapter):
 
 		self.contentRe = contentRe
 
-		self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
+		self.tocUrl = f'{self.baseUrl}/table-of-contents'
 
 		# map from source url to real url, or none if it should be skipped
 		self.urlFixups: Dict[str, Optional[str]] = {}
@@ -112,7 +112,7 @@ class WordpressAdapter(Adapter):
 		soup = BeautifulSoup(data, 'html5lib')
 		publishTimes = soup.findAll('time', {'class': ['entry-date', 'published']})
 		if len(publishTimes) != 1:
-			raise Exception('cannot find publish time for {}'.format(url))
+			raise Exception(f'cannot find publish time for {url}')
 		uts = util.dtToUnix(dateutil.parser.parse(publishTimes[0].get('datetime')))
 		return OilTimestamp(uts)
 
@@ -170,7 +170,6 @@ class WordpressAdapter(Adapter):
 		return Fic.lookup((fic.id, ))
 
 	def parseInfoInto(self, fic: Fic, html: str) -> Fic:
-		from bs4 import BeautifulSoup
 		html = html.replace('\r\n', '\n')
 
 		# wooh hardcoding

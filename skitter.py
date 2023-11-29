@@ -1,5 +1,5 @@
-import scrape as sc
 import priv
+import scrape as sc
 import util
 from weaver_client import WeaverClient
 
@@ -63,8 +63,9 @@ def softScrape(url: str, fallback: bool = False) -> sc.ScrapeMeta:
 
 if __name__ == '__main__':
 	import sys
-	from skitter_client import SkitterClient
+
 	from scrape import canonizeUrl, saveWebRequest
+	from skitter_client import SkitterClient
 
 	skitter_primary: SkitterClient = priv.skitterClients[0]
 	skitter_secondary: SkitterClient = priv.skitterClients[-1]

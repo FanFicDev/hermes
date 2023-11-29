@@ -1,13 +1,13 @@
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import curses
 import re
-from typing import TYPE_CHECKING, List, Tuple, Union, Dict, Optional, Any
+
 if TYPE_CHECKING:
 	from hermes import Hermes
 import html
 
+from store import Fic, FicChapter, FicStatus
 import util
-from htypes import FicType
-from store import FicStatus, Fic, FicChapter
 from view.widget import Widget
 
 
@@ -142,7 +142,7 @@ class HtmlView:
 		# blow up on very long lines (TODO: graceful)
 		if len(line) > (80 * 60 * 1000000):  # TODO
 			raise Exception(
-				'error: extremely long line: {}\n{}'.format(len(line), line)
+				f'error: extremely long line: {len(line)}\n{line}'
 			)
 
 		self.text += [line]
@@ -180,7 +180,7 @@ class HtmlView:
 		# replace whitespace only divs with line breaks
 		htmlText = htmlText.replace('<div>&nbsp;</div>', '<br>')  # FIXME
 		htmlText = htmlText.replace('<div> </div>', '<br>')  # FIXME
-		htmlText = htmlText.replace(u'<div>\u200b</div>', '<br>')  # FIXME
+		htmlText = htmlText.replace('<div>\u200b</div>', '<br>')  # FIXME
 
 		# decode nbsp into regular space
 		htmlText = htmlText.replace("&nbsp;", ' ').replace('&#8203;', ' ')
@@ -212,7 +212,7 @@ class HtmlView:
 		htmlText = htmlText.replace('<p><br/>\n<br/>\n<br/>\n</p>', '<hr />')
 
 		# replace unicode nbsp with regular space
-		htmlText = htmlText.replace(' ', ' ').replace(u'\u200b', ' ')
+		htmlText = htmlText.replace(' ', ' ').replace('\u200b', ' ')
 
 		# replace centered stars with scene break
 		htmlText = htmlText.replace(
@@ -393,7 +393,7 @@ class HtmlView:
 			nclose = htmlText.find('>', nopen)
 
 			if nclose < nopen:
-				raise Exception('open tag with no close: {}'.format(nopen))
+				raise Exception(f'open tag with no close: {nopen}')
 
 			# yank tag body
 			originalFullInner = htmlText[nopen + 1:nclose].strip()
@@ -633,18 +633,18 @@ class ChapterView:
 		if header == True:
 			descriptionView = HtmlView(fic.description or '{missing description}')
 			self.text += [
-				['', '"{}"'.format(fic.title), ''],
-				['', 'by {}'.format(fic.getAuthorName()), ''],
+				['', f'"{fic.title}"', ''],
+				['', f'by {fic.getAuthorName()}', ''],
 				[
-					'chapter {}'.format(chapter.chapterId),
-					'words: {}'.format(util.formatNumber(self.totalWords))
+					f'chapter {chapter.chapterId}',
+					f'words: {util.formatNumber(self.totalWords)}'
 				]
 			]
 			if chapter.chapterId >= 1:
 				self.text += descriptionView.text
 			if chapter.title is not None and len(chapter.title) > 0:
 				self.text += [
-					['', 'Chapter {}: {}'.format(chapter.chapterId, chapter.title), '']
+					['', f'Chapter {chapter.chapterId}: {chapter.title}', '']
 				]
 			if len(contentView.text) > 0 and contentView.text[0] != '<hr />':
 				self.text += ['<hr />']
@@ -657,14 +657,14 @@ class ChapterView:
 				self.text += ['<hr />']
 			if chapter.title is not None and len(chapter.title) > 0:
 				self.text += [
-					['', 'Chapter {}: {}'.format(chapter.chapterId, chapter.title), '']
+					['', f'Chapter {chapter.chapterId}: {chapter.title}', '']
 				]
 			self.text += [
 				[
-					'chapter {}'.format(chapter.chapterId),
-					'words: {}'.format(util.formatNumber(self.totalWords))
+					f'chapter {chapter.chapterId}',
+					f'words: {util.formatNumber(self.totalWords)}'
 				],
-				['"{}"'.format(fic.title), 'by {}'.format(fic.getAuthorName())],
+				[f'"{fic.title}"', f'by {fic.getAuthorName()}'],
 			]
 
 		self.cumulativeLength = [0] * len(self.text)
@@ -1130,7 +1130,7 @@ class StoryView(Widget):
 		ruler = self.getRuler()
 		try:
 			stdscr.addstr(self.height - 1, 0, ruler, curses.color_pair(0))
-		except curses.error as e:
+		except curses.error:
 			pass
 
 	def saveCursor(self) -> None:
@@ -1158,7 +1158,7 @@ class StoryView(Widget):
 			# chapter status
 			status[FicStatus(self.chapter.getUserFicChapter().readStatus)],
 			# title
-			'"{}"'.format(self.fic.title),
+			f'"{self.fic.title}"',
 			# chapter title
 			self.cview.chapter.title or '',
 		]
@@ -1180,13 +1180,13 @@ class StoryView(Widget):
 			'{: >{}d}/{: >{}d}'.format(
 				self.cursor.line + 1, self.lineMag, totalLines, self.lineMag
 			),
-			'{:>3d}%'.format(int(perc))
+			f'{int(perc):>3d}%'
 		]
 		if self.maxWidth is not None:
 			if self.width >= self.maxWidth:
-				rightParts = ['F({})'.format(self.maxWidth)] + rightParts
+				rightParts = [f'F({self.maxWidth})'] + rightParts
 			else:
-				rightParts = ['F[{}]'.format(self.width)] + rightParts
+				rightParts = [f'F[{self.width}]'] + rightParts
 
 		rRuler = ' '.join(rightParts)
 

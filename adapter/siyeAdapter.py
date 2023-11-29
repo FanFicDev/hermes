@@ -1,14 +1,13 @@
+from typing import Optional
 import re
 import time
 import urllib
-from typing import Optional
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom
-import util
-import scrape
 
 from adapter.adapter import Adapter, edumpContent
+from htypes import FicId, FicType
+import scrape
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class SiyeAdapter(Adapter):
@@ -19,8 +18,8 @@ class SiyeAdapter(Adapter):
 
 	def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
 		if cid is None:
-			return '{}?sid={}'.format(self.baseStoryUrl, lid)
-		return '{}?sid={}&chapter={}'.format(self.baseStoryUrl, lid, cid)
+			return f'{self.baseStoryUrl}?sid={lid}'
+		return f'{self.baseStoryUrl}?sid={lid}&chapter={cid}'
 
 	def tryParseUrl(self, url: str) -> Optional[FicId]:
 		url = url.replace('&textsize=0', '')
@@ -67,7 +66,7 @@ class SiyeAdapter(Adapter):
 
 		w95tables = soup.findAll('table', {'width': '95%'})
 		if len(w95tables) != 3:
-			raise Exception('wrong number of w95 tables: {}'.format(len(w95tables)))
+			raise Exception(f'wrong number of w95 tables: {len(w95tables)}')
 
 		contentTable = w95tables[1]
 
@@ -98,7 +97,7 @@ class SiyeAdapter(Adapter):
 
 		w95tables = soup.findAll('table', {'width': '95%'})
 		if len(w95tables) != 3:
-			raise Exception('wrong number of w95 tables: {}'.format(len(w95tables)))
+			raise Exception(f'wrong number of w95 tables: {len(w95tables)}')
 
 		ficInfoTable = w95tables[0]
 		ficTitleH3 = ficInfoTable.find('h3')
@@ -132,8 +131,8 @@ class SiyeAdapter(Adapter):
 			fic.ageRating = ageRatingMatch.group(1).strip()
 
 		maxChapter = 0
-		baseChapterHref = 'viewstory.php?sid={}&chapter='.format(fic.localId)
-		singleChapterHref = 'viewstory.php?sid={}&chapter=Array'.format(fic.localId)
+		baseChapterHref = f'viewstory.php?sid={fic.localId}&chapter='
+		singleChapterHref = f'viewstory.php?sid={fic.localId}&chapter=Array'
 		isSingleChapterFic = False
 		allAs = soup.find_all('a')
 		for a in allAs:
@@ -163,7 +162,7 @@ class SiyeAdapter(Adapter):
 		minUpdate = util.parseDateAsUnix(int(time.time()), fic.fetched)
 		maxUpdate = util.parseDateAsUnix('1970/01/01', fic.fetched)
 		for (year, month, day) in re.findall(updatedOnPattern, html):
-			date = '{}/{}/{}'.format(year, month, day)
+			date = f'{year}/{month}/{day}'
 			dt = util.parseDateAsUnix(date, fic.fetched)
 
 			minUpdate = min(minUpdate, dt)

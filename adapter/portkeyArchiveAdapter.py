@@ -1,13 +1,7 @@
-import re
-import time
 from typing import Optional
 
-from htypes import FicType, FicId
-from store import Fic, FicChapter, Fandom, Character
-import util
-import scrape
-
 from adapter.adapter import ManualAdapter
+from htypes import FicId, FicType
 
 
 class PortkeyArchiveAdapter(ManualAdapter):

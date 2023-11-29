@@ -1,14 +1,13 @@
 from typing import List, Optional
 import re
-import time
+
 import dateutil.parser
 
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, Fic, FicStatus, FicChapter, Fandom
-import util
-import scrape
-
 from adapter.adapter import Adapter, edumpContent
+from htypes import FicId, FicType
+import scrape
+from store import Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class WavesArisenAdapter(Adapter):
@@ -17,7 +16,7 @@ class WavesArisenAdapter(Adapter):
 			True, 'https://wertifloke.wordpress.com', 'wertifloke.wordpress.com',
 			FicType.wavesarisen
 		)
-		self.tocUrl = '{}/table-of-contents'.format(self.baseUrl)
+		self.tocUrl = f'{self.baseUrl}/table-of-contents'
 
 	def canonizeUrl(self, url: str) -> str:
 		url = scrape.canonizeUrl(url)
@@ -55,7 +54,7 @@ class WavesArisenAdapter(Adapter):
 		soup = BeautifulSoup(data, 'html5lib')
 		publishTimes = soup.findAll('time', {'class': ['entry-date', 'published']})
 		if len(publishTimes) != 1:
-			raise Exception('cannot find publish time for {}'.format(url))
+			raise Exception(f'cannot find publish time for {url}')
 		uts = util.dtToUnix(dateutil.parser.parse(publishTimes[0].get('datetime')))
 		return OilTimestamp(uts)
 

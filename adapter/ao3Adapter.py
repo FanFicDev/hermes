@@ -1,14 +1,10 @@
-import time
 from typing import Optional
 
-from htypes import FicType, FicId
-from store import (
-	OilTimestamp, Language, FicStatus, Fic, FicChapter, Fandom, Character
-)
-import util
-import scrape
-
 from adapter.adapter import Adapter, edumpContent
+from htypes import FicId, FicType
+import scrape
+from store import Character, Fandom, Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 # [ any of these ], [ map to all of these ]
 ao3FandomsMap = [
@@ -206,14 +202,14 @@ class Ao3Adapter(Adapter):
 		if url.find('/chapters/') >= 0 and url.find('/works/') < 0:
 			meta = scrape.softScrapeWithMeta(url, delay=10)
 			if meta is None or meta['raw'] is None or meta['status'] != 200:
-				raise Exception('unable to lookup chapter: {}'.format(url))
+				raise Exception(f'unable to lookup chapter: {url}')
 			from bs4 import BeautifulSoup
 			soup = BeautifulSoup(meta['raw'], 'html5lib')
 			for a in soup.find_all('a'):
 				if a.get_text() == 'Entire Work':
 					return self.tryParseUrl(self.baseUrl + a.get('href')[len('/works/'):])
 			else:
-				raise Exception('unable to lookup chapters entire work: {}'.format(url))
+				raise Exception(f'unable to lookup chapters entire work: {url}')
 
 		if url.startswith(self.collectionUrl) and url.find('/works/') != -1:
 			url = self.baseUrl + url[url.find('/works/') + len('/works/'):]
@@ -299,7 +295,7 @@ class Ao3Adapter(Adapter):
 
 		titleHeadings = soup.findAll('h2', {'class': 'title heading'})
 		if len(titleHeadings) != 1:
-			raise Exception('unable to find ao3 title {}'.format(fic.url))
+			raise Exception(f'unable to find ao3 title {fic.url}')
 		fic.title = titleHeadings[0].get_text().strip()
 
 		summaryModules = soup.findAll('div', {'class': 'summary module'})
@@ -367,7 +363,7 @@ class Ao3Adapter(Adapter):
 				updatedUts = util.parseDateAsUnix(uText, fic.fetched)
 				fic.updated = OilTimestamp(updatedUts)
 			else:
-				raise Exception('unkown status: {}'.format(statusDt.contents[0]))
+				raise Exception(f'unkown status: {statusDt.contents[0]}')
 
 		byline = soup.find('h3', {'class': 'byline heading'})
 		authorLink = byline.find('a')
@@ -829,7 +825,7 @@ class Ao3Adapter(Adapter):
 					r = rt.contents[0]
 					chars = r.split('/')
 					if len(chars) > 8:  # TODO: sometimes more?
-						raise Exception('unable to parse relationship: {}'.format(r))
+						raise Exception(f'unable to parse relationship: {r}')
 					for char in chars:
 						fic.add(Character.defineInFandom(ourDoms[0], char, self.ftype))
 

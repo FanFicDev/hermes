@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Dict, Optional
 import os
+
 import psycopg2
 
 if TYPE_CHECKING:

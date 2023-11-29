@@ -1,14 +1,12 @@
+from typing import List, Optional
 import re
-import time
-from typing import Optional, List
-
-from htypes import FicType, FicId
-from store import OilTimestamp, Language, FicStatus, Fic, FicChapter
-import util
-import scrape
 
 from adapter.adapter import Adapter
 from adapter.regex_matcher import RegexMatcher
+from htypes import FicId, FicType
+import scrape
+from store import Fic, FicChapter, FicStatus, Language, OilTimestamp
+import util
 
 
 class FictionHuntAdapter(Adapter):
@@ -19,9 +17,9 @@ class FictionHuntAdapter(Adapter):
 
 	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		if chapterId is None:
-			return '{}/read/{}'.format(self.baseUrl, storyId)
+			return f'{self.baseUrl}/read/{storyId}'
 		# note: does not support titles
-		return '{}/read/{}/{}'.format(self.baseUrl, storyId, chapterId)
+		return f'{self.baseUrl}/read/{storyId}/{chapterId}'
 
 	def buildUrl(self, chapter: 'FicChapter') -> str:
 		if chapter.fic is None:
@@ -107,12 +105,12 @@ class FictionHuntAdapter(Adapter):
 		if len(divTitle) == 1:
 			fic.title = divTitle[0].get_text().strip()
 		else:
-			raise Exception('error: unable to find title:\n{}\n'.format(pt_str))
+			raise Exception(f'error: unable to find title:\n{pt_str}\n')
 
 		fic.url = self.constructUrl(fic.localId, 1)
 
 		# TODO: this may not exist on fictionhunt?
-		fic.description = 'archive of {} from fictionhunt TODO'.format(fic.title)
+		fic.description = f'archive of {fic.title} from fictionhunt TODO'
 
 		# default optional fields
 		fic.reviewCount = 0
@@ -161,7 +159,7 @@ class FictionHuntAdapter(Adapter):
 				self.setAuthor(fic, author, authorUrl, authorId)
 				break
 		else:
-			raise Exception('unable to find author:\n{}'.format(text))
+			raise Exception(f'unable to find author:\n{text}')
 
 		# TODO: hardcode Harry Potter fanfic?
 

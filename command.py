@@ -1,5 +1,5 @@
+from typing import Any, Callable, List, Optional, Set, Tuple, Union, cast
 import inspect
-from typing import List, Set, Any, Callable, Optional, Tuple, Union, cast
 
 
 class Command:
@@ -13,7 +13,7 @@ class Command:
 
 	def printUsage(self) -> None:
 		for idx in range(len(self.targets)):
-			print('usage: {}'.format(self.__getUsage(idx)))
+			print(f'usage: {self.__getUsage(idx)}')
 
 		types: Set[type] = set()
 		for idx in range(len(self.tspecs)):
@@ -31,7 +31,7 @@ class Command:
 			return self.name
 		aspec: List[str] = []
 		for arg in self.tspecs[idx].args:
-			aspec += ['{}:{}'.format(arg, self.tspecs[idx].annotations[arg])]
+			aspec += [f'{arg}:{self.tspecs[idx].annotations[arg]}']
 		return self.name + ' ' + ' '.join(aspec)
 
 	def __getTypeDescription(self, t: Any) -> Optional[str]:

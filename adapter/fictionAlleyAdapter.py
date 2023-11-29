@@ -1,7 +1,8 @@
 from typing import Optional
-from htypes import FicType, FicId
-from store import Fic, FicChapter
+
 from adapter.adapter import Adapter, edumpContent
+from htypes import FicId, FicType
+from store import Fic, FicChapter
 
 
 class FictionAlleyAdapter(Adapter):

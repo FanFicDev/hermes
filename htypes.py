@@ -1,6 +1,7 @@
-from enum import IntEnum
 import typing
-from typing import Dict, Optional, Tuple, Any
+from typing import Any, Dict, Optional, Tuple
+from enum import IntEnum
+
 if typing.TYPE_CHECKING:
 	from adapter.adapter import Adapter
 from psycopg2.extensions import AsIs, register_adapter
@@ -83,7 +84,7 @@ class FicId:
 		ident = ident.strip()
 		res = FicId.tryParse(ident)
 		if res is None:
-			raise Exception('unable to parse ident: {}'.format(ident))
+			raise Exception(f'unable to parse ident: {ident}')
 		return res
 
 	@staticmethod
@@ -182,7 +183,7 @@ class FicId:
 			a = adapters[ftype]
 			if a is None: continue
 			if a.botLinkSuffix is None: continue
-			l = 'link{}('.format(a.botLinkSuffix)
+			l = f'link{a.botLinkSuffix}('
 			if ident.startswith(l) and ident.endswith(')'):
 				mid = ident[len(l):-1]
 				if not mid.isnumeric():
