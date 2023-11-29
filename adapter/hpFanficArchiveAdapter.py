@@ -20,7 +20,7 @@ class HpFanficArchiveAdapter(Adapter):
 		self.baseStoryUrl = 'http://www.hpfanficarchive.com/stories/viewstory.php'
 		self.baseDelay = 5
 
-	def constructUrl(self, lid: str, cid: int = None) -> str:
+	def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
 		if cid is None:
 			return '{}?sid={}'.format(self.baseStoryUrl, lid)
 		return '{}?sid={}&chapter={}'.format(self.baseStoryUrl, lid, cid)
@@ -64,7 +64,7 @@ class HpFanficArchiveAdapter(Adapter):
 		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(html, 'html.parser')
 		mainpage = soup.find(id='mainpage')
 		if mainpage is None:

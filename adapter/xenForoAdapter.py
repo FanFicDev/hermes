@@ -1,7 +1,7 @@
 from typing import Dict, List, Set, Optional, Tuple, Union, Any, cast
 import typing
 if typing.TYPE_CHECKING:
-	from bs4 import BeautifulSoup  # type: ignore
+	from bs4 import BeautifulSoup
 import time
 import dateutil.parser
 import traceback
@@ -26,7 +26,7 @@ class XenForoAdapter(Adapter):
 		urlFragments: Union[str, List[str]] = [],
 		ftype: FicType = FicType.broken,
 		titleSuffix: str = '',
-		rewrites: List[Tuple[str, str]] = None,
+		rewrites: Optional[List[Tuple[str, str]]] = None,
 		postContainer: Union[str, List[str]] = 'li',
 		postsPerPage: int = 10
 	):
@@ -971,7 +971,7 @@ class XenForoAdapter(Adapter):
 		title = title.replace('  ', ' ')
 		return (title, titleFandoms, titleTags)
 
-	def scrapeLike(self, url: str, delay: int = None) -> str:
+	def scrapeLike(self, url: str, delay: Optional[int] = None) -> str:
 		url = scrape.canonizeUrl(url)
 		if delay is None:
 			delay = self.defaultDelay

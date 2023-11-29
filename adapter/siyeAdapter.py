@@ -17,7 +17,7 @@ class SiyeAdapter(Adapter):
 		self.baseStoryUrl = 'https://www.siye.co.uk/viewstory.php'
 		self.alternateBaseUrl = 'https://www.siye.co.uk/siye'
 
-	def constructUrl(self, lid: str, cid: int = None) -> str:
+	def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
 		if cid is None:
 			return '{}?sid={}'.format(self.baseStoryUrl, lid)
 		return '{}?sid={}&chapter={}'.format(self.baseStoryUrl, lid, cid)
@@ -61,7 +61,7 @@ class SiyeAdapter(Adapter):
 		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(html, 'html5lib')
 		notes = soup.find(id='notes')
 

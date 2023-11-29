@@ -48,7 +48,10 @@ class FictionPressAdapter(Adapter):
 		)
 
 	def constructUrl(
-		self, storyId: str, chapterId: int = None, title: str = None
+		self,
+		storyId: str,
+		chapterId: Optional[int] = None,
+		title: Optional[str] = None
 	) -> str:
 		if chapterId is None:
 			return '{}/s/{}'.format(self.baseUrl, storyId)
@@ -140,7 +143,7 @@ class FictionPressAdapter(Adapter):
 		return self.parseInfoInto(fic, data['raw'])
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		deletedFicText = 'Story Not FoundUnable to locate story. Code 1.'
 		soup = BeautifulSoup(wwwHtml, 'html5lib')
 		profile_top = soup.find(id='profile_top')

@@ -28,7 +28,7 @@ class Adapter(object):
 		baseUrl: str,
 		urlFragments: Union[str, List[str]] = [],
 		ftype: FicType = FicType.broken,
-		botLinkSuffix: str = None
+		botLinkSuffix: Optional[str] = None
 	):
 		self.cacheable = cacheable
 		self.baseUrl = baseUrl

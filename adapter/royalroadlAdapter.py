@@ -22,7 +22,7 @@ class RoyalRoadlAdapter(Adapter):
 		)
 		self.baseStoryUrl = self.baseUrl + '/fiction/'
 
-	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
+	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		if chapterId is None:
 			return '{}{}'.format(self.baseStoryUrl, storyId)
 		# TODO: lookup url in existing chapters?
@@ -68,7 +68,7 @@ class RoyalRoadlAdapter(Adapter):
 		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(html, 'html5lib')
 		content = soup.find('div', {'class': 'chapter-content'})
 		return str(content)

@@ -60,8 +60,8 @@ class WordpressAdapter(Adapter):
 			url += '/'
 		return url
 
-	def getChapterUrls(self, data: str = None) -> List[str]:
-		from bs4 import BeautifulSoup  # type: ignore
+	def getChapterUrls(self, data: Optional[str] = None) -> List[str]:
+		from bs4 import BeautifulSoup
 		if data is None:
 			data = scrape.softScrape(self.tocUrl)
 		soup = BeautifulSoup(data, 'html5lib')
@@ -84,7 +84,7 @@ class WordpressAdapter(Adapter):
 				chapterUrls += [href]
 		return chapterUrls
 
-	def getChapterTitles(self, data: str = None) -> List[str]:
+	def getChapterTitles(self, data: Optional[str] = None) -> List[str]:
 		from bs4 import BeautifulSoup
 		if data is None:
 			data = scrape.softScrape(self.tocUrl)
@@ -116,7 +116,7 @@ class WordpressAdapter(Adapter):
 		uts = util.dtToUnix(dateutil.parser.parse(publishTimes[0].get('datetime')))
 		return OilTimestamp(uts)
 
-	def constructUrl(self, lid: str, cid: int = None) -> str:
+	def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
 		if cid is None:
 			return self.baseUrl
 		chapterUrls = self.getChapterUrls()

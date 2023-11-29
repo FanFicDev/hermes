@@ -7,7 +7,7 @@ import dateutil.parser
 import time
 import struct
 import zlib
-from typing import List, Union
+from typing import List, Optional, Union
 from schema import OilTimestamp
 
 defaultLogFile = 'hermes.log'
@@ -47,7 +47,7 @@ def urlTitle(title: str) -> str:
 	return ut.rstrip('-')
 
 
-def randomString(length: int = 2, charset: str = None) -> str:
+def randomString(length: int = 2, charset: Optional[str] = None) -> str:
 	charset = rippleCharset if charset is None else charset
 	res = ''
 	for i in range(length):
@@ -115,7 +115,7 @@ def isWrittenDate(val: str) -> bool:
 def parseDateAsUnix(
 	updated: Union[OilTimestamp, str, int],
 	fetched: Union[OilTimestamp, int],
-	defaultYear: int = None
+	defaultYear: Optional[int] = None
 ) -> int:
 	if isinstance(updated, OilTimestamp):
 		return updated.toUTS()
@@ -180,7 +180,9 @@ def parseDateAsUnix(
 	raise Exception('error parsing date: {}'.format(updated))
 
 
-def logMessage(msg: str, fname: str = None, logDir: str = None) -> None:
+def logMessage(
+	msg: str, fname: Optional[str] = None, logDir: Optional[str] = None
+) -> None:
 	if fname is None:
 		fname = defaultLogFile
 	if logDir is None:

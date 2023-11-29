@@ -146,8 +146,8 @@ class Hermes:
 				# TODO: do resize all widgets
 			else:
 				self.isDirty |= self.active.handleKey(key)
-			if self.abort:
-				return
+			#if self.abort:
+			#	return
 
 			# if the screen has changed, repaint it
 			if self.isDirty:
@@ -266,7 +266,7 @@ def dumpAll() -> None:
 def dumpUrl(url: str, lpad: int) -> None:
 	html = scrape.softScrape(url)
 
-	from bs4 import BeautifulSoup  # type: ignore
+	from bs4 import BeautifulSoup
 	soup = BeautifulSoup(html, 'html5lib')
 	[s.extract() for s in soup('link')]
 	[s.extract() for s in soup('script')]

@@ -615,7 +615,10 @@ class FFNAdapter(Adapter):
 		)
 
 	def constructUrl(
-		self, storyId: str, chapterId: int = None, title: str = None
+		self,
+		storyId: str,
+		chapterId: Optional[int] = None,
+		title: Optional[str] = None
 	) -> str:
 		if chapterId is None:
 			return '{}/s/{}'.format(self.baseUrl, storyId)
@@ -806,7 +809,7 @@ class FFNAdapter(Adapter):
 		return fandoms
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		deletedFicTexts = [
 			# probably deleted by user
 			'Story Not FoundUnable to locate story. Code 1.',

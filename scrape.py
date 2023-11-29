@@ -9,6 +9,7 @@ import util
 import lite_oil
 
 if typing.TYPE_CHECKING:
+	from psycopg2 import connection  # type: ignore[attr-defined]
 	import psycopg2
 	import requests
 
@@ -43,7 +44,7 @@ def importEnvironment() -> None:
 	)
 
 
-def openMinerva() -> 'psycopg2.connection':
+def openMinerva() -> 'connection':
 	global __oilConn
 	if __oilConn is None:
 		import psycopg2
@@ -67,7 +68,7 @@ def saveWebRequest(
 	url: str,
 	status: int,
 	response: Optional[str],
-	source: str = None
+	source: Optional[str] = None
 ) -> None:
 	#import psycopg2
 	responseBytes: Optional[bytes] = None
@@ -156,7 +157,7 @@ ScrapeMeta = Dict[str, Any]
 
 def getMostRecentScrapeWithMeta(
 	url: str,
-	ulike: str = None,
+	ulike: Optional[str] = None,
 	status: Optional[int] = 200,
 	beforeId: Optional[int] = None
 ) -> Optional[ScrapeMeta]:
@@ -196,7 +197,7 @@ def getMostRecentScrapeWithMeta(
 	return {'url': res[2], 'fetched': res[1], 'raw': response, 'status': res[4]}
 
 
-def getMostRecentScrape(url: str, ulike: str = None) -> Optional[str]:
+def getMostRecentScrape(url: str, ulike: Optional[str] = None) -> Optional[str]:
 	r = getMostRecentScrapeWithMeta(url, ulike)
 	return None if r is None else r['raw']
 
@@ -230,8 +231,8 @@ def canonizeUrl(url: str) -> str:
 def softScrapeWithMeta(
 	url: str,
 	delay: float = 3,
-	ulike: str = None,
-	mustyThreshold: int = None,
+	ulike: Optional[str] = None,
+	mustyThreshold: Optional[int] = None,
 	timeout: int = 15
 ) -> Optional[ScrapeMeta]:
 	url = canonizeUrl(url)
@@ -252,8 +253,8 @@ def softScrapeWithMeta(
 def softScrape(
 	url: str,
 	delay: float = 3,
-	ulike: str = None,
-	mustyThreshold: int = None,
+	ulike: Optional[str] = None,
+	mustyThreshold: Optional[int] = None,
 	timeout: int = 15
 ) -> Optional[str]:
 	r = softScrapeWithMeta(
@@ -354,7 +355,8 @@ def decodeRequest(data: Optional[bytes], url: str) -> Optional[str]:
 
 
 def resolveRedirects(
-	url: str, cookies: 'requests.cookies.RequestsCookieJar' = None
+	url: str,
+	cookies: Optional['requests.cookies.RequestsCookieJar'] = None
 ) -> str:
 	import requests
 	url = canonizeUrl(url)
@@ -379,7 +381,7 @@ def delaySecs(secs: float) -> None:
 
 def scrape(
 	url: str,
-	cookies: 'requests.cookies.RequestsCookieJar' = None,
+	cookies: Optional['requests.cookies.RequestsCookieJar'] = None,
 	delay: float = 3,
 	timeout: int = 15
 ) -> ScrapeMeta:

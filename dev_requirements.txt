@@ -1,0 +1,11 @@
+importlib-metadata==6.8.0
+mypy==1.7.1
+mypy-extensions==1.0.0
+platformdirs==4.0.0
+tomli==2.0.1
+types-psycopg2==2.9.21.18
+types-python-dateutil==2.8.19.14
+types-requests==2.31.0.10
+typing_extensions==4.8.0
+yapf==0.40.2
+zipp==3.17.0

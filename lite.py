@@ -1,13 +1,17 @@
 import re
 import threading
 from typing import (
-	Dict, List, Tuple, Any, Iterable, Optional, Sequence, Type, TypeVar
+	TYPE_CHECKING, Dict, List, Tuple, Any, Sequence, Optional, Sequence, Type,
+	TypeVar
 )
 import psycopg2
 import schema
 from schema import ColumnInfo
 import util
 from lite_oil import getConnection, commit, shutdown
+
+if TYPE_CHECKING:
+	from psycopg2 import connection  # type: ignore[attr-defined]
 
 JSONable = Dict[str, Any]
 
@@ -46,7 +50,7 @@ def getTableName(clsName: str) -> str:
 	return name
 
 
-def transformQueryData(data: Iterable[Any]) -> Iterable[Any]:
+def transformQueryData(data: Sequence[Any]) -> Sequence[Any]:
 	ld = list(data)
 	nd = []
 	for d in ld:
@@ -57,7 +61,7 @@ def transformQueryData(data: Iterable[Any]) -> Iterable[Any]:
 	return tuple(nd)
 
 
-def logQuery(kind: str, table: str, sql: str, data: Iterable[Any]) -> None:
+def logQuery(kind: str, table: str, sql: str, data: Sequence[Any]) -> None:
 	if not logQueries:
 		return
 	sql = sql.replace('\t', ' ').replace('\n', ' ')
@@ -77,7 +81,7 @@ class StoreType(object):
 	regColumns: List[ColumnInfo]
 
 	@classmethod
-	def getConnection(cls) -> 'psycopg2.connection':
+	def getConnection(cls) -> 'connection':
 		return getConnection(cls.subDB)
 
 	@classmethod
@@ -96,7 +100,7 @@ class StoreType(object):
 		raise NotImplementedError()
 
 	@classmethod
-	def get(cls: Type[T], pkValues: Iterable[Any]) -> Optional[T]:
+	def get(cls: Type[T], pkValues: Sequence[Any]) -> Optional[T]:
 		table = cls.getTableName()
 
 		conn = cls.getConnection()
@@ -124,7 +128,9 @@ class StoreType(object):
 		raise Exception(f"unable to lookup {cls.__name__}: {pkValues}")
 
 	@staticmethod
-	def buildWhere(whereData: Dict[str, Any] = None) -> Tuple[Iterable[Any], str]:
+	def buildWhere(
+		whereData: Optional[Dict[str, Any]] = None
+	) -> Tuple[Sequence[Any], str]:
 		operators = {'>', '<', '>=', '<=', '!=', '==', 'is'}
 		data: List[Any] = []
 		whereSql = ''
@@ -147,8 +153,8 @@ class StoreType(object):
 	@classmethod
 	def select(
 		cls: Type[T],
-		whereData: Dict[str, Any] = None,
-		orderBy: str = None
+		whereData: Optional[Dict[str, Any]] = None,
+		orderBy: Optional[str] = None
 	) -> List[T]:
 		table = cls.getTableName()
 		conn = cls.getConnection()
@@ -167,7 +173,7 @@ class StoreType(object):
 		return res
 
 	@classmethod
-	def count(cls, whereData: Dict[str, Any] = None) -> int:
+	def count(cls, whereData: Optional[Dict[str, Any]] = None) -> int:
 		table = cls.getTableName()
 		conn = cls.getConnection()
 
@@ -182,21 +188,21 @@ class StoreType(object):
 		assert (r is not None)
 		return int(r[0])
 
-	def __getParts(self, which: List[str]) -> Iterable[Any]:
+	def __getParts(self, which: List[str]) -> Sequence[Any]:
 		return tuple([self.__dict__[piece] for piece in which])
 
-	def toTuple(self) -> Iterable[Any]:
+	def toTuple(self) -> Sequence[Any]:
 		cols = type(self).columns
 		return self.__getParts([col.name for col in cols])
 
-	def toInsertTuple(self) -> Iterable[Any]:
+	def toInsertTuple(self) -> Sequence[Any]:
 		cols = type(self).getNonGeneratedColumns()
 		return self.__getParts([col.name for col in cols])
 
-	def getPKTuple(self) -> Iterable[Any]:
+	def getPKTuple(self) -> Sequence[Any]:
 		return self.__getParts([col.name for col in type(self).pkColumns])
 
-	def getNonPKTuple(self) -> Iterable[Any]:
+	def getNonPKTuple(self) -> Sequence[Any]:
 		return self.__getParts([col.name for col in type(self).regColumns])
 
 	def insert(self) -> None:

@@ -19,7 +19,7 @@ class SugarQuillAdapter(Adapter):
 		)
 		self.baseStoryUrl = self.baseUrl + '/read.php'
 
-	def constructUrl(self, lid: str, cid: int = None) -> str:
+	def constructUrl(self, lid: str, cid: Optional[int] = None) -> str:
 		if cid is None:
 			cid = 1
 		return '{}?storyid={}&chapno={}'.format(self.baseStoryUrl, lid, cid)
@@ -59,7 +59,7 @@ class SugarQuillAdapter(Adapter):
 		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(html, 'html5lib')
 		content = soup.findAll('div', {'class': 'Section1'})
 		if len(content) != 1:

@@ -17,7 +17,7 @@ class FictionHuntAdapter(Adapter):
 			True, 'http://fictionhunt.com', 'fictionhunt.com', FicType.fictionhunt
 		)
 
-	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
+	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		if chapterId is None:
 			return '{}/read/{}'.format(self.baseUrl, storyId)
 		# note: does not support titles
@@ -89,7 +89,7 @@ class FictionHuntAdapter(Adapter):
 		return self.parseInfoInto(fic, data['raw'])
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(wwwHtml, 'html.parser')
 		divDetails = soup.find_all('div', {'class': 'details'})
 		if len(divDetails) != 1:

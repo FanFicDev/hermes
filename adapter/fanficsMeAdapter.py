@@ -15,7 +15,7 @@ class FanficsMeAdapter(Adapter):
 		super().__init__(True, 'http://fanfics.me', 'fanfics.me', FicType.fanficsme)
 		self.baseStoryUrl = self.baseUrl + '/read2.php'
 
-	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
+	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		url = self.baseStoryUrl + '?id={}'.format(storyId)
 		if chapterId is not None:
 			url += '&chapter={}'.format(chapterId - 1)
@@ -59,7 +59,7 @@ class FanficsMeAdapter(Adapter):
 	def extractContent(self, fic: Fic, html: str) -> str:
 		# TODO: is this ok? it will never be called if its always prefetched by
 		# TODO: getLatest grabbing it without the cid?
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(html, 'html5lib')
 		readContent = soup.find('div', {'class': 'ReadContent'})
 		header = readContent.find('h2')  # TODO: this is the chapter title

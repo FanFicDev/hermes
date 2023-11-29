@@ -52,7 +52,7 @@ class FictionAlleyAdapter(Adapter):
 		raise NotImplementedError()
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(html, 'html.parser')
 		normalDiv = soup.find('div', {'name': 'Normal'})
 		if normalDiv is None:

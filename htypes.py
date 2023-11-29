@@ -58,7 +58,11 @@ def getAdapter(ficType: FicType) -> 'Adapter':
 class FicId:
 	# TODO: is this cid or localChapterId?
 	def __init__(
-		self, ftype: FicType, lid: str, cid: int = None, ambiguous: bool = True
+		self,
+		ftype: FicType,
+		lid: str,
+		cid: Optional[int] = None,
+		ambiguous: bool = True
 	):
 		self.sourceId = ftype
 		self.localId = lid

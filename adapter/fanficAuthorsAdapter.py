@@ -26,7 +26,7 @@ class FanficAuthorsAdapter(Adapter):
 		)
 		self.baseStoryUrl = 'https://{}.fanficauthors.net/{}'
 
-	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
+	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		authorLid = storyId.split('/')[0]
 		storyLid = storyId.split('/')[1]
 		url = self.baseStoryUrl.format(authorLid, storyLid)
@@ -74,7 +74,7 @@ class FanficAuthorsAdapter(Adapter):
 		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(html, 'html5lib')
 		storyChapterDisplay = soup.find(
 			'div', {'class': ['story', 'chapterDisplay']}

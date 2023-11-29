@@ -125,7 +125,7 @@ class AdultFanfictionAdapter(Adapter):
 		)
 		self.baseStoryUrl = 'http://{}.adult-fanfiction.org/story.php?no={}'
 
-	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
+	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		archive = storyId.split('/')[0]
 		storyNo = storyId.split('/')[1]
 		url = self.baseStoryUrl.format(archive, storyNo)
@@ -185,7 +185,7 @@ class AdultFanfictionAdapter(Adapter):
 		return Fic.lookup((fic.id, ))
 
 	def extractContent(self, fic: Fic, html: str) -> str:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(html, 'html5lib')
 		tables = soup.findAll('table', {'width': '100%'})
 		if len(tables) != 5:

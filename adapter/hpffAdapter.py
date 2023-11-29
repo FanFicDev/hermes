@@ -116,7 +116,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 			return None
 		return FicId(self.ftype, info[0], int(info[3]))
 
-	def constructUrl(self, storyId: str, chapterId: int = None) -> str:
+	def constructUrl(self, storyId: str, chapterId: Optional[int] = None) -> str:
 		if chapterId is None:
 			return '{}{}{}'.format(self.baseUrl, self.storyPrefix, storyId)
 		return '{}{}{}'.format(self.baseUrl, self.chapterPrefix, chapterId)
@@ -187,7 +187,7 @@ class HarryPotterFanfictionAdapter(Adapter):
 		return Fic.lookup((fic.id, ))
 
 	def parseInfoInto(self, fic: Fic, wwwHtml: str) -> Fic:
-		from bs4 import BeautifulSoup  # type: ignore
+		from bs4 import BeautifulSoup
 		soup = BeautifulSoup(wwwHtml, 'html.parser')
 		storyMainInfo = soup.findAll('table', {'class': 'storymaininfo'})
 		if len(storyMainInfo) != 1:

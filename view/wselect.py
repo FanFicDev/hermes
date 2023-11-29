@@ -14,7 +14,7 @@ T = TypeVar('T', int, str)
 
 
 class FicSelect(Widget):
-	def __init__(self, parent: Optional['Hermes'], target: Fic = None):
+	def __init__(self, parent: Optional['Hermes'], target: Optional[Fic] = None):
 		self.parent = parent
 		self.fics = Fic.list() if target is None else Fic.list({'id': target.id})
 		self.list = self.fics
@@ -188,7 +188,9 @@ class FicSelect(Widget):
 			return (str(val).lower().find(str(arg).lower()) > -1)
 		raise Exception('invalid relation: {}'.format(rel))
 
-	def __refilter(self, target: Fic = None, force: bool = False) -> None:
+	def __refilter(
+		self, target: Optional[Fic] = None, force: bool = False
+	) -> None:
 		self.__doRefilter(force)
 		tidx = None
 		if target is not None:

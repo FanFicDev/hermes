@@ -16,7 +16,7 @@ class HtmlView:
 		self,
 		html: str,
 		markdown: bool = True,
-		extraTitles: List[str] = None
+		extraTitles: Optional[List[str]] = None
 	) -> None:
 		hrRes = [
 			'[!/\\\\&#~*_XxIiOoHhPpsVv80°¤ :.…=><12)(+\[\]-]{3,}',
@@ -261,7 +261,7 @@ class HtmlView:
 			htmlText.find("<\"I'm sorry Miss") >= 0
 			or htmlText.find("<\"Great Grandmother,") >= 0
 		):
-			from bs4 import BeautifulSoup  # type: ignore
+			from bs4 import BeautifulSoup
 			soup = BeautifulSoup(htmlText, 'html5lib')
 			htmlText = str(soup)
 

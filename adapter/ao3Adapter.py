@@ -207,7 +207,7 @@ class Ao3Adapter(Adapter):
 			meta = scrape.softScrapeWithMeta(url, delay=10)
 			if meta is None or meta['raw'] is None or meta['status'] != 200:
 				raise Exception('unable to lookup chapter: {}'.format(url))
-			from bs4 import BeautifulSoup  # type: ignore
+			from bs4 import BeautifulSoup
 			soup = BeautifulSoup(meta['raw'], 'html5lib')
 			for a in soup.find_all('a'):
 				if a.get_text() == 'Entire Work':

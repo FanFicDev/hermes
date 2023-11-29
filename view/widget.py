@@ -3,7 +3,7 @@ from typing import Any
 
 class Widget:
 	def handleKey(self, key: int) -> bool:
-		pass
+		return False
 
 	def refresh(self) -> None:
 		pass

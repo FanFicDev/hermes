@@ -20,7 +20,10 @@ class TagBase(store_bases.Tag):
 
 	@classmethod
 	def define(
-		cls: Type[T], name: str, parent: int = None, sourceId: int = None
+		cls: Type[T],
+		name: str,
+		parent: Optional[int] = None,
+		sourceId: Optional[int] = None
 	) -> T:
 		assert (cls.ttype is not None)
 		whereData = {'type': cls.ttype, 'name': name}
@@ -76,7 +79,7 @@ class Character(TagBase):
 
 	@staticmethod
 	def defineInFandom(
-		fandom: Fandom, name: str, sourceId: int = None
+		fandom: Fandom, name: str, sourceId: Optional[int] = None
 	) -> 'Character':
 		return Character.define(name, fandom.id, sourceId)
 
@@ -214,7 +217,7 @@ class Fic(store_bases.Fic):
 		)
 
 	@staticmethod
-	def list(where: Dict[str, Any] = None) -> List['Fic']:
+	def list(where: Optional[Dict[str, Any]] = None) -> List['Fic']:
 		#Sql.execute((Fic, UserFic), '''
 		#select f.*, uf.*
 		#from fic f
@@ -301,7 +304,7 @@ class Fic(store_bases.Fic):
 		ours = FicTag.forFic(self.id)
 		return [Tag.lookup((our.tagId, )) for our in ours]
 
-	def cache(self, upto: int = None) -> None:
+	def cache(self, upto: Optional[int] = None) -> None:
 		upto = upto or self.chapterCount or -1
 		for cid in range(1, upto + 1):
 			self.chapter(cid).cache()

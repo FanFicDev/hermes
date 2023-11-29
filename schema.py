@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-from typing import List, Dict, Any, Tuple, Optional, IO, Sequence
+#!./venv/bin/python
+from typing import TYPE_CHECKING, List, Dict, Any, Tuple, Optional, IO, Sequence
 import os
 import sys
 import shutil
@@ -7,6 +7,9 @@ import time
 import datetime
 import psycopg2
 from psycopg2.extensions import AsIs, register_adapter, new_type, register_type
+
+if TYPE_CHECKING:
+	from psycopg2 import cursor  # type: ignore[attr-defined]
 
 
 # return an ordered list of raw sql path, target, and link names
@@ -361,8 +364,8 @@ def adaptOilTimestamp(oil_timestamp: OilTimestamp) -> AsIs:
 	return AsIs(str(oil_timestamp.ots))
 
 
-def castOilTimestamp(value: Optional[str],
-											curs: 'psycopg2.cursor') -> Optional[OilTimestamp]:
+def castOilTimestamp(value: str | bytes | None,
+											curs: 'cursor') -> Optional[OilTimestamp]:
 	if value is None: return None
 	return OilTimestamp.fromOil(int(value))
 
@@ -631,9 +634,10 @@ def writeEnum(f: IO, name: str, values: Sequence[str]) -> None:
 			'\n',
 			f'def adapt{clsName}({name}: {clsName}) -> AsIs:\n'
 			f"\treturn AsIs(\"'%s'::{name}\" % {name}.name)\n",
-			f"def cast{clsName}(value: Optional[str], curs: 'psycopg2.cursor'\n",
+			f"def cast{clsName}(value: str | bytes | None, curs: 'cursor'\n",
 			f'\t\t) -> Optional[{clsName}]:\n',
 			f'\tif value is None: return None\n',
+			f'\tif isinstance(value, bytes): return {clsName}[value.decode(\'utf-8\')]\n',
 			f'\treturn {clsName}[value]\n',
 			'\n',
 			f'register_adapter({clsName}, adapt{clsName})\n',
@@ -654,12 +658,15 @@ def generateBaseClasses() -> None:
 		f.writelines(
 			[
 				'import typing\n',
-				'from typing import Optional, Type, Sequence, List, Tuple, Any, NewType, TypeVar\n',
+				'from typing import TYPE_CHECKING, Optional, Type, Sequence, List, Tuple, Any, NewType, TypeVar\n',
 				'import lite\n',
 				'import enum\n',
 				'import psycopg2\n',
 				'from psycopg2.extensions import AsIs, register_adapter, new_type, register_type\n',
 				'from schema import ColumnInfo, OilTimestamp, oil_timestamp\n',
+				'\n',
+				'if TYPE_CHECKING:\n',
+				'\tfrom psycopg2 import cursor  # type: ignore[attr-defined]\n',
 				'\n',
 			]
 		)

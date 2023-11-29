@@ -1,8 +1,11 @@
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 import os
 import psycopg2
 
-__conns: Dict[str, 'psycopg2.connection'] = {}
+if TYPE_CHECKING:
+	from psycopg2 import connection  # type: ignore[attr-defined]
+
+__conns: Dict[str, 'connection'] = {}
 
 
 def getConnectionString() -> str:
@@ -27,7 +30,7 @@ def getConnectionString() -> str:
 	return connStr
 
 
-def getConnection(subDB: str) -> 'psycopg2.connection':
+def getConnection(subDB: str) -> 'connection':
 	global __conns
 	if subDB in __conns:
 		return __conns[subDB]
