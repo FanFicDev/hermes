@@ -1,10 +1,16 @@
 There are a few steps required when first getting started with this project.
 
+If you'd like a quickstart using docker and docker-compose, please see the
+https://github.com/FanFicDev/alexandria_api_infra-dev repository and its
+README. It has instructions for running both the alexandria api and hermes.
+
+Otherwise, use these instructions and the referenced docs:
+
 Depending on whether you plan to run hermes or alexandria (or both) several
 python dependencies are required. These can be installed using standard
 virtual enviornment management utilities, through pip, or your distributions
 package manager. For example:
-	python -m virtualenv ./venv_alexandria
+	python -m venv ./venv_alexandria
 	./venv_alexandria/bin/python -m pip install --upgrade pip
 	./venv_alexandria/bin/python -m pip install -r alexandria_api_requirements.txt
 
